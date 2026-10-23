@@ -77,13 +77,13 @@ Flow:
 7. On approval: stock is re-checked, an **Order** is created (status Confirmed), stock is decremented, and the customer receives a confirmation message on the same channel. On rejection: customer receives a polite message; conversation goes to the team if needed.
 
 **Order template**
-- Each workspace has an order template: the list of fields an order needs, each with type, required/optional and validation. Default for e-commerce: name, phone, delivery address (street, CAP, city, province, country), delivery zone, quantity, payment method, notes. The owner can add fields (e.g. preferred delivery date, gift message) or make fields optional.
+- Each workspace has an order template: the list of fields an order needs, each with type, required/optional and validation. Default for e-commerce: name, phone, delivery address (street, CAP, city, province, country), delivery zone, quantity, notes. Payment method is fixed to **cash on delivery** in Phase 1 (shown in the summary, not chosen). The owner can add fields (e.g. preferred delivery date, gift message) or make fields optional.
 - The template drives both input paths, so chat and form always produce the same structured order request.
 
 **Two input paths, one result**
 - **Chat:** the customer can write the details in any order and any format, even in one messy message (e.g. "Marco Rossi via Roma 12 Sassari 07100 tel 333 1234567 consegna venerdì"). The AI **extracts** the values into the template fields, asks **only for missing or invalid fields**, and never asks again for something already given (also reuses known contact data, asking the customer to confirm it).
 - **Checkout form:** a short hosted page (shop logo and colours, customer's language, mobile-first) opened from a button/link in the chat. Same fields, prefilled with anything already known from the conversation. Works on Messenger, Instagram and WhatsApp.
-- Extraction is done by the model, but **validation is done by code**: phone format, postal code, required fields, allowed delivery zones and payment methods, dates in the future. Invalid values go back to the AI to ask the customer again.
+- Extraction is done by the model, but **validation is done by code**: phone format, postal code, required fields, allowed delivery zones, dates in the future. Invalid values go back to the AI to ask the customer again.
 
 Rules:
 - All prices, variants, stock and shipping costs come from the catalog/policies — never from the model.
@@ -91,6 +91,8 @@ Rules:
 - Buttons follow channel capabilities (Messenger/Instagram quick replies; WhatsApp reply buttons for ≤3 options, list message for more). If buttons aren't possible, use a numbered text list.
 - If the approval happens after the 24-hour window, WhatsApp confirmation uses an approved utility template.
 - Pending requests older than a configurable time are highlighted; optional reminder to the team.
+
+**Payment (Phase 1): cash on delivery only.** The summary and confirmation state the total to pay on delivery. Online payment comes later via Stripe Connect (ADR 0004); the payment-method model must support adding methods without changing the order flow.
 
 Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; order detail with items, customer, address, conversation link. Simple statuses only in Phase 1 (no fulfilment, payment or shipping tracking).
 
@@ -109,7 +111,7 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 ## 5. Out of scope (Phase 1)
 - Shopify / WooCommerce integration (Phase 2)
 - Website chat widget (Phase 2)
-- Payments inside chat, payment links, order fulfilment/tracking, shipping integrations (order *requests* + approval ARE in scope)
+- Online payments (Stripe or others), payment links, order fulfilment/tracking, shipping integrations (order *requests* + approval ARE in scope)
 - Broadcasts, sequences, comment automation
 - Bookings, other verticals, agency multi-workspace UI
 - Email and other channels
@@ -143,7 +145,7 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 
 ## 9. Open questions
 1. ~~Order capture in Phase 1?~~ **Decided 2026-10-23:** AI collects the order and creates an order request; a human approves before an order exists (section 4.9).
-6. Which payment methods to offer at launch in Italy (bank transfer, PayPal, cash on delivery) and how the customer is told how to pay after approval?
+6. ~~Payment methods at launch?~~ **Decided 2026-10-23:** cash on delivery only in Phase 1; Stripe Connect is the first online method later (ADR 0004).
 2. Billing in beta: free beta with manual invoicing, or Stripe subscriptions from day one?
 3. Which AI provider(s) and EU hosting option?
 4. Languages of the dashboard at launch: Italian + English?
