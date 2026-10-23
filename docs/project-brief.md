@@ -36,9 +36,9 @@ One inbox where a business's customers are answered day and night — by an AI a
 ## 6. Roadmap (phases)
 | Phase | Scope |
 |---|---|
-| **1 — MVP (e-commerce)** | Auth + organization/workspace + team; Messenger, Instagram, WhatsApp (official Cloud API); unified inbox; native product catalog (manual + CSV import); knowledge base; AI agent with tools (search_products, search_knowledge, create_lead, handoff_to_human); contact merge; AI usage metering. See `docs/prd/phase-1-mvp.md` |
+| **1 — MVP (e-commerce)** | Auth + organization/workspace + team; Messenger, Instagram, WhatsApp (official Cloud API); unified inbox; native product catalog (manual + CSV import); knowledge base; AI agent with tools (search_products, get_product_options, search_knowledge, create_lead, create_order_request, handoff_to_human); AI takes orders as requests, a human approves; contact merge; AI usage metering. See `docs/prd/phase-1-mvp.md` |
 | 2 | Shopify + WooCommerce sync into the native catalog (products, stock, orders); website chat widget; lead pipeline |
-| 3 | Order capture + payment links; shipping tracking; broadcasts; comment automation; agency multi-workspace |
+| 3 | Payment links; shipping tracking; broadcasts; comment automation; agency multi-workspace |
 | 4 | Booking pack (salons/clinics); email channel; mobile app; white-label; advanced analytics |
 
 Web app first, mobile app later.

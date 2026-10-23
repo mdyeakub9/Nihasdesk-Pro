@@ -17,8 +17,9 @@ _Status: draft._
 
 ## Tool registry
 Each tool implements `IAgentTool { Name, Description, Parameters, ExecuteAsync(ctx, input) }`. Tools are enabled per workspace by connected integrations/features.
-- Phase 1: `search_knowledge`, `create_lead`, `handoff_to_human`
-- Later: `search_products`, `get_order_status`, `create_order`, `check_availability`, `book_appointment`, custom API tool.
+- Phase 1: `search_products`, `get_product_options`, `search_knowledge`, `create_lead`, `create_order_request`, `handoff_to_human`
+- Later: `get_order_status`, `check_availability`, `book_appointment`, custom API tool.
+- There is deliberately **no** `create_order` tool: orders are created only by a human approving an order request (PRD Phase 1, section 4.9).
 
 Tool code validates all inputs and takes `TenantId` from `ToolContext`, never from model output.
 

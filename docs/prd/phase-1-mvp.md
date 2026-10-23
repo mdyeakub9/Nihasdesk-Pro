@@ -1,6 +1,6 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.1 · 2026-10-23 · Owner: Yeakub_
+_Status: draft v0.2 · 2026-10-23 · Owner: Yeakub_
 _Related: `docs/project-brief.md`, ADR 0003._
 
 ## 1. Problem
@@ -56,7 +56,7 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 
 ### 4.8 AI agent
 - Replies in the customer's language; tone setting (formal/friendly); custom instructions in plain language.
-- Tools: `search_products`, `search_knowledge`, `create_lead`, `handoff_to_human`.
+- Tools: `search_products`, `get_product_options`, `search_knowledge`, `create_lead`, `create_order_request`, `handoff_to_human`.
 - Never invents prices, stock or policies; if unsure → asks a clarifying question or hands off.
 - Handoff: reason recorded (complaint, refund, special request, low confidence, customer asked for a human); team notified; optional timer after which the conversation returns to AI.
 - AI on/off per channel and per conversation; business-hours mode (AI only outside hours, or always).
@@ -64,22 +64,43 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - **Test chat** inside the dashboard before going live.
 - Understands images (match to catalog when possible) and voice notes (transcribe).
 
-### 4.9 Notifications
-- In-app notifications and email for handoffs and new hot leads.
+### 4.9 Order requests (AI takes the order, a human approves it)
+**Rule: the AI never creates a confirmed order.** It collects the order and creates an *order request*; an order exists only after a human approves it.
+
+Flow:
+1. Customer shows interest → AI shows matching products (cards with image, price, code) from the catalog.
+2. AI offers the **available options as buttons** (e.g. sizes/colours in stock) via `get_product_options`. Only in-stock variants are offered.
+3. AI collects the remaining details step by step: quantity, name, phone, delivery address, preferred payment method (from the shop's allowed methods), notes.
+4. AI shows an **order summary** (items, variant, unit prices, shipping cost from shop policy, total) and asks the customer to confirm.
+5. On customer confirmation → `create_order_request` → status **Pending approval**. Customer is told the shop will confirm shortly.
+6. Team is notified. In the dashboard an agent can **Approve**, **Edit then approve**, or **Reject** (with reason).
+7. On approval: stock is re-checked, an **Order** is created (status Confirmed), stock is decremented, and the customer receives a confirmation message on the same channel. On rejection: customer receives a polite message; conversation goes to the team if needed.
+
+Rules:
+- All prices, variants, stock and shipping costs come from the catalog/policies — never from the model.
+- `TenantId` and contact come from the conversation context, not from model output.
+- Buttons follow channel capabilities (Messenger/Instagram quick replies; WhatsApp reply buttons for ≤3 options, list message for more). If buttons aren't possible, use a numbered text list.
+- If the approval happens after the 24-hour window, WhatsApp confirmation uses an approved utility template.
+- Pending requests older than a configurable time are highlighted; optional reminder to the team.
+
+Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; order detail with items, customer, address, conversation link. Simple statuses only in Phase 1 (no fulfilment, payment or shipping tracking).
+
+### 4.10 Notifications
+- In-app notifications and email for handoffs, new order requests and new hot leads.
 - Daily summary email: conversations handled by AI, handoffs, hot leads.
 
-### 4.10 Usage & limits
+### 4.11 Usage & limits
 - Per-workspace metering of AI conversations and tokens.
 - Plan limits enforced (AI stops replying when limit is reached; messages still arrive; owner notified at 80% and 100%).
 - Usage page for the owner.
 
-### 4.11 Compliance & security
+### 4.12 Compliance & security
 - Tenant isolation (rules in CLAUDE.md), EU hosting, data export and deletion per workspace, audit log of key actions.
 
 ## 5. Out of scope (Phase 1)
 - Shopify / WooCommerce integration (Phase 2)
 - Website chat widget (Phase 2)
-- Taking orders/payments inside chat, payment links, order tracking, shipping integrations
+- Payments inside chat, payment links, order fulfilment/tracking, shipping integrations (order *requests* + approval ARE in scope)
 - Broadcasts, sequences, comment automation
 - Bookings, other verticals, agency multi-workspace UI
 - Email and other channels
@@ -93,12 +114,15 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 4. As an owner, I'm notified when a customer complains, and I can take over the chat.
 5. As an agent, I see which conversations are hot leads and who to follow up today.
 6. As an owner, I see how many conversations the AI handled this month and how much of my limit is left.
+7. As a customer, I pick my size from buttons, confirm the order summary, and get a confirmation once the shop approves.
+8. As an agent, I review a pending order request, fix the address, and approve it in one click.
 
 ## 7. Acceptance criteria (Phase 1 done when)
 - A new shop can sign up, finish onboarding and go live without help.
 - Messages from all three channels arrive in the inbox in < 5 seconds; replies are delivered on the right channel.
 - AI answers product questions only from the catalog; in the eval set, 0 invented prices and ≥ 90% correct/acceptable answers (IT + EN).
 - Handoff works end to end with notification and return-to-AI timer.
+- An order flows end to end: product → option buttons → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
 - No cross-workspace data access possible (critical tests).
 - Usage limits enforced and visible.
 - 5 real Italian shops use it in a beta for 2 weeks.
@@ -109,7 +133,8 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - Weekly active owners; beta → paid conversion
 
 ## 9. Open questions
-1. In Phase 1, when a customer wants to buy, should the AI capture an **order request** (products, size, name, address) for the owner to confirm, or only create a lead?
+1. ~~Order capture in Phase 1?~~ **Decided 2026-10-23:** AI collects the order and creates an order request; a human approves before an order exists (section 4.9).
+6. Which payment methods to offer at launch in Italy (bank transfer, PayPal, cash on delivery) and how the customer is told how to pay after approval?
 2. Billing in beta: free beta with manual invoicing, or Stripe subscriptions from day one?
 3. Which AI provider(s) and EU hosting option?
 4. Languages of the dashboard at launch: Italian + English?

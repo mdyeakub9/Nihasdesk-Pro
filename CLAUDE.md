@@ -35,7 +35,7 @@ Module internal layout: `Domain/`, `Features/<UseCase>/` (Endpoint, Request, Res
 2. **Module boundaries.** Modules talk only through `Contracts/` or integration events. Each module has its own DbContext and DB schema.
 3. **Never edit or delete files in `backend/tests/Critical/`** and never weaken a failing test to make it pass. Fix the code, or stop and ask.
 4. **Migrations:** never edit a migration that has been applied to staging/production; no destructive migration (drop/rename column/table) without the expand → migrate → contract process. Always show migration files for review.
-5. **AI agent:** prices, stock, order status and availability come only from tools, never from the model. Tool code enforces permissions and tenant scope. Disclose AI to end customers (EU AI Act).
+5. **AI agent:** prices, stock, order status and availability come only from tools, never from the model. The AI never creates a confirmed order — it creates an order request that a human approves. Tool code enforces permissions and tenant scope. Disclose AI to end customers (EU AI Act).
 6. **Secrets** never in the repo. `.env` is git-ignored; document variables in `.env.example`.
 7. **GDPR:** send the AI provider only the data needed for the reply; customer data stays in the EU.
 
