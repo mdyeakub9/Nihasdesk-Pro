@@ -1,6 +1,6 @@
 # Nihasdesk — Project Brief
 
-_Last updated: 2026-10-23. Source of truth for vision and scope. Update it when decisions change._
+_Last updated: 2026-10-23 (vertical: e-commerce first, see ADR 0003). Source of truth for vision and scope. Update it when decisions change._
 
 ## 1. Vision
 One inbox where a business's customers are answered day and night — by an AI agent that knows the business, and by the team when a human is needed.
@@ -12,7 +12,8 @@ One inbox where a business's customers are answered day and night — by an AI a
 
 ## 3. Target market
 - **Europe first, starting with Italy.** One country + one vertical at a time.
-- First verticals to validate: (a) small/medium online shops (Shopify / WooCommerce + social), (b) appointment businesses (salons, clinics).
+- **First vertical: e-commerce** (small/medium online shops selling via Instagram, Facebook, WhatsApp). Core stays business-type agnostic via vertical packs (ADR 0003).
+- Next: agencies, then booking businesses (salons, clinics), tourism.
 - Later: agencies (white-label), other EU countries.
 
 ## 4. Core promise
@@ -35,10 +36,10 @@ One inbox where a business's customers are answered day and night — by an AI a
 ## 6. Roadmap (phases)
 | Phase | Scope |
 |---|---|
-| **1 — MVP** | Auth + workspaces + team; Messenger, Instagram, WhatsApp (official Cloud API); unified inbox; AI agent with knowledge base and 3 tools (search_knowledge, create_lead, handoff_to_human); contact merge; AI usage metering |
-| 2 | Website chat widget; Shopify + WooCommerce (products, stock, orders); lead pipeline |
-| 3 | Bookings (salons/clinics); broadcasts; comment automation; shipping tracking |
-| 4 | Mobile app; agency/white-label; advanced analytics |
+| **1 — MVP (e-commerce)** | Auth + organization/workspace + team; Messenger, Instagram, WhatsApp (official Cloud API); unified inbox; native product catalog (manual + CSV import); knowledge base; AI agent with tools (search_products, search_knowledge, create_lead, handoff_to_human); contact merge; AI usage metering. See `docs/prd/phase-1-mvp.md` |
+| 2 | Shopify + WooCommerce sync into the native catalog (products, stock, orders); website chat widget; lead pipeline |
+| 3 | Order capture + payment links; shipping tracking; broadcasts; comment automation; agency multi-workspace |
+| 4 | Booking pack (salons/clinics); email channel; mobile app; white-label; advanced analytics |
 
 Web app first, mobile app later.
 
@@ -75,6 +76,5 @@ GDPR (DPA, data minimization, export/delete), EU data residency, EU AI Act discl
 
 ## 13. Open decisions
 - AI provider(s) and EU-region hosting choice
-- Exact Phase 1 vertical (shops vs salons)
 - Final pricing and trial model
 - Shipping aggregator (AfterShip / 17TRACK / other)

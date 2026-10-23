@@ -1,0 +1,116 @@
+# PRD — Phase 1 MVP (E-commerce)
+
+_Status: draft v0.1 · 2026-10-23 · Owner: Yeakub_
+_Related: `docs/project-brief.md`, ADR 0003._
+
+## 1. Problem
+Owners of small online shops in Italy sell through Instagram, Facebook and WhatsApp. Customers ask the same questions all day and night (price, size, colour, stock, delivery, returns). If nobody answers quickly, the sale is lost. Owners can't be online 24/7, and messages are spread across three apps, so leads get forgotten.
+
+## 2. Target user
+- **Primary:** owner of an Italian online shop (fashion, beauty, jewellery, home), team of 1–10, 30+ messages/day, selling mainly via Instagram/Facebook/WhatsApp.
+- **Secondary:** shop team members who answer messages.
+- **End customer:** the shop's customer writing in Italian, English or another EU language.
+
+## 3. Goal of Phase 1
+A shop owner connects their channels, adds products and shop info, and within ~15 minutes an AI agent answers customers correctly in their language — and calls a human when needed. Every conversation ends up as a known contact/lead.
+
+## 4. In scope
+
+### 4.1 Account & team
+- Sign up, log in, password reset, email verification.
+- Organization → Workspace (one workspace per shop in Phase 1; model supports many — ADR 0003).
+- Invite team members by email. Roles: **Owner**, **Admin**, **Agent**.
+
+### 4.2 Onboarding
+- Steps: business info (name, country, languages, timezone, business hours) → connect channels → add products → shop policies → AI settings → test chat → go live.
+- Business type selection exists, but only "Online shop" is available (others shown as "coming soon" or hidden).
+- Progress is saved; user can leave and resume.
+
+### 4.3 Channels
+- Facebook Messenger, Instagram DM, WhatsApp (official Cloud API, business brings its own WABA).
+- Text, images, voice notes received; text, images, buttons/quick replies sent where the channel supports them.
+- Respect Meta rules (24-hour window, templates for WhatsApp outside the window).
+
+### 4.4 Unified inbox
+- All conversations in one list; filters by channel, status (open / pending / resolved), assignee, AI vs human, tag.
+- Conversation view with full history, contact panel, internal notes.
+- Real-time updates; unread counts; "who is viewing" indicator.
+- Agent can **take over** from AI with one click and **return to AI**.
+
+### 4.5 Contacts & leads
+- One contact per person; auto-created on first message.
+- Merge contacts (manual; suggested merge when phone/email match).
+- AI classification per conversation: new lead, hot lead, customer, support, spam (editable by agents).
+- Contact fields: name, phone, email, language, channels, tags, notes, products of interest.
+- Simple lead list with filters (no pipeline board yet).
+
+### 4.6 Product catalog (native)
+- Add/edit products manually: name, code/SKU, description, category, price, currency, images, variants (e.g. size, colour) with optional stock quantity, active/inactive.
+- **CSV import** with a downloadable template, preview, validation errors per row, and update-by-SKU.
+- Catalog is the only source of prices and stock for the AI.
+
+### 4.7 Knowledge base
+- Shop policies as structured fields: shipping (zones, costs, times), returns, payment methods, contact info.
+- Free-text FAQ entries; upload PDF/DOCX; add a website URL to import text (single pages).
+- Owner can see which sources were used in an AI answer.
+
+### 4.8 AI agent
+- Replies in the customer's language; tone setting (formal/friendly); custom instructions in plain language.
+- Tools: `search_products`, `search_knowledge`, `create_lead`, `handoff_to_human`.
+- Never invents prices, stock or policies; if unsure → asks a clarifying question or hands off.
+- Handoff: reason recorded (complaint, refund, special request, low confidence, customer asked for a human); team notified; optional timer after which the conversation returns to AI.
+- AI on/off per channel and per conversation; business-hours mode (AI only outside hours, or always).
+- AI disclosure message (EU AI Act), editable text.
+- **Test chat** inside the dashboard before going live.
+- Understands images (match to catalog when possible) and voice notes (transcribe).
+
+### 4.9 Notifications
+- In-app notifications and email for handoffs and new hot leads.
+- Daily summary email: conversations handled by AI, handoffs, hot leads.
+
+### 4.10 Usage & limits
+- Per-workspace metering of AI conversations and tokens.
+- Plan limits enforced (AI stops replying when limit is reached; messages still arrive; owner notified at 80% and 100%).
+- Usage page for the owner.
+
+### 4.11 Compliance & security
+- Tenant isolation (rules in CLAUDE.md), EU hosting, data export and deletion per workspace, audit log of key actions.
+
+## 5. Out of scope (Phase 1)
+- Shopify / WooCommerce integration (Phase 2)
+- Website chat widget (Phase 2)
+- Taking orders/payments inside chat, payment links, order tracking, shipping integrations
+- Broadcasts, sequences, comment automation
+- Bookings, other verticals, agency multi-workspace UI
+- Email and other channels
+- Mobile app (web app must be usable on mobile browsers)
+- Flow builder, public API, Zapier
+
+## 6. User stories (selection)
+1. As an owner, I connect my Instagram and WhatsApp in under 5 minutes, so messages appear in one inbox.
+2. As an owner, I upload my products via CSV, so the AI knows my prices and sizes.
+3. As a customer, I ask "avete questa borsa in nero?" with a photo at 23:00 and get a correct answer within a minute.
+4. As an owner, I'm notified when a customer complains, and I can take over the chat.
+5. As an agent, I see which conversations are hot leads and who to follow up today.
+6. As an owner, I see how many conversations the AI handled this month and how much of my limit is left.
+
+## 7. Acceptance criteria (Phase 1 done when)
+- A new shop can sign up, finish onboarding and go live without help.
+- Messages from all three channels arrive in the inbox in < 5 seconds; replies are delivered on the right channel.
+- AI answers product questions only from the catalog; in the eval set, 0 invented prices and ≥ 90% correct/acceptable answers (IT + EN).
+- Handoff works end to end with notification and return-to-AI timer.
+- No cross-workspace data access possible (critical tests).
+- Usage limits enforced and visible.
+- 5 real Italian shops use it in a beta for 2 weeks.
+
+## 8. Success metrics (beta)
+- % of conversations resolved without human (target ≥ 60%)
+- Median first response time (target < 1 min)
+- Weekly active owners; beta → paid conversion
+
+## 9. Open questions
+1. In Phase 1, when a customer wants to buy, should the AI capture an **order request** (products, size, name, address) for the owner to confirm, or only create a lead?
+2. Billing in beta: free beta with manual invoicing, or Stripe subscriptions from day one?
+3. Which AI provider(s) and EU hosting option?
+4. Languages of the dashboard at launch: Italian + English?
+5. Is the daily summary email enough, or is a push/WhatsApp alert to the owner needed?
