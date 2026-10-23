@@ -1,6 +1,6 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.2 · 2026-10-23 · Owner: Yeakub_
+_Status: draft v0.3 · 2026-10-23 · Owner: Yeakub_
 _Related: `docs/project-brief.md`, ADR 0003._
 
 ## 1. Problem
@@ -70,11 +70,20 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 Flow:
 1. Customer shows interest → AI shows matching products (cards with image, price, code) from the catalog.
 2. AI offers the **available options as buttons** (e.g. sizes/colours in stock) via `get_product_options`. Only in-stock variants are offered.
-3. AI collects the remaining details step by step: quantity, name, phone, delivery address, preferred payment method (from the shop's allowed methods), notes.
+3. The remaining details are collected according to the shop's **order template** (see below) — **either in chat or through a checkout form**, whichever the customer prefers.
 4. AI shows an **order summary** (items, variant, unit prices, shipping cost from shop policy, total) and asks the customer to confirm.
 5. On customer confirmation → `create_order_request` → status **Pending approval**. Customer is told the shop will confirm shortly.
 6. Team is notified. In the dashboard an agent can **Approve**, **Edit then approve**, or **Reject** (with reason).
 7. On approval: stock is re-checked, an **Order** is created (status Confirmed), stock is decremented, and the customer receives a confirmation message on the same channel. On rejection: customer receives a polite message; conversation goes to the team if needed.
+
+**Order template**
+- Each workspace has an order template: the list of fields an order needs, each with type, required/optional and validation. Default for e-commerce: name, phone, delivery address (street, CAP, city, province, country), delivery zone, quantity, payment method, notes. The owner can add fields (e.g. preferred delivery date, gift message) or make fields optional.
+- The template drives both input paths, so chat and form always produce the same structured order request.
+
+**Two input paths, one result**
+- **Chat:** the customer can write the details in any order and any format, even in one messy message (e.g. "Marco Rossi via Roma 12 Sassari 07100 tel 333 1234567 consegna venerdì"). The AI **extracts** the values into the template fields, asks **only for missing or invalid fields**, and never asks again for something already given (also reuses known contact data, asking the customer to confirm it).
+- **Checkout form:** a short hosted page (shop logo and colours, customer's language, mobile-first) opened from a button/link in the chat. Same fields, prefilled with anything already known from the conversation. Works on Messenger, Instagram and WhatsApp.
+- Extraction is done by the model, but **validation is done by code**: phone format, postal code, required fields, allowed delivery zones and payment methods, dates in the future. Invalid values go back to the AI to ask the customer again.
 
 Rules:
 - All prices, variants, stock and shipping costs come from the catalog/policies — never from the model.
@@ -114,7 +123,7 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 4. As an owner, I'm notified when a customer complains, and I can take over the chat.
 5. As an agent, I see which conversations are hot leads and who to follow up today.
 6. As an owner, I see how many conversations the AI handled this month and how much of my limit is left.
-7. As a customer, I pick my size from buttons, confirm the order summary, and get a confirmation once the shop approves.
+7. As a customer, I pick my size from buttons, send my name, phone and address in one messy message (or fill a short form), confirm the summary, and get a confirmation once the shop approves.
 8. As an agent, I review a pending order request, fix the address, and approve it in one click.
 
 ## 7. Acceptance criteria (Phase 1 done when)
@@ -122,7 +131,7 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 - Messages from all three channels arrive in the inbox in < 5 seconds; replies are delivered on the right channel.
 - AI answers product questions only from the catalog; in the eval set, 0 invented prices and ≥ 90% correct/acceptable answers (IT + EN).
 - Handoff works end to end with notification and return-to-AI timer.
-- An order flows end to end: product → option buttons → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
+- An order flows end to end via chat and via form: product → option buttons → details (messy chat input correctly extracted, only missing fields asked) → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
 - No cross-workspace data access possible (critical tests).
 - Usage limits enforced and visible.
 - 5 real Italian shops use it in a beta for 2 weeks.
