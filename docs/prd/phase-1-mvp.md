@@ -136,17 +136,23 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 - An order flows end to end via chat and via form: product → option buttons → details (messy chat input correctly extracted, only missing fields asked) → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
 - No cross-workspace data access possible (critical tests).
 - Usage limits enforced and visible.
-- 5 real Italian shops use it in a beta for 2 weeks.
+- Internal testing passes on our own test shops, then 5 real Italian shops use it in a beta for 2 weeks.
 
-## 8. Success metrics (beta)
+## 8. Rollout & billing
+1. **Internal testing (alpha):** the Nihasdesk team uses it on its own test shops and pages with real Messenger/Instagram/WhatsApp traffic until the acceptance criteria pass. No billing.
+2. **Beta:** 5–10 Italian shops. Billing by **manual invoice** (bank transfer), issued by the owner's company with Italian e-invoicing (fattura elettronica). Price and any beta discount decided before beta starts.
+3. **Phase 1 product support for billing:** usage metering, plan limits and a plan field per workspace that a Nihasdesk admin sets by hand. No self-serve checkout, no Stripe subscriptions.
+4. Stripe Billing (self-serve subscriptions, upgrades, card payments) comes before public launch.
+
+## 9. Success metrics (beta)
 - % of conversations resolved without human (target ≥ 60%)
 - Median first response time (target < 1 min)
 - Weekly active owners; beta → paid conversion
 
-## 9. Open questions
+## 10. Open questions
 1. ~~Order capture in Phase 1?~~ **Decided 2026-10-23:** AI collects the order and creates an order request; a human approves before an order exists (section 4.9).
 6. ~~Payment methods at launch?~~ **Decided 2026-10-23:** cash on delivery only in Phase 1; Stripe Connect is the first online method later (ADR 0004).
-2. Billing in beta: free beta with manual invoicing, or Stripe subscriptions from day one?
+2. ~~Billing in beta?~~ **Decided 2026-10-23:** see section 8 — internal testing first, then beta with manual invoices; no Stripe subscriptions in Phase 1.
 3. Which AI provider(s) and EU hosting option?
 4. Languages of the dashboard at launch: Italian + English?
 5. Is the daily summary email enough, or is a push/WhatsApp alert to the owner needed?
