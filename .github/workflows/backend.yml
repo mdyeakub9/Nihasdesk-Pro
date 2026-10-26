@@ -1,0 +1,63 @@
+name: backend
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+
+      # Lock files are committed; restore fails if they are out of date (SEC-20).
+      - name: Restore
+        run: dotnet restore Nihasdesk.slnx --locked-mode
+
+      - name: Build
+        run: dotnet build Nihasdesk.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Nihasdesk.slnx --no-build --configuration Release
+
+      # Fail on known vulnerable packages, including transitive ones (SEC-20).
+      - name: Vulnerable packages
+        run: |
+          dotnet list Nihasdesk.slnx package --vulnerable --include-transitive | tee vulnerable.txt
+          if grep -qiE "\b(High|Critical)\b" vulnerable.txt; then
+            echo "::error::High or critical vulnerable packages found"
+            exit 1
+          fi
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Secret scanning in CI (SEC-34); also enable GitHub secret scanning + push protection in repo settings.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,48 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nihasdesk.Api/Nihasdesk.Api.csproj" />
+    <Project Path="src/Nihasdesk.Workers/Nihasdesk.Workers.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/" />
+  <Folder Name="/src/BuildingBlocks/Infrastructure/">
+    <Project Path="src/BuildingBlocks/Infrastructure/Nihasdesk.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/SharedKernel/">
+    <Project Path="src/BuildingBlocks/SharedKernel/Nihasdesk.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/AiAgent/">
+    <Project Path="src/Modules/AiAgent/Nihasdesk.Modules.AiAgent.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Billing/">
+    <Project Path="src/Modules/Billing/Nihasdesk.Modules.Billing.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Channels/">
+    <Project Path="src/Modules/Channels/Nihasdesk.Modules.Channels.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Commerce/">
+    <Project Path="src/Modules/Commerce/Nihasdesk.Modules.Commerce.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Contacts/">
+    <Project Path="src/Modules/Contacts/Nihasdesk.Modules.Contacts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Nihasdesk.Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inbox/">
+    <Project Path="src/Modules/Inbox/Nihasdesk.Modules.Inbox.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Shipping/">
+    <Project Path="src/Modules/Shipping/Nihasdesk.Modules.Shipping.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Api/">
+    <Project Path="tests/Api/Nihasdesk.Api.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Architecture/">
+    <Project Path="tests/Architecture/Nihasdesk.ArchitectureTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/">
+    <Project Path="tests/Modules/Nihasdesk.Modules.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,35 @@
+name: codeql
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+
+      # CodeQL for C# (SEC-34); TypeScript is added with the frontend.
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          build-mode: manual
+
+      - name: Build
+        run: dotnet build backend/Nihasdesk.slnx --configuration Release
+
+      - uses: github/codeql-action/analyze@v3

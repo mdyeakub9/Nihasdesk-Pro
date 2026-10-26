@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <RootNamespace>Nihasdesk.Workers</RootNamespace>
+    <UserSecretsId>nihasdesk-workers</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BuildingBlocks\SharedKernel\Nihasdesk.SharedKernel.csproj" />
+    <ProjectReference Include="..\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
