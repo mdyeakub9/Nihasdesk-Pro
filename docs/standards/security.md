@@ -1,6 +1,6 @@
 # Security Standard
 
-_Status: v1 · 2026-10-23 · Mandatory for all code._
+_Status: v1 · 2026-10-26 · Mandatory for all code._
 
 Every rule has an ID (`SEC-xx`) so Issues, PRs and tests can reference it. **If a rule cannot be followed, stop and ask** — do not work around it. A deviation needs an ADR.
 
