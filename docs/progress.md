@@ -8,4 +8,5 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Phase 1 PRD drafted (`docs/prd/phase-1-mvp.md`). Decided: AI takes orders as requests with option buttons; a human approves before an order is created.
 - Decided: payment is cash on delivery only in Phase 1; Stripe Connect later (ADR 0004).
 - Decided: internal testing first, then beta billed by manual invoice; Stripe Billing before public launch.
+- Added security standard (`docs/standards/security.md`, SEC-01…49) and ADR 0005 (cookie auth).
 - Next: answer PRD open questions, Meta Business Verification, customer interviews in Italy, Figma screens.

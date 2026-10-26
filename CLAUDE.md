@@ -38,6 +38,7 @@ Module internal layout: `Domain/`, `Features/<UseCase>/` (Endpoint, Request, Res
 5. **AI agent:** prices, stock, order status and availability come only from tools, never from the model. The AI never creates a confirmed order — it creates an order request that a human approves. Tool code enforces permissions and tenant scope. Disclose AI to end customers (EU AI Act).
 6. **Secrets** never in the repo. `.env` is git-ignored; document variables in `.env.example`.
 7. **GDPR:** send the AI provider only the data needed for the reply; customer data stays in the EU.
+8. **Security standard is mandatory.** Read `docs/standards/security.md` before any work on endpoints, auth, uploads, outbound HTTP, webhooks, AI tools, logging or infrastructure. Reference the `SEC-xx` rules you applied in the PR. If a rule can't be followed, stop and ask.
 
 ## How to work
 - One GitHub Issue = one session = one branch (`feat/...`, `fix/...`) = one PR.
@@ -58,3 +59,4 @@ Module internal layout: `Domain/`, `Features/<UseCase>/` (Endpoint, Request, Res
 | Integrations (channels, shipping, commerce) | `docs/standards/integrations.md` |
 | UI | `docs/standards/design-system.md` |
 | Git, PRs, CI | `docs/standards/git-workflow.md` |
+| Security (always for endpoints, auth, uploads, webhooks, AI tools, infra) | `docs/standards/security.md` |
