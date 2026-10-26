@@ -57,7 +57,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Secret scanning in CI (SEC-34); also enable GitHub secret scanning + push protection in repo settings.
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Secret scanning in CI (SEC-34) with the pinned gitleaks image: needs no token or API access.
+      # Also enable GitHub secret scanning + push protection in repo settings.
+      - name: Gitleaks
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/repo" \
+            ghcr.io/gitleaks/gitleaks:v8.28.0 git /repo --redact --exit-code 1

@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   security-events: write
 
 jobs:
@@ -32,4 +33,26 @@ jobs:
       - name: Build
         run: dotnet build backend/Nihasdesk.slnx --configuration Release
 
+      # Private repo without GitHub Code Security: keep results local instead of uploading,
+      # and fail on any finding so CodeQL still blocks merge (SEC-34).
       - uses: github/codeql-action/analyze@v3
+        with:
+          upload: never
+          output: codeql-results
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: codeql-sarif
+          path: codeql-results
+          if-no-files-found: ignore
+
+      - name: Fail on findings
+        run: |
+          count=$(jq '[.runs[].results[]] | length' codeql-results/*.sarif)
+          echo "CodeQL findings: $count"
+          if [ "$count" -gt 0 ]; then
+            jq -r '.runs[].results[] | "\(.ruleId): \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine) \(.message.text)"' codeql-results/*.sarif
+            echo "::error::CodeQL found $count issue(s); see the codeql-sarif artifact"
+            exit 1
+          fi
