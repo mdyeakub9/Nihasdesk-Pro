@@ -1,0 +1,3 @@
+[*.cs]
+# Test names read as sentences: Method_does_something_when_condition.
+dotnet_diagnostic.CA1707.severity = none

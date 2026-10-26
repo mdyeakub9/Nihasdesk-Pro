@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Nihasdesk.ArchitectureTests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BuildingBlocks\SharedKernel\Nihasdesk.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Nihasdesk.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Contacts\Nihasdesk.Modules.Contacts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Inbox\Nihasdesk.Modules.Inbox.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Channels\Nihasdesk.Modules.Channels.csproj" />
+    <ProjectReference Include="..\..\src\Modules\AiAgent\Nihasdesk.Modules.AiAgent.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Commerce\Nihasdesk.Modules.Commerce.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Shipping\Nihasdesk.Modules.Shipping.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\Nihasdesk.Modules.Billing.csproj" />
+  </ItemGroup>
+
+</Project>
