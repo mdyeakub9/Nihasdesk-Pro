@@ -75,6 +75,6 @@ GDPR (DPA, data minimization, export/delete), EU data residency, EU AI Act discl
 - Talk to 5–10 target customers in Italy before building Phase 1 features
 
 ## 13. Open decisions
-- AI provider(s) and EU-region hosting choice
+- ~~AI provider(s) and EU-region hosting choice~~ Decided: OpenAI with European data residency (ADR 0006)
 - Final pricing and trial model
 - Shipping aggregator (AfterShip / 17TRACK / other)

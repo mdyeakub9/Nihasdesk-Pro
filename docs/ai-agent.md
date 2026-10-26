@@ -5,7 +5,7 @@ _Status: draft._
 ## Principles
 - The LLM is stateless. "Memory" = our database. Each call gets a small, selected context.
 - The model **asks**, our code **acts**: all facts and actions come through tools.
-- Provider-agnostic `ILlmProvider`; can switch or fall back between providers.
+- Provider-agnostic `ILlmProvider`; can switch or fall back between providers. Phase 1 provider: OpenAI with European data residency (ADR 0006).
 
 ## Per-message pipeline
 1. Message arrives via queue.

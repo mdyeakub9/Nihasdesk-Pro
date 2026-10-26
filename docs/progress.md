@@ -2,6 +2,11 @@
 
 Weekly, 3–5 lines: done, blocked, decisions.
 
+## 2026-W44
+- Phase 1 PRD open questions answered (PRD v0.4).
+- Decided: AI provider is OpenAI with European data residency (ADR 0006); dashboard in Italian + English; owner alerts via daily email + web push.
+- Next: Meta Business Verification, customer interviews in Italy, Figma screens.
+
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
 - Decided: e-commerce first; flexible core with vertical packs (ADR 0003); Shopify/Woo moved to Phase 2, Phase 1 uses manual + CSV catalog.
