@@ -1,6 +1,6 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.3 · 2026-10-23 · Owner: Yeakub_
+_Status: draft v0.4 · 2026-10-26 · Owner: Yeakub_
 _Related: `docs/project-brief.md`, ADR 0003._
 
 ## 1. Problem
@@ -99,6 +99,7 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 ### 4.10 Notifications
 - In-app notifications and email for handoffs, new order requests and new hot leads.
 - Daily summary email: conversations handled by AI, handoffs, hot leads.
+- Web push (browser/PWA) for urgent events: handoffs, new order requests, new hot leads. Each member can turn push on/off per event type. No WhatsApp alert to the owner in Phase 1.
 
 ### 4.11 Usage & limits
 - Per-workspace metering of AI conversations and tokens.
@@ -107,6 +108,10 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 
 ### 4.12 Compliance & security
 - Tenant isolation (rules in CLAUDE.md), EU hosting, data export and deletion per workspace, audit log of key actions.
+
+### 4.13 Dashboard languages
+- Dashboard UI in **Italian and English** at launch; each user picks their language (default from browser). All UI text goes through the i18n package so more languages can be added later.
+- Customer-facing texts (AI disclosure, checkout form, order confirmations) follow the customer's language, independent of the dashboard language.
 
 ## 5. Out of scope (Phase 1)
 - Shopify / WooCommerce integration (Phase 2)
@@ -153,6 +158,6 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 1. ~~Order capture in Phase 1?~~ **Decided 2026-10-23:** AI collects the order and creates an order request; a human approves before an order exists (section 4.9).
 6. ~~Payment methods at launch?~~ **Decided 2026-10-23:** cash on delivery only in Phase 1; Stripe Connect is the first online method later (ADR 0004).
 2. ~~Billing in beta?~~ **Decided 2026-10-23:** see section 8 — internal testing first, then beta with manual invoices; no Stripe subscriptions in Phase 1.
-3. Which AI provider(s) and EU hosting option?
-4. Languages of the dashboard at launch: Italian + English?
-5. Is the daily summary email enough, or is a push/WhatsApp alert to the owner needed?
+3. ~~Which AI provider(s) and EU hosting option?~~ **Decided 2026-10-26:** OpenAI API with European data residency (ADR 0006).
+4. ~~Languages of the dashboard at launch?~~ **Decided 2026-10-26:** Italian + English (section 4.13).
+5. ~~Is the daily summary email enough?~~ **Decided 2026-10-26:** daily summary email + web push for urgent events; no WhatsApp alert to the owner in Phase 1 (section 4.10).
