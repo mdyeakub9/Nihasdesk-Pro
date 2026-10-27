@@ -14,7 +14,7 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    ```bash
    docker compose -f infra/docker-compose.yml --env-file infra/.env up -d
    ```
-   Ports are bound to `127.0.0.1` only. RabbitMQ management UI: http://localhost:15672.
+   Ports are bound to `127.0.0.1` only. RabbitMQ management UI: http://localhost:15672. Mailpit catches every email the API sends: http://localhost:8025.
    On the first start, `postgres/init` creates the app role `nihasdesk_app` (not table owner, cannot bypass RLS — `docs/standards/database.md`). If your database volume existed before that script, run it once by hand:
    ```bash
    docker compose -f infra/docker-compose.yml --env-file infra/.env exec postgres sh /docker-entrypoint-initdb.d/01-app-role.sh
@@ -33,11 +33,15 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    cd backend
    dotnet ef database update --project src/Modules/Identity --startup-project src/Modules/Identity --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
    ```
-5. Run the API and check health:
+5. Run the API (HTTPS only: session and CSRF cookies are `Secure`). Trust the .NET development certificate once:
+   ```bash
+   dotnet dev-certs https --trust
+   ```
+   Then run it and check health:
    ```bash
    dotnet run --project backend/src/Nihasdesk.Api
    ```
-   - http://localhost:5080/health — liveness (process is up)
-   - http://localhost:5080/health/ready — readiness (PostgreSQL, Redis, RabbitMQ reachable)
+   - https://localhost:5080/health — liveness (process is up)
+   - https://localhost:5080/health/ready — readiness (PostgreSQL, Redis, RabbitMQ reachable)
 
 Stop with `docker compose -f infra/docker-compose.yml down` (add `-v` to delete local data).

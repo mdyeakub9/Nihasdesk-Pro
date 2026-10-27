@@ -11,6 +11,8 @@ internal sealed class User : IdentityUser<Guid>
 {
     public const int DisplayNameMaxLength = 200;
 
+    public const int LanguageMaxLength = 10;
+
     public User()
     {
         Id = Guid.CreateVersion7();
@@ -18,6 +20,9 @@ internal sealed class User : IdentityUser<Guid>
     }
 
     public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>Dashboard and email language (PRD 4.13): "it" or "en".</summary>
+    public string Language { get; set; } = "en";
 
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 }

@@ -22,7 +22,7 @@ pnpm install
 pnpm dev
 ```
 
-The dashboard runs on http://localhost:5173 and calls the API on http://localhost:5080 (override with `VITE_API_URL` in `apps/web/.env.local`, see `apps/web/.env.example`). Start the API first (`infra/README.md`) to see "API: Healthy".
+The dashboard runs on http://localhost:5173 and calls the API on https://localhost:5080 (override with `VITE_API_URL` in `apps/web/.env.local`, see `apps/web/.env.example`). Start the API first (`infra/README.md`) to see "API: Healthy".
 
 ## Scripts
 

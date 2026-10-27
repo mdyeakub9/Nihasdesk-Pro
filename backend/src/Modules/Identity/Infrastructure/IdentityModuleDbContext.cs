@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ namespace Nihasdesk.Modules.Identity.Infrastructure;
 /// and Row-Level Security.
 /// </summary>
 internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbContext> options, ITenantContext tenantContext)
-    : IdentityUserContext<User, Guid>(options), ITenantDbContext
+    : IdentityUserContext<User, Guid>(options), ITenantDbContext, IDataProtectionKeyContext
 {
     public const string Schema = "identity";
 
@@ -26,6 +27,11 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
 
     public DbSet<Membership> Memberships => Set<Membership>();
 
+    public DbSet<UserSession> Sessions => Set<UserSession>();
+
+    /// <summary>ASP.NET Core Data Protection key ring (cookies, tokens), shared by all API instances.</summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -35,6 +41,7 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
         {
             user.ToTable("users");
             user.Property(u => u.DisplayName).HasMaxLength(User.DisplayNameMaxLength);
+            user.Property(u => u.Language).HasMaxLength(User.LanguageMaxLength);
             // One account per email, enforced by the database too.
             user.HasIndex(u => u.NormalizedEmail).HasDatabaseName("ix_users_normalized_email").IsUnique();
             user.HasIndex(u => u.NormalizedUserName).HasDatabaseName("ix_users_normalized_user_name").IsUnique();
@@ -71,6 +78,17 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
             membership.HasIndex(m => new { m.TenantId, m.UserId }).IsUnique();
             membership.HasIndex(m => m.UserId);
         });
+
+        builder.Entity<UserSession>(session =>
+        {
+            session.ToTable("sessions");
+            session.Property(s => s.UserAgent).HasMaxLength(UserSession.UserAgentMaxLength);
+            session.HasOne<User>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+            session.HasIndex(s => s.UserId);
+            session.HasIndex(s => s.AbsoluteExpiresAt);
+        });
+
+        builder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
 
         builder.ApplyTenantQueryFilters(this);
     }

@@ -1,0 +1,60 @@
+using FluentValidation;
+using Microsoft.AspNetCore.Identity;
+using Nihasdesk.Modules.Identity.Accounts;
+using Nihasdesk.Modules.Identity.Features.Me;
+using Nihasdesk.Modules.Identity.Infrastructure.Sessions;
+using Nihasdesk.SharedKernel;
+
+namespace Nihasdesk.Modules.Identity.Features.Login;
+
+internal sealed record LoginRequest(string Email, string Password, bool RememberMe);
+
+internal sealed class LoginValidator : AbstractValidator<LoginRequest>
+{
+    public LoginValidator()
+    {
+        RuleFor(r => r.Email).NotEmpty().MaximumLength(256);
+        // Only an upper bound here: a wrong password must look the same as any other failure.
+        RuleFor(r => r.Password).NotEmpty().MaximumLength(PasswordRules.MaxLength);
+    }
+}
+
+/// <summary>
+/// Password sign-in with lockout (5 failures → 15 minutes). Unknown email, wrong password and
+/// lockout all return the same error (SEC-26); an unknown email still costs one hash.
+/// </summary>
+internal sealed class LoginHandler(
+    UserManager<User> users,
+    SignInManager<User> signInManager,
+    IPasswordHasher<User> hasher,
+    SessionSignIn sessions)
+{
+    private static readonly User TimingDummy = new();
+
+    public async Task<Result<MeResponse>> HandleAsync(LoginRequest request, CancellationToken cancellationToken)
+    {
+        var user = await users.FindByEmailAsync(request.Email.Trim());
+        if (user is null)
+        {
+            hasher.HashPassword(TimingDummy, request.Password);
+            return AuthErrors.InvalidCredentials;
+        }
+
+        var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+        if (result.IsNotAllowed)
+        {
+            // Identity rejects unverified accounts before checking the password; check it ourselves
+            // so "not verified" is only revealed to someone who knows the password.
+            return await users.CheckPasswordAsync(user, request.Password)
+                ? AuthErrors.EmailNotVerified
+                : AuthErrors.InvalidCredentials;
+        }
+
+        if (!result.Succeeded)
+        {
+            return AuthErrors.InvalidCredentials;
+        }
+
+        return await sessions.SignInAsync(user, request.RememberMe, cancellationToken);
+    }
+}

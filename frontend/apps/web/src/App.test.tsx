@@ -17,7 +17,7 @@ describe('App', () => {
 
     expect(await screen.findByText('System online')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:5080/health',
+      'https://localhost:5080/health',
       expect.objectContaining({ credentials: 'include' }),
     );
   });
