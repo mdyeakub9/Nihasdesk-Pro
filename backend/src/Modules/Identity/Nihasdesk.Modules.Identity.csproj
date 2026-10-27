@@ -13,4 +13,14 @@
     <ProjectReference Include="..\..\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Critical tests need the DbContext and entities to prove tenant isolation. -->
+    <InternalsVisibleTo Include="Nihasdesk.CriticalTests" />
+  </ItemGroup>
+
 </Project>
