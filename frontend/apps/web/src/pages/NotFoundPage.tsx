@@ -6,7 +6,7 @@ export function NotFoundPage() {
   const { t } = useTranslation();
 
   return (
-    <section>
+    <section className="p-6 md:p-8">
       <h1 className="text-2xl font-semibold">{t('notFound.title')}</h1>
       <Button asChild variant="outline" className="mt-4">
         <Link to="/">{t('notFound.back')}</Link>

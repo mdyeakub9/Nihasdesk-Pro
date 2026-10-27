@@ -1,62 +1,49 @@
-import { Button, cn } from '@nihasdesk/ui';
+import { cn } from '@nihasdesk/ui';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet } from 'react-router';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { ApiStatus } from '../features/health/ApiStatus';
+import { Outlet } from 'react-router';
+import { NotificationPermissionBanner } from '../components/NotificationPermissionBanner';
 import { useUiStore } from '../stores/ui-store';
-
-/** Sections from PRD phase 1; only Home exists so far. */
-const upcomingSections = ['inbox', 'contacts', 'orders', 'settings'] as const;
+import { Sidebar } from './Sidebar';
+import { TopBar } from './TopBar';
 
 export function AppShell() {
   const { t, i18n } = useTranslation();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
-  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const closeSidebar = useUiStore((state) => state.closeSidebar);
+  const theme = useUiStore((state) => state.theme);
 
   useEffect(() => {
     document.documentElement.lang = i18n.resolvedLanguage ?? 'en';
   }, [i18n.resolvedLanguage]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-dvh overflow-hidden">
       {sidebarOpen && (
-        <aside className="w-60 shrink-0 border-r p-4">
-          <div className="mb-6 text-lg font-semibold">{t('app.name')}</div>
-          <nav className="flex flex-col gap-1">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                cn('rounded-md px-3 py-2 text-sm hover:bg-muted', isActive && 'bg-muted font-medium')
-              }
-            >
-              {t('nav.home')}
-            </NavLink>
-            {upcomingSections.map((section) => (
-              <span
-                key={section}
-                aria-disabled="true"
-                title={t('home.comingSoon')}
-                className="cursor-not-allowed rounded-md px-3 py-2 text-sm text-muted-foreground"
-              >
-                {t(`nav.${section}`)}
-              </span>
-            ))}
-          </nav>
-        </aside>
+        <button
+          type="button"
+          aria-label={t('nav.closeSidebar')}
+          className="fixed inset-0 z-30 bg-foreground/30 md:hidden"
+          onClick={closeSidebar}
+        />
       )}
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b px-4 py-3">
-          <Button variant="ghost" size="sm" onClick={toggleSidebar} aria-expanded={sidebarOpen}>
-            {t('nav.toggleSidebar')}
-          </Button>
-          <div className="flex items-center gap-6">
-            <ApiStatus />
-            <LanguageSwitcher />
-          </div>
-        </header>
-        <main className="flex-1 p-6">
+      <aside
+        id="app-sidebar"
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 w-60 shrink-0 md:static md:block',
+          sidebarOpen ? 'block' : 'hidden',
+        )}
+      >
+        <Sidebar />
+      </aside>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar />
+        <NotificationPermissionBanner />
+        <main className="flex min-h-0 flex-1 flex-col">
           <Outlet />
         </main>
       </div>

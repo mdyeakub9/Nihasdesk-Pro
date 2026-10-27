@@ -1,3 +1,10 @@
+export { Avatar } from './components/avatar';
+export { Badge, type BadgeProps } from './components/badge';
 export { Button, type ButtonProps } from './components/button';
 export { buttonVariants } from './components/button-variants';
+export { Checkbox } from './components/checkbox';
+export { Input, NativeSelect, Textarea } from './components/input';
+export { Switch } from './components/switch';
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './components/tabs';
 export { cn } from './lib/cn';
+export { initials } from './lib/initials';
