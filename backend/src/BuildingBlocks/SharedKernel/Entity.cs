@@ -27,6 +27,13 @@ public abstract class Entity
 public abstract class TenantEntity : Entity
 {
     protected TenantEntity(Guid tenantId)
+        : this(Guid.CreateVersion7(), tenantId)
+    {
+    }
+
+    /// <summary>For entities whose ID is chosen up front, e.g. a workspace whose ID is its own tenant ID.</summary>
+    protected TenantEntity(Guid id, Guid tenantId)
+        : base(id)
     {
         if (tenantId == Guid.Empty)
         {
