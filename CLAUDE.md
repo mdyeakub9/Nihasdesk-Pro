@@ -8,7 +8,7 @@ A subscription SaaS: one unified inbox for Messenger, Instagram, WhatsApp, websi
 Full context: `docs/project-brief.md`.
 
 ## Status
-Phase 1 foundation. Backend skeleton exists (solution, SharedKernel, empty modules, health checks, architecture tests); no business features yet. Do not scaffold projects or write code unless the task (GitHub Issue) explicitly asks for it.
+Phase 1 foundation. Backend skeleton exists (solution, SharedKernel, empty modules, health checks, architecture tests) and a frontend skeleton (pnpm workspace, dashboard shell, ui and i18n packages); no business features yet. Do not scaffold projects or write code unless the task (GitHub Issue) explicitly asks for it.
 
 ## Stack
 - Backend: .NET (ASP.NET Core), modular monolith, EF Core code-first, PostgreSQL (+ pgvector), Redis, RabbitMQ + MassTransit, SignalR

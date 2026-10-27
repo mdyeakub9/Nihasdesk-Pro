@@ -1,0 +1,58 @@
+name: frontend
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # pnpm version comes from "packageManager" in frontend/package.json.
+      - name: Enable pnpm
+        run: |
+          npm install --global corepack@latest
+          corepack enable pnpm
+
+      # Lockfile is committed; install fails if it is out of date (SEC-20).
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # Fail on known high/critical vulnerabilities (SEC-20).
+      - name: Audit
+        run: pnpm audit --audit-level high

@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/codeql.yml"
   push:
     branches: [main]
   schedule:
@@ -17,20 +19,30 @@ permissions:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-dotnet@v4
+        if: matrix.language == 'csharp'
         with:
           global-json-file: backend/global.json
 
-      # CodeQL for C# (SEC-34); TypeScript is added with the frontend.
+      # CodeQL for C# and TypeScript (SEC-34).
       - uses: github/codeql-action/init@v3
         with:
-          languages: csharp
-          build-mode: manual
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
 
       - name: Build
+        if: matrix.language == 'csharp'
         run: dotnet build backend/Nihasdesk.slnx --configuration Release
 
       # Private repo without GitHub Code Security: keep results local instead of uploading,
@@ -43,7 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: codeql-sarif
+          name: codeql-sarif-${{ matrix.language }}
           path: codeql-results
           if-no-files-found: ignore
 
