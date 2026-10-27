@@ -7,7 +7,7 @@ Identity needs email from the start (verification, invitations, password reset),
 
 ## Decision
 - Production sends through **Brevo** (EU-based, EU data processing, DPA signed).
-- All modules send through one **`IEmailSender`** interface in BuildingBlocks; the Brevo adapter is the only code that knows the provider, so a switch to **Amazon SES (EU region)** is a new adapter plus configuration.
+- All modules send through one **`IEmailSender`** interface in BuildingBlocks. Phase 1 has a single **SMTP adapter**: Brevo's SMTP relay in production and Mailpit locally differ only in configuration. A switch to **Amazon SES (EU region)** is configuration (SES also speaks SMTP) or, if provider APIs are needed later, a new adapter.
 - Local development uses **Mailpit** in `infra/docker-compose.yml` (SMTP capture with a web UI); no real email leaves a developer machine.
 - The sending domain has **SPF, DKIM and DMARC** configured before the first production email.
 - API keys live only in the server secret store (SEC-13); email addresses and message bodies are never logged (SEC-19).
