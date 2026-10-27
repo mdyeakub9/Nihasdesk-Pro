@@ -27,7 +27,7 @@
   "roles": {
     "owner": "Workspace owner",
     "admin": "Admin",
-    "agent": "Agent"
+    "member": "Team member"
   },
   "language": {
     "label": "Language",
