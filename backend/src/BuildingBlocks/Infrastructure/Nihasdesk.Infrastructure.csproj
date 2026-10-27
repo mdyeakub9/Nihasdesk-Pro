@@ -17,6 +17,8 @@
     <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" />
     <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Nihasdesk.Api\Nihasdesk.Api.csproj" />
+    <ProjectReference Include="..\Support\Nihasdesk.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

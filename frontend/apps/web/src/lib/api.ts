@@ -1,4 +1,4 @@
-const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:5080').replace(/\/$/, '');
+const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'https://localhost:5080').replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(readonly status: number) {

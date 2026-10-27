@@ -2,7 +2,10 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Nihasdesk.Api;
 using Nihasdesk.Api.Middleware;
+using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Infrastructure.Health;
+using Nihasdesk.Infrastructure.Security;
+using Nihasdesk.Infrastructure.Tenancy;
 
 const string DashboardCorsPolicy = "dashboard";
 const long MaxRequestBodyBytes = 1024 * 1024;
@@ -31,6 +34,9 @@ builder.Services.AddCors(options =>
         .AllowCredentials()));
 
 builder.Services.AddDependencyHealthChecks(builder.Configuration);
+builder.Services.AddEmail(builder.Configuration);
+// CSRF tokens (SEC-03) and auth rate limits (SEC-07).
+builder.Services.AddApiSecurity(builder.Configuration);
 
 foreach (var module in ModuleCatalog.All)
 {
@@ -43,6 +49,12 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(DashboardCorsPolicy);
+app.UseRateLimiter();
+app.UseAuthentication();
+// Tenant only from the authenticated session (CLAUDE.md rule 1).
+app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseAuthorization();
+app.UseMiddleware<CsrfProtectionMiddleware>();
 
 // Liveness: the process is up. Readiness: dependencies are reachable.
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
@@ -50,6 +62,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains(HealthCheckExtensions.ReadyTag),
 });
+
+app.MapCsrfEndpoint();
 
 foreach (var module in ModuleCatalog.All)
 {
