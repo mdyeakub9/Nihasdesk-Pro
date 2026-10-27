@@ -18,7 +18,7 @@ _Status: draft. Expand before Phase 1 coding starts._
 ```
 Channel webhook → API stores raw payload, returns 200 → queue
   → Channels adapter normalizes → Inbox stores message (idempotent)
-  → SignalR pushes to agents' screens
+  → SignalR pushes to team members' screens
   → AiAgent decides: reply / tool calls / handoff
   → reply sent through Channels adapter → stored → metered
 ```

@@ -1,6 +1,6 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.4 · 2026-10-26 · Owner: Yeakub_
+_Status: draft v0.5 · 2026-10-27 · Owner: Yeakub_
 _Related: `docs/project-brief.md`, ADR 0003._
 
 ## 1. Problem
@@ -19,7 +19,7 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 ### 4.1 Account & team
 - Sign up, log in, password reset, email verification.
 - Organization → Workspace (one workspace per shop in Phase 1; model supports many — ADR 0003).
-- Invite team members by email. Roles: **Owner**, **Admin**, **Agent**.
+- Invite team members by email. Roles: **Owner**, **Admin**, **Member** (ADR 0011; "Agent" means only the AI agent).
 
 ### 4.2 Onboarding
 - Steps: business info (name, country, languages, timezone, business hours) → connect channels → add products → shop policies → AI settings → test chat → go live.
@@ -35,12 +35,12 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - All conversations in one list; filters by channel, status (open / pending / resolved), assignee, AI vs human, tag.
 - Conversation view with full history, contact panel, internal notes.
 - Real-time updates; unread counts; "who is viewing" indicator.
-- Agent can **take over** from AI with one click and **return to AI**.
+- A team member can **take over** from AI with one click and **return to AI**.
 
 ### 4.5 Contacts & leads
 - One contact per person; auto-created on first message.
 - Merge contacts (manual; suggested merge when phone/email match).
-- AI classification per conversation: new lead, hot lead, customer, support, spam (editable by agents).
+- AI classification per conversation: new lead, hot lead, customer, support, spam (editable by team members).
 - Contact fields: name, phone, email, language, channels, tags, notes, products of interest.
 - Simple lead list with filters (no pipeline board yet).
 
@@ -73,7 +73,7 @@ Flow:
 3. The remaining details are collected according to the shop's **order template** (see below) — **either in chat or through a checkout form**, whichever the customer prefers.
 4. AI shows an **order summary** (items, variant, unit prices, shipping cost from shop policy, total) and asks the customer to confirm.
 5. On customer confirmation → `create_order_request` → status **Pending approval**. Customer is told the shop will confirm shortly.
-6. Team is notified. In the dashboard an agent can **Approve**, **Edit then approve**, or **Reject** (with reason).
+6. Team is notified. In the dashboard a team member can **Approve**, **Edit then approve**, or **Reject** (with reason).
 7. On approval: stock is re-checked, an **Order** is created (status Confirmed), stock is decremented, and the customer receives a confirmation message on the same channel. On rejection: customer receives a polite message; conversation goes to the team if needed.
 
 **Order template**
@@ -128,10 +128,10 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 2. As an owner, I upload my products via CSV, so the AI knows my prices and sizes.
 3. As a customer, I ask "avete questa borsa in nero?" with a photo at 23:00 and get a correct answer within a minute.
 4. As an owner, I'm notified when a customer complains, and I can take over the chat.
-5. As an agent, I see which conversations are hot leads and who to follow up today.
+5. As a team member, I see which conversations are hot leads and who to follow up today.
 6. As an owner, I see how many conversations the AI handled this month and how much of my limit is left.
 7. As a customer, I pick my size from buttons, send my name, phone and address in one messy message (or fill a short form), confirm the summary, and get a confirmation once the shop approves.
-8. As an agent, I review a pending order request, fix the address, and approve it in one click.
+8. As a team member, I review a pending order request, fix the address, and approve it in one click.
 
 ## 7. Acceptance criteria (Phase 1 done when)
 - A new shop can sign up, finish onboarding and go live without help.

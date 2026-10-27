@@ -27,7 +27,7 @@
   "roles": {
     "owner": "Titolare",
     "admin": "Amministratore",
-    "agent": "Operatore"
+    "member": "Membro del team"
   },
   "language": {
     "label": "Lingua",
