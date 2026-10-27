@@ -1,12 +1,32 @@
 import { create } from 'zustand';
 
 /** Client-only UI state. Server data belongs in TanStack Query, not here (ADR 0007). */
+export type Theme = 'light' | 'dark';
+
 type UiState = {
+  /** Mobile navigation drawer; the sidebar is always visible on wide screens. */
   sidebarOpen: boolean;
+  /** Starts from the system setting; not persisted until user preferences exist server side (SEC-14). */
+  theme: Theme;
+  notificationBannerDismissed: boolean;
   toggleSidebar: () => void;
+  closeSidebar: () => void;
+  setTheme: (theme: Theme) => void;
+  dismissNotificationBanner: () => void;
 };
 
+function systemTheme(): Theme {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
+
 export const useUiStore = create<UiState>()((set) => ({
-  sidebarOpen: true,
+  sidebarOpen: false,
+  theme: systemTheme(),
+  notificationBannerDismissed: false,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  closeSidebar: () => set({ sidebarOpen: false }),
+  setTheme: (theme) => set({ theme }),
+  dismissNotificationBanner: () => set({ notificationBannerDismissed: true }),
 }));

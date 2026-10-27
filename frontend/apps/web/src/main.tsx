@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter } from 'react-router';
 import { App } from './App';
 import { routes } from './routes';
+import '@fontsource-variable/inter';
 import './styles.css';
 
 const root = document.getElementById('root');

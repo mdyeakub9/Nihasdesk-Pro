@@ -3,32 +3,231 @@
     "name": "Nihasdesk"
   },
   "nav": {
-    "home": "Home",
+    "overview": "Overview",
     "inbox": "Inbox",
-    "contacts": "Contacts",
+    "notifications": "Notifications",
     "orders": "Orders",
+    "leads": "Leads",
+    "customers": "Customers",
+    "products": "Products",
+    "analytics": "Analytics",
     "settings": "Settings",
-    "toggleSidebar": "Toggle sidebar"
+    "toggleSidebar": "Open navigation",
+    "closeSidebar": "Close navigation"
+  },
+  "sidebar": {
+    "tagline": "Customer workspace",
+    "navigation": "Main navigation",
+    "setupGuide": "Setup guide · {{completed}}/{{total}}",
+    "setupProgress": "Setup progress",
+    "workspace": "Workspace",
+    "growManage": "Grow & manage",
+    "onDuty": "On duty"
+  },
+  "roles": {
+    "owner": "Workspace owner",
+    "admin": "Admin",
+    "agent": "Agent"
   },
   "language": {
     "label": "Language",
     "en": "English",
     "it": "Italiano"
   },
-  "home": {
-    "title": "Welcome to Nihasdesk",
-    "subtitle": "Your inbox, AI agent and team in one place.",
-    "comingSoon": "Coming soon"
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "topBar": {
+    "live": "Live",
+    "mode": "AI ↔ Human"
   },
   "apiStatus": {
-    "label": "API",
     "checking": "Checking…",
-    "healthy": "Healthy",
-    "unreachable": "Unreachable",
+    "online": "System online",
+    "offline": "System offline",
     "retry": "Retry"
+  },
+  "notificationBanner": {
+    "text": "Stay in the loop. Turn on notifications for handoffs, order requests and hot leads.",
+    "enable": "Enable notifications",
+    "notNow": "Not now"
+  },
+  "home": {
+    "title": "Welcome to Nihasdesk",
+    "subtitle": "Your inbox, AI agent and team in one place."
+  },
+  "comingSoon": {
+    "text": "This section is coming soon.",
+    "short": "Coming soon"
   },
   "notFound": {
     "title": "Page not found",
-    "back": "Back to home"
+    "back": "Back to overview"
+  },
+  "channels": {
+    "messenger": "Messenger",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp"
+  },
+  "inbox": {
+    "title": "Conversations",
+    "search": "Search name or message…",
+    "statusFilter": "Conversation status",
+    "channelFilter": "Channel",
+    "allChannels": "All",
+    "assignee": "Assignee",
+    "everyone": "Everyone",
+    "mine": "Mine",
+    "noMatches": "No conversations match these filters.",
+    "showing": "Showing {{shown}} of {{total}} conversations",
+    "ai": "AI",
+    "unread": "Unread",
+    "tabs": {
+      "waiting": "Waiting",
+      "unread": "Unread",
+      "open": "Open",
+      "done": "Done"
+    },
+    "empty": {
+      "title": "No conversation selected",
+      "text": "Pick a conversation from the list to read it, reply or take over from the AI."
+    }
+  },
+  "conversation": {
+    "notFound": "Conversation not found",
+    "backToInbox": "Back to conversations",
+    "aiAnswering": "AI answering",
+    "teamAnswering": "Team answering",
+    "handoffs_one": "{{count}} handoff",
+    "handoffs_other": "{{count}} handoffs",
+    "done": "Done",
+    "reopen": "Reopen",
+    "takeOver": "Take over",
+    "returnToAi": "Return to AI",
+    "aiOffHint": "AI assistance is turned off for this conversation.",
+    "assign": "Assign",
+    "close": "Close conversation"
+  },
+  "message": {
+    "history": "Messages",
+    "today": "Today, {{date}}",
+    "aiName": "Nihas AI",
+    "team": "Team",
+    "internalNote": "Internal note",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "sku": "SKU",
+    "viewDetails": "View details",
+    "delivery": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "read": "Read"
+    }
+  },
+  "composer": {
+    "mode": "Message type",
+    "reply": "Reply",
+    "note": "Internal note",
+    "replyPlaceholder": "Write a reply…",
+    "notePlaceholder": "Write a note for your team. The customer won't see it.",
+    "aiPreparing": "AI is answering this customer. Sending a reply takes the conversation over.",
+    "enterToSend": "Enter to send",
+    "send": "Send",
+    "saveNote": "Add note"
+  },
+  "customer": {
+    "title": "Customer details",
+    "seen": "First seen {{firstSeen}} ago · Active {{active}} ago",
+    "labels": "Labels",
+    "teamNote": "Team note",
+    "noNote": "No note yet.",
+    "assistant": "Assistant",
+    "noSummary": "The AI summary appears after a few messages.",
+    "lead": "Lead",
+    "leadHint": "Classified by the AI; your team can change it.",
+    "orders": "Orders",
+    "orderCount_one": "{{count}} order",
+    "orderCount_other": "{{count}} orders",
+    "ordersHint": "Order requests need a team member's approval before they become orders.",
+    "aiOrPerson": "AI or person",
+    "aiAnswering": "AI is answering this customer.",
+    "personAnswering": "A team member is answering this customer.",
+    "aiAssistance": "AI assistance",
+    "handoffs_one": "Handed to a person {{count}} time",
+    "handoffs_other": "Handed to a person {{count}} times"
+  },
+  "leadStatus": {
+    "new": "New lead",
+    "hot": "Hot lead",
+    "customer": "Customer",
+    "support": "Support",
+    "spam": "Spam"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Know when your team needs to step in. Let AI handle the routine conversations.",
+    "openInbox": "Open inbox",
+    "summary": {
+      "actionNeeded": "Action needed",
+      "assignedToYou": "Assigned to you",
+      "aiReview": "AI needs review",
+      "hint": "These items stay open until your team resolves them."
+    },
+    "view": "Notification status",
+    "views": {
+      "open": "Action needed",
+      "resolved": "Resolved",
+      "all": "All"
+    },
+    "search": "Search customers…",
+    "typeFilter": "Notification type",
+    "type": "Type",
+    "allTypes": "All types",
+    "list": "Notifications",
+    "selectAll": "Select all",
+    "select": "Select: {{title}}",
+    "updates_one": "{{count}} update",
+    "updates_other": "{{count}} updates",
+    "resolveSelected": "Resolve selected",
+    "resolve": "Resolve",
+    "resolved": "Resolved",
+    "empty": "Nothing here. You're all caught up.",
+    "showing": "Showing {{shown}} of {{total}}",
+    "openingHint": "Opening a conversation does not resolve its notification.",
+    "assignedToYou": "Assigned to you",
+    "unassigned": "Unassigned",
+    "ago": "{{age}} ago",
+    "types": {
+      "handoff": {
+        "title": "{{name}} wants to speak with your team",
+        "description": "The AI paused its replies after the customer asked for a person.",
+        "label": "Human handoff",
+        "filter": "Human handoffs",
+        "action": "Take over"
+      },
+      "aiReview": {
+        "title": "AI needs an answer about your {{detail}}",
+        "description": "The knowledge base does not cover this question. Review before replying.",
+        "label": "AI review",
+        "filter": "AI review",
+        "action": "Review reply"
+      },
+      "orderRequest": {
+        "title": "New order request from {{name}}",
+        "description": "{{detail}} · cash on delivery. Approve it before it becomes an order.",
+        "label": "Order request",
+        "filter": "Order requests",
+        "action": "Review order"
+      },
+      "hotLead": {
+        "title": "{{name}} is a hot lead",
+        "description": "The AI marked this conversation as a likely buyer.",
+        "label": "Hot lead",
+        "filter": "Hot leads",
+        "action": "Open chat"
+      }
+    }
   }
 }

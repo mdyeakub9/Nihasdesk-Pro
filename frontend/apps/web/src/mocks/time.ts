@@ -1,0 +1,4 @@
+/** ISO timestamp `minutes` before now, so mock data always looks recent. */
+export function minutesAgo(minutes: number): string {
+  return new Date(Date.now() - minutes * 60_000).toISOString();
+}

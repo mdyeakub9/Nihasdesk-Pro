@@ -3,32 +3,231 @@
     "name": "Nihasdesk"
   },
   "nav": {
-    "home": "Home",
-    "inbox": "Posta in arrivo",
-    "contacts": "Contatti",
+    "overview": "Panoramica",
+    "inbox": "Inbox",
+    "notifications": "Notifiche",
     "orders": "Ordini",
+    "leads": "Lead",
+    "customers": "Clienti",
+    "products": "Prodotti",
+    "analytics": "Statistiche",
     "settings": "Impostazioni",
-    "toggleSidebar": "Mostra/nascondi barra laterale"
+    "toggleSidebar": "Apri navigazione",
+    "closeSidebar": "Chiudi navigazione"
+  },
+  "sidebar": {
+    "tagline": "Area clienti",
+    "navigation": "Navigazione principale",
+    "setupGuide": "Configurazione · {{completed}}/{{total}}",
+    "setupProgress": "Avanzamento configurazione",
+    "workspace": "Area di lavoro",
+    "growManage": "Crescita e gestione",
+    "onDuty": "In servizio"
+  },
+  "roles": {
+    "owner": "Titolare",
+    "admin": "Amministratore",
+    "agent": "Operatore"
   },
   "language": {
     "label": "Lingua",
     "en": "English",
     "it": "Italiano"
   },
-  "home": {
-    "title": "Benvenuto in Nihasdesk",
-    "subtitle": "La tua casella, l'agente AI e il tuo team in un unico posto.",
-    "comingSoon": "Prossimamente"
+  "theme": {
+    "label": "Tema",
+    "light": "Chiaro",
+    "dark": "Scuro"
+  },
+  "topBar": {
+    "live": "Attivo",
+    "mode": "IA ↔ Persona"
   },
   "apiStatus": {
-    "label": "API",
-    "checking": "Verifica in corso…",
-    "healthy": "Operativa",
-    "unreachable": "Non raggiungibile",
+    "checking": "Verifica…",
+    "online": "Sistema online",
+    "offline": "Sistema offline",
     "retry": "Riprova"
+  },
+  "notificationBanner": {
+    "text": "Resta aggiornato. Attiva le notifiche per passaggi al team, richieste d'ordine e lead caldi.",
+    "enable": "Attiva notifiche",
+    "notNow": "Non ora"
+  },
+  "home": {
+    "title": "Benvenuto in Nihasdesk",
+    "subtitle": "La tua inbox, l'agente IA e il team in un unico posto."
+  },
+  "comingSoon": {
+    "text": "Questa sezione arriverà presto.",
+    "short": "In arrivo"
   },
   "notFound": {
     "title": "Pagina non trovata",
-    "back": "Torna alla home"
+    "back": "Torna alla panoramica"
+  },
+  "channels": {
+    "messenger": "Messenger",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp"
+  },
+  "inbox": {
+    "title": "Conversazioni",
+    "search": "Cerca nome o messaggio…",
+    "statusFilter": "Stato della conversazione",
+    "channelFilter": "Canale",
+    "allChannels": "Tutti",
+    "assignee": "Assegnatario",
+    "everyone": "Tutti",
+    "mine": "Mie",
+    "noMatches": "Nessuna conversazione corrisponde ai filtri.",
+    "showing": "{{shown}} di {{total}} conversazioni",
+    "ai": "IA",
+    "unread": "Non letta",
+    "tabs": {
+      "waiting": "In attesa",
+      "unread": "Non lette",
+      "open": "Aperte",
+      "done": "Chiuse"
+    },
+    "empty": {
+      "title": "Nessuna conversazione selezionata",
+      "text": "Scegli una conversazione dall'elenco per leggerla, rispondere o subentrare all'IA."
+    }
+  },
+  "conversation": {
+    "notFound": "Conversazione non trovata",
+    "backToInbox": "Torna alle conversazioni",
+    "aiAnswering": "Risponde l'IA",
+    "teamAnswering": "Risponde il team",
+    "handoffs_one": "{{count}} passaggio al team",
+    "handoffs_other": "{{count}} passaggi al team",
+    "done": "Chiudi",
+    "reopen": "Riapri",
+    "takeOver": "Subentra",
+    "returnToAi": "Ridai all'IA",
+    "aiOffHint": "L'assistenza IA è disattivata per questa conversazione.",
+    "assign": "Assegna",
+    "close": "Chiudi conversazione"
+  },
+  "message": {
+    "history": "Messaggi",
+    "today": "Oggi, {{date}}",
+    "aiName": "Nihas IA",
+    "team": "Team",
+    "internalNote": "Nota interna",
+    "inStock": "Disponibile",
+    "outOfStock": "Esaurito",
+    "sku": "Codice",
+    "viewDetails": "Vedi dettagli",
+    "delivery": {
+      "sent": "Inviato",
+      "delivered": "Consegnato",
+      "read": "Letto"
+    }
+  },
+  "composer": {
+    "mode": "Tipo di messaggio",
+    "reply": "Rispondi",
+    "note": "Nota interna",
+    "replyPlaceholder": "Scrivi una risposta…",
+    "notePlaceholder": "Scrivi una nota per il team. Il cliente non la vedrà.",
+    "aiPreparing": "L'IA sta rispondendo a questo cliente. Inviando una risposta subentri tu.",
+    "enterToSend": "Invio per inviare",
+    "send": "Invia",
+    "saveNote": "Aggiungi nota"
+  },
+  "customer": {
+    "title": "Dettagli cliente",
+    "seen": "Primo contatto {{firstSeen}} fa · Attivo {{active}} fa",
+    "labels": "Etichette",
+    "teamNote": "Nota del team",
+    "noNote": "Nessuna nota.",
+    "assistant": "Assistente",
+    "noSummary": "Il riepilogo IA compare dopo qualche messaggio.",
+    "lead": "Lead",
+    "leadHint": "Classificato dall'IA; il team può modificarlo.",
+    "orders": "Ordini",
+    "orderCount_one": "{{count}} ordine",
+    "orderCount_other": "{{count}} ordini",
+    "ordersHint": "Le richieste d'ordine diventano ordini solo dopo l'approvazione di un membro del team.",
+    "aiOrPerson": "IA o persona",
+    "aiAnswering": "L'IA sta rispondendo a questo cliente.",
+    "personAnswering": "Un membro del team sta rispondendo a questo cliente.",
+    "aiAssistance": "Assistenza IA",
+    "handoffs_one": "Passato a una persona {{count}} volta",
+    "handoffs_other": "Passato a una persona {{count}} volte"
+  },
+  "leadStatus": {
+    "new": "Nuovo lead",
+    "hot": "Lead caldo",
+    "customer": "Cliente",
+    "support": "Assistenza",
+    "spam": "Spam"
+  },
+  "notifications": {
+    "title": "Notifiche",
+    "subtitle": "Sappi quando il team deve intervenire. Lascia all'IA le conversazioni di routine.",
+    "openInbox": "Apri inbox",
+    "summary": {
+      "actionNeeded": "Da gestire",
+      "assignedToYou": "Assegnate a te",
+      "aiReview": "Da rivedere per l'IA",
+      "hint": "Restano aperte finché il team non le risolve."
+    },
+    "view": "Stato delle notifiche",
+    "views": {
+      "open": "Da gestire",
+      "resolved": "Risolte",
+      "all": "Tutte"
+    },
+    "search": "Cerca clienti…",
+    "typeFilter": "Tipo di notifica",
+    "type": "Tipo",
+    "allTypes": "Tutti i tipi",
+    "list": "Notifiche",
+    "selectAll": "Seleziona tutto",
+    "select": "Seleziona: {{title}}",
+    "updates_one": "{{count}} aggiornamento",
+    "updates_other": "{{count}} aggiornamenti",
+    "resolveSelected": "Risolvi selezionate",
+    "resolve": "Risolvi",
+    "resolved": "Risolta",
+    "empty": "Niente da gestire. Sei in pari.",
+    "showing": "{{shown}} di {{total}}",
+    "openingHint": "Aprire una conversazione non risolve la sua notifica.",
+    "assignedToYou": "Assegnata a te",
+    "unassigned": "Non assegnata",
+    "ago": "{{age}} fa",
+    "types": {
+      "handoff": {
+        "title": "{{name}} vuole parlare con il team",
+        "description": "L'IA ha sospeso le risposte dopo che il cliente ha chiesto una persona.",
+        "label": "Passaggio al team",
+        "filter": "Passaggi al team",
+        "action": "Subentra"
+      },
+      "aiReview": {
+        "title": "L'IA ha bisogno di una risposta su: {{detail}}",
+        "description": "La knowledge base non copre questa domanda. Controlla prima di rispondere.",
+        "label": "Revisione IA",
+        "filter": "Revisione IA",
+        "action": "Rivedi risposta"
+      },
+      "orderRequest": {
+        "title": "Nuova richiesta d'ordine da {{name}}",
+        "description": "{{detail}} · pagamento alla consegna. Approvala prima che diventi un ordine.",
+        "label": "Richiesta d'ordine",
+        "filter": "Richieste d'ordine",
+        "action": "Rivedi ordine"
+      },
+      "hotLead": {
+        "title": "{{name}} è un lead caldo",
+        "description": "L'IA ha segnato questa conversazione come probabile acquisto.",
+        "label": "Lead caldo",
+        "filter": "Lead caldi",
+        "action": "Apri chat"
+      }
+    }
   }
 }

@@ -4,13 +4,17 @@ pnpm monorepo: `apps/web` (dashboard), `packages/ui` (design system), `packages/
 
 ## Setup
 
-Requirements: Node 24. pnpm comes through corepack in the version pinned in `package.json`:
+Requirements: Node 24 and pnpm in the version pinned in `package.json` (`packageManager`):
 
 ```bash
 corepack enable pnpm
 ```
 
-If that fails with a permission error on Windows, run pnpm as `corepack pnpm …` instead.
+If that fails with a permission error on Windows, install the same version globally instead (root scripts call `pnpm` themselves, so `corepack pnpm …` alone is not enough):
+
+```bash
+npm install -g pnpm@12.15.0
+```
 
 ```bash
 cd frontend
