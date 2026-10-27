@@ -9,6 +9,14 @@ updates:
       nuget:
         patterns: ["*"]
 
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

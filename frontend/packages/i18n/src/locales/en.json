@@ -1,0 +1,34 @@
+{
+  "app": {
+    "name": "Nihasdesk"
+  },
+  "nav": {
+    "home": "Home",
+    "inbox": "Inbox",
+    "contacts": "Contacts",
+    "orders": "Orders",
+    "settings": "Settings",
+    "toggleSidebar": "Toggle sidebar"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "it": "Italiano"
+  },
+  "home": {
+    "title": "Welcome to Nihasdesk",
+    "subtitle": "Your inbox, AI agent and team in one place.",
+    "comingSoon": "Coming soon"
+  },
+  "apiStatus": {
+    "label": "API",
+    "checking": "Checking…",
+    "healthy": "Healthy",
+    "unreachable": "Unreachable",
+    "retry": "Retry"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "back": "Back to home"
+  }
+}

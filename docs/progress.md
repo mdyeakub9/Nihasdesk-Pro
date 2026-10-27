@@ -7,6 +7,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Decided: AI provider is OpenAI with European data residency (ADR 0006); dashboard in Italian + English; owner alerts via daily email + web push.
 - Next: Meta Business Verification, customer interviews in Italy, Figma screens.
 - Coding started: Issue #1 backend foundation (solution, SharedKernel, empty modules, health checks, architecture tests, docker-compose, CI).
+- Issue #2 frontend foundation: pnpm workspace, dashboard shell (React + Vite), ui and i18n packages, frontend CI. Decided: TanStack Query + Zustand, no Redux (ADR 0007).
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
