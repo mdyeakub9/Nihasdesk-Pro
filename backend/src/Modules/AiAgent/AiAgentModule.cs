@@ -7,6 +7,7 @@ using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.AiAgent.Agent;
 using Nihasdesk.Modules.AiAgent.Features.Knowledge;
+using Nihasdesk.Modules.AiAgent.Features.Settings;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Llm;
 
@@ -31,9 +32,13 @@ public sealed class AiAgentModule : IModule
             .RemoveAllLoggers();
 
         services.AddScoped<AgentTools>();
+        services.AddScoped<AgentBrain>();
+        services.AddScoped<AiSettingsStore>();
         services.AddScoped<ReplyAgent>();
         services.AddScoped<IValidator<TeachRequest>, TeachValidator>();
         services.AddScoped<IValidator<AnswerRequest>, AnswerValidator>();
+        services.AddScoped<IValidator<AiSettingsRequest>, AiSettingsValidator>();
+        services.AddScoped<IValidator<TestChatRequest>, TestChatValidator>();
 
         services.AddSingleton<AiReplyProcessor>();
         if (configuration.GetValue($"{AiOptions.SectionName}:{nameof(AiOptions.BackgroundProcessing)}", true))
@@ -45,5 +50,6 @@ public sealed class AiAgentModule : IModule
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         KnowledgeEndpoints.Map(endpoints);
+        AiSettingsEndpoints.Map(endpoints);
     }
 }

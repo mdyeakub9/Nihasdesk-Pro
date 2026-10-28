@@ -22,6 +22,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 
     public DbSet<AiRun> Runs => Set<AiRun>();
 
+    public DbSet<AiSettings> Settings => Set<AiSettings>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -54,6 +56,17 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             // Limits count replies per workspace per day and per conversation per hour.
             run.HasIndex(r => new { r.TenantId, r.CreatedAt });
             run.HasIndex(r => new { r.ConversationId, r.CreatedAt });
+        });
+
+        modelBuilder.Entity<AiSettings>(settings =>
+        {
+            settings.ToTable("settings");
+            settings.Property(s => s.Id).ValueGeneratedNever();
+            settings.Property(s => s.Instructions).HasMaxLength(AiSettings.InstructionsMaxLength);
+            settings.Property(s => s.Disclosure).HasMaxLength(AiSettings.DisclosureMaxLength);
+            LowerCaseText(settings.Property(s => s.Tone));
+            // One row per workspace.
+            settings.HasIndex(s => s.TenantId).IsUnique();
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);
