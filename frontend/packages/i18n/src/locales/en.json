@@ -312,6 +312,7 @@
   "settings": {
     "sections": "Settings sections",
     "team": "Team",
+    "channels": "Channels",
     "security": "Security"
   },
   "team": {
@@ -401,6 +402,40 @@
       "current": "Current password",
       "submit": "Change password",
       "changed": "Password changed. Other devices were signed out."
+    }
+  },
+  "channelSettings": {
+    "resultLabel": "Connection result",
+    "intro": "Connect the channels your customers write on. Their messages arrive in the inbox, and your team and the AI answer from there.",
+    "ownersOnly": "Only Owners and Admins can connect channels.",
+    "connectedPages": "Connected Pages",
+    "connectedOn": "Connected {{date}}",
+    "disconnect": "Disconnect",
+    "disconnectPage": "Disconnect {{name}}",
+    "disconnectConfirm": "Yes, disconnect",
+    "disconnectHint": "New messages from this Page will stop arriving. Conversations already in the inbox stay.",
+    "comingSoon": "Coming soon",
+    "dismiss": "Dismiss",
+    "messenger": {
+      "title": "Facebook Messenger",
+      "intro": "Answer messages sent to your Facebook Page.",
+      "connect": "Connect a Facebook Page",
+      "connectAnother": "Connect another Page",
+      "hint": "You'll sign in with Facebook and choose the Pages to connect. You need to be an admin of the Page."
+    },
+    "result": {
+      "connected_one": "{{count}} Page connected.",
+      "connected_other": "{{count}} Pages connected.",
+      "elsewhere_one": "{{count}} Page is already connected to another Nihasdesk workspace and was skipped.",
+      "elsewhere_other": "{{count}} Pages are already connected to another Nihasdesk workspace and were skipped.",
+      "none": "No Page was connected. Choose at least one Page you manage on Facebook.",
+      "cancelled": "Connecting was cancelled on Facebook. Nothing changed.",
+      "invalid_state": "That link has expired or wasn't started here. Please try connecting again.",
+      "meta_failed": "Facebook didn't respond as expected. Please try again in a moment."
+    },
+    "errors": {
+      "notConfigured": "Facebook isn't set up on this server yet. Ask the Nihasdesk team for help.",
+      "notFound": "This connection no longer exists. Refresh the page."
     }
   }
 }

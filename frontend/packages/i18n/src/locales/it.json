@@ -312,6 +312,7 @@
   "settings": {
     "sections": "Sezioni delle impostazioni",
     "team": "Team",
+    "channels": "Canali",
     "security": "Sicurezza"
   },
   "team": {
@@ -401,6 +402,40 @@
       "current": "Password attuale",
       "submit": "Cambia password",
       "changed": "Password cambiata. Gli altri dispositivi sono stati disconnessi."
+    }
+  },
+  "channelSettings": {
+    "resultLabel": "Esito del collegamento",
+    "intro": "Collega i canali su cui ti scrivono i clienti. I loro messaggi arrivano nella inbox, dove rispondono il team e l'IA.",
+    "ownersOnly": "Solo Proprietari e Admin possono collegare i canali.",
+    "connectedPages": "Pagine collegate",
+    "connectedOn": "Collegata il {{date}}",
+    "disconnect": "Scollega",
+    "disconnectPage": "Scollega {{name}}",
+    "disconnectConfirm": "Sì, scollega",
+    "disconnectHint": "I nuovi messaggi di questa Pagina smetteranno di arrivare. Le conversazioni già nella inbox restano.",
+    "comingSoon": "In arrivo",
+    "dismiss": "Chiudi",
+    "messenger": {
+      "title": "Facebook Messenger",
+      "intro": "Rispondi ai messaggi inviati alla tua Pagina Facebook.",
+      "connect": "Collega una Pagina Facebook",
+      "connectAnother": "Collega un'altra Pagina",
+      "hint": "Accederai con Facebook e sceglierai le Pagine da collegare. Devi essere amministratore della Pagina."
+    },
+    "result": {
+      "connected_one": "{{count}} Pagina collegata.",
+      "connected_other": "{{count}} Pagine collegate.",
+      "elsewhere_one": "{{count}} Pagina è già collegata a un altro workspace Nihasdesk ed è stata saltata.",
+      "elsewhere_other": "{{count}} Pagine sono già collegate a un altro workspace Nihasdesk e sono state saltate.",
+      "none": "Nessuna Pagina collegata. Scegli almeno una Pagina che gestisci su Facebook.",
+      "cancelled": "Il collegamento è stato annullato su Facebook. Nulla è cambiato.",
+      "invalid_state": "Il link è scaduto o non è stato avviato qui. Riprova a collegare.",
+      "meta_failed": "Facebook non ha risposto come previsto. Riprova tra poco."
+    },
+    "errors": {
+      "notConfigured": "Facebook non è ancora configurato su questo server. Chiedi aiuto al team Nihasdesk.",
+      "notFound": "Questo collegamento non esiste più. Aggiorna la pagina."
     }
   }
 }

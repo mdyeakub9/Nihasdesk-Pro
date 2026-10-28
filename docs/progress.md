@@ -21,6 +21,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Security UI: two-step code (or recovery code) step at sign-in, Settings → Security (MFA setup with QR code and one-time recovery codes, devices list, password change), a password dialog that retries risky actions after re-auth, and a dismissible reminder for Owners without MFA.
 - Inbox core (ADR 0016): Contacts module (contact per person, channel identities, find-or-create on first message, view/edit) and Inbox module (one conversation per contact and channel, statuses waiting/open/done, AI/human responder, per-member unread, notes, assignment, cursor lists with filters), `IInboxIngest` for channels, SignalR hub with IDs-only events per workspace. Team replies are stored; channel delivery comes with the channels.
 - Messenger backend (ADR 0017): connect Facebook Pages with Facebook Login (encrypted Page tokens, one workspace per Page, audit), signed webhook with encrypted raw storage and background processing into the inbox, team replies sent through the Send API with retries, 24-hour window enforced. Processing runs in the API until SignalR has a backplane.
+- Settings → Channels: connect Facebook Pages (leaves only for Facebook Login), list and disconnect Pages, explain the Facebook result; Owner/Admin only; Instagram and WhatsApp shown as coming soon.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
