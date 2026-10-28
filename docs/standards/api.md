@@ -15,3 +15,5 @@ _Status: draft._
 - `/api/v1/auth/*` is anonymous and rate-limited per IP (SEC-07, `429` + `Retry-After`); everything else requires a session.
 - Signup, resend-verification and forgot-password always answer `202` without saying whether the email exists (SEC-26). Signup checks the password policy before looking up the email, so a rejected password cannot reveal registered emails either.
 - Password reset revokes every session of the user; the user signs in again with the new password.
+- Login answers `{ "mfaRequired": true }` for users with MFA; the dashboard then posts the code to `/api/v1/auth/login/mfa` within 5 minutes.
+- Risky actions (role change, member removal, turning MFA off, new recovery codes) answer `403 auth.reauth_required` unless the user signed in or re-entered the password in the last 10 minutes (ADR 0015).

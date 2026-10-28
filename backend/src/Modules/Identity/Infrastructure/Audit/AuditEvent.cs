@@ -43,4 +43,11 @@ internal static class AuditActions
     public const string InvitationAccepted = "team.invitation_accepted";
     public const string MemberRoleChanged = "team.member_role_changed";
     public const string MemberRemoved = "team.member_removed";
+    public const string MfaEnabled = "auth.mfa_enabled";
+    public const string MfaDisabled = "auth.mfa_disabled";
+    public const string MfaFailed = "auth.mfa_failed";
+    public const string RecoveryCodesRegenerated = "auth.recovery_codes_regenerated";
+    public const string Reauthenticated = "auth.reauthenticated";
+    public const string SessionRevoked = "auth.session_revoked";
+    public const string PasswordChanged = "auth.password_changed";
 }

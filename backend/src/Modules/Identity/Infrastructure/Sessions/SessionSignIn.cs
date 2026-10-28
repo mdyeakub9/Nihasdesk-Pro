@@ -48,7 +48,7 @@ internal sealed class SessionSignIn(
         var workspace = await db.Workspaces.SingleAsync(cancellationToken);
 
         return Result.Success(new MeResponse(
-            new MeUser(user.Id, user.DisplayName, user.Email!, user.Language, user.EmailConfirmed),
+            new MeUser(user.Id, user.DisplayName, user.Email!, user.Language, user.EmailConfirmed, user.TwoFactorEnabled),
             new MeWorkspace(workspace.Id, workspace.Name),
             membership.Role));
     }

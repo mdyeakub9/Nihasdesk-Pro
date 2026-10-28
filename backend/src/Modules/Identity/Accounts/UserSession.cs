@@ -30,4 +30,7 @@ internal sealed class UserSession
     public DateTimeOffset IdleExpiresAt { get; set; }
 
     public DateTimeOffset AbsoluteExpiresAt { get; init; }
+
+    /// <summary>Last password re-check in this session (ADR 0015); a fresh sign-in counts too.</summary>
+    public DateTimeOffset? ReauthenticatedAt { get; set; }
 }
