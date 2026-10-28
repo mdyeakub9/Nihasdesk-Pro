@@ -1,25 +1,17 @@
 import { cn } from '@nihasdesk/ui';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { NotificationPermissionBanner } from '../components/NotificationPermissionBanner';
+import { useDocumentSettings } from '../components/useDocumentSettings';
 import { useUiStore } from '../stores/ui-store';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppShell() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const closeSidebar = useUiStore((state) => state.closeSidebar);
-  const theme = useUiStore((state) => state.theme);
-
-  useEffect(() => {
-    document.documentElement.lang = i18n.resolvedLanguage ?? 'en';
-  }, [i18n.resolvedLanguage]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
+  useDocumentSettings();
 
   return (
     <div className="flex h-dvh overflow-hidden">

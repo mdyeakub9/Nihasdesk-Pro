@@ -1,11 +1,11 @@
-import { Avatar, Badge, cn } from '@nihasdesk/ui';
+import { Avatar, Badge, Button, cn } from '@nihasdesk/ui';
 import {
   Bell,
   ChartColumn,
-  Check,
   ChevronDown,
   Inbox,
   LayoutGrid,
+  LogOut,
   Package,
   Settings,
   ShoppingBag,
@@ -14,11 +14,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import { countByTab } from '../features/inbox/filters';
 import { useConversations } from '../features/inbox/api';
 import { isOpen, useNotifications } from '../features/notifications/api';
-import { useSession } from '../features/session/useSession';
+import { useLogout, useSession } from '../features/session/useSession';
 import { useUiStore } from '../stores/ui-store';
 
 type NavItem = { to: string; label: string; icon: LucideIcon; count?: number };
@@ -52,6 +52,8 @@ function SectionLabel({ children }: { children: string }) {
 export function Sidebar() {
   const { t } = useTranslation();
   const { data: session } = useSession();
+  const logout = useLogout();
+  const navigate = useNavigate();
   const { data: conversations = [] } = useConversations();
   const { data: notifications = [] } = useNotifications();
 
@@ -92,29 +94,11 @@ export function Sidebar() {
 
       {session && (
         <>
+          {/* Setup guide returns with onboarding (PRD 4.2). */}
           <div className="flex h-11 items-center gap-2 rounded-lg bg-background px-3">
             <Avatar name={session.workspace.name} />
             <span className="flex-1 truncate text-sm font-medium">{session.workspace.name}</span>
             <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-          </div>
-          <div className="mt-0.5 flex flex-col gap-1 rounded-lg bg-selected px-3 py-2">
-            <span className="flex items-center gap-2 text-[13px] font-medium text-selected-foreground">
-              <Check className="size-4" aria-hidden="true" />
-              {t('sidebar.setupGuide', { completed: session.setup.completed, total: session.setup.total })}
-            </span>
-            <span
-              role="progressbar"
-              aria-label={t('sidebar.setupProgress')}
-              aria-valuemin={0}
-              aria-valuemax={session.setup.total}
-              aria-valuenow={session.setup.completed}
-              className="h-1 overflow-hidden bg-border"
-            >
-              <span
-                className="block h-full bg-primary"
-                style={{ width: `${(session.setup.completed / session.setup.total) * 100}%` }}
-              />
-            </span>
           </div>
         </>
       )}
@@ -143,9 +127,20 @@ export function Sidebar() {
           <Avatar name={session.user.name} size="md" />
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-[13px] font-medium">{session.user.name}</span>
-            <span className="text-xs text-muted-foreground">{t(`roles.${session.user.role}`)}</span>
+            <span className="text-xs text-muted-foreground">{t(`roles.${session.role}`)}</span>
           </div>
-          <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('auth.logout')}
+            title={t('auth.logout')}
+            disabled={logout.isPending}
+            onClick={() =>
+              logout.mutate(undefined, { onSettled: () => void navigate('/login', { replace: true }) })
+            }
+          >
+            <LogOut aria-hidden="true" />
+          </Button>
         </div>
       )}
     </div>

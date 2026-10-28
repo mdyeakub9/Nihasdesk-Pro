@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { fakeApi } from '../../test/fake-api';
 import { renderApp } from '../../test/render-app';
 
 async function notificationList() {
@@ -10,10 +11,7 @@ async function notificationList() {
 
 describe('Notifications', () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response('Healthy', { status: 200 })),
-    );
+    fakeApi();
   });
 
   it('lists open notifications with links to the right place', async () => {

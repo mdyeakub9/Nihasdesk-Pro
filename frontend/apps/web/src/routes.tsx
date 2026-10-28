@@ -1,6 +1,14 @@
 import type { RouteObject } from 'react-router';
+import { AuthLayout } from './features/auth/AuthLayout';
+import { CheckEmailPage } from './features/auth/CheckEmailPage';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
+import { LoginPage } from './features/auth/LoginPage';
+import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
+import { SignupPage } from './features/auth/SignupPage';
+import { VerifyEmailPage } from './features/auth/VerifyEmailPage';
 import { InboxPage } from './features/inbox/InboxPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
+import { RedirectIfSignedIn, RequireSession } from './features/session/guards';
 import { AppShell } from './layouts/AppShell';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { HomePage } from './pages/HomePage';
@@ -11,8 +19,38 @@ const comingSoon = ['orders', 'leads', 'customers', 'products', 'analytics', 'se
 
 export const routes: RouteObject[] = [
   {
+    // Public pages. Links from emails (verify, reset) work whether or not someone is signed in.
+    element: <AuthLayout />,
+    children: [
+      {
+        path: 'login',
+        element: (
+          <RedirectIfSignedIn>
+            <LoginPage />
+          </RedirectIfSignedIn>
+        ),
+      },
+      {
+        path: 'signup',
+        element: (
+          <RedirectIfSignedIn>
+            <SignupPage />
+          </RedirectIfSignedIn>
+        ),
+      },
+      { path: 'check-email', element: <CheckEmailPage /> },
+      { path: 'verify-email', element: <VerifyEmailPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
+    ],
+  },
+  {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <RequireSession>
+        <AppShell />
+      </RequireSession>
+    ),
     children: [
       { index: true, element: <HomePage /> },
       { path: 'inbox', element: <InboxPage /> },

@@ -18,8 +18,6 @@
   "sidebar": {
     "tagline": "Customer workspace",
     "navigation": "Main navigation",
-    "setupGuide": "Setup guide · {{completed}}/{{total}}",
-    "setupProgress": "Setup progress",
     "workspace": "Workspace",
     "growManage": "Grow & manage",
     "onDuty": "On duty"
@@ -229,5 +227,73 @@
         "action": "Open chat"
       }
     }
+  },
+  "auth": {
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "name": "Your name",
+    "businessName": "Business name",
+    "rememberMe": "Remember me",
+    "passwordHint": "At least 12 characters. A few words together are easy to remember and hard to guess.",
+    "backToLogin": "Back to sign in",
+    "login": {
+      "title": "Sign in",
+      "intro": "Welcome back to your inbox.",
+      "submit": "Sign in",
+      "forgot": "Forgot password?",
+      "noAccount": "New to Nihasdesk?",
+      "signupLink": "Create an account"
+    },
+    "signup": {
+      "title": "Create your workspace",
+      "intro": "One inbox for Messenger, Instagram and WhatsApp, with an AI agent that answers for you.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "checkEmail": {
+      "title": "Check your email",
+      "text": "We sent a confirmation link to {{email}}. It expires in one hour.",
+      "textNoEmail": "We sent you a confirmation link. It expires in one hour.",
+      "resend": "Send a new link",
+      "resent": "If this account still needs confirming, a new link is on its way."
+    },
+    "verify": {
+      "title": "Confirming your email",
+      "working": "One moment…",
+      "failedTitle": "Link not valid",
+      "requestNew": "Request a new link"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "Enter the email of your account and we will send you a link.",
+      "submit": "Send reset link",
+      "sent": "If an account exists for this email, a reset link is on its way. It expires in one hour."
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "intro": "You will be signed out everywhere and can sign in with the new password.",
+      "newPassword": "New password",
+      "confirmPassword": "Repeat new password",
+      "submit": "Save password",
+      "done": "Password changed. Sign in with your new password."
+    }
+  },
+  "validation": {
+    "required": "Required.",
+    "email": "Enter a valid email address.",
+    "passwordLength": "Use 12–128 characters.",
+    "passwordMismatch": "The passwords do not match."
+  },
+  "authErrors": {
+    "invalidCredentials": "Email or password is incorrect.",
+    "emailNotVerified": "Confirm your email address first. Check your inbox or ask for a new link.",
+    "invalidToken": "This link is invalid, already used or expired.",
+    "noWorkspace": "This account has no workspace.",
+    "weakPassword": "Choose a different password.",
+    "breachedPassword": "This password appears in known data breaches. Choose a different one.",
+    "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+    "generic": "Something went wrong. Please try again."
   }
 }
