@@ -32,7 +32,7 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - Respect Meta rules (24-hour window, templates for WhatsApp outside the window).
 
 ### 4.4 Unified inbox
-- All conversations in one list; filters by channel, status (open / pending / resolved), assignee, AI vs human, tag.
+- All conversations in one list; filters by channel, status (waiting / open / done, ADR 0016), unread, assignee, AI vs human, tag.
 - Conversation view with full history, contact panel, internal notes.
 - Real-time updates; unread counts; "who is viewing" indicator.
 - A team member can **take over** from AI with one click and **return to AI**.

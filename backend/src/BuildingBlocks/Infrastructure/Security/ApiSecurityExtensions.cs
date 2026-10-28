@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Nihasdesk.Infrastructure.Security;
 
-/// <summary>Named rate-limit policies (SEC-07). Limits are per client IP and configurable under <c>RateLimits</c>.</summary>
+/// <summary>Named rate-limit policies (SEC-07), configurable under <c>RateLimits</c>. Per client IP, except <see cref="Messages"/>.</summary>
 public static class RatePolicies
 {
     public const string Login = "login";
@@ -21,6 +22,9 @@ public static class RatePolicies
 
     /// <summary>Team invitations (create, resend).</summary>
     public const string Invite = "invite";
+
+    /// <summary>Team replies and notes in the inbox; per signed-in user.</summary>
+    public const string Messages = "messages";
 }
 
 public sealed class RateLimitSettings
@@ -40,6 +44,7 @@ public static class ApiSecurityExtensions
         [RatePolicies.Signup] = new() { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) },
         [RatePolicies.Email] = new() { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) },
         [RatePolicies.Invite] = new() { PermitLimit = 30, Window = TimeSpan.FromHours(1) },
+        [RatePolicies.Messages] = new() { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) },
     };
 
     /// <summary>Antiforgery for cookie-authenticated APIs (SEC-03) and auth rate limits (SEC-07).</summary>
@@ -72,7 +77,7 @@ public static class ApiSecurityExtensions
             {
                 var settings = configuration.GetSection($"RateLimits:{name}").Get<RateLimitSettings>() ?? fallback;
                 options.AddPolicy(name, context => RateLimitPartition.GetFixedWindowLimiter(
-                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    PartitionKey(name, context),
                     _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = settings.PermitLimit,
@@ -84,6 +89,11 @@ public static class ApiSecurityExtensions
 
         return services;
     }
+
+    private static string PartitionKey(string policy, HttpContext context) =>
+        policy == RatePolicies.Messages && context.User.FindFirstValue(ClaimTypes.NameIdentifier) is { } userId
+            ? "user:" + userId
+            : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
     /// <summary><c>GET /api/v1/csrf</c>: issues the antiforgery cookie and returns the token for the header.</summary>
     public static IEndpointConventionBuilder MapCsrfEndpoint(this IEndpointRouteBuilder endpoints) =>

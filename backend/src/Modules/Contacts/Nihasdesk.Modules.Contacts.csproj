@@ -11,6 +11,16 @@
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\SharedKernel\Nihasdesk.SharedKernel.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
+    <!-- Only Identity.Contracts is reachable: everything else in Identity is internal. -->
+    <ProjectReference Include="..\Identity\Nihasdesk.Modules.Identity.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Nihasdesk.TestSupport" />
   </ItemGroup>
 
 </Project>

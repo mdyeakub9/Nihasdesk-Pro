@@ -19,6 +19,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Team UI: Settings → Team (invite with role, pending invitations with resend/revoke, role change, remove with confirmation; actions shown per role) and the public accept-invitation page.
 - Security (PR 3b backend, ADR 0015): optional TOTP MFA (encrypted secret, hashed one-time recovery codes, MFA step at login with lockout), password re-auth for 10 minutes before role changes, removals and MFA changes, own session list and sign-out of other devices, password change. MFA stays optional for Owners during the beta.
 - Security UI: two-step code (or recovery code) step at sign-in, Settings → Security (MFA setup with QR code and one-time recovery codes, devices list, password change), a password dialog that retries risky actions after re-auth, and a dismissible reminder for Owners without MFA.
+- Inbox core (ADR 0016): Contacts module (contact per person, channel identities, find-or-create on first message, view/edit) and Inbox module (one conversation per contact and channel, statuses waiting/open/done, AI/human responder, per-member unread, notes, assignment, cursor lists with filters), `IInboxIngest` for channels, SignalR hub with IDs-only events per workspace. Team replies are stored; channel delivery comes with the channels.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

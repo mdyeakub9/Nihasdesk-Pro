@@ -36,7 +36,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         builder.UseSetting($"ConnectionStrings:{PersistenceServiceCollectionExtensions.AppConnectionName}", database.AppConnectionString);
         builder.UseSetting("App:DashboardUrl", DashboardUrl);
         // Generous by default; rate-limit tests pass their own limits.
-        foreach (var policy in new[] { "login", "signup", "email", "invite" })
+        foreach (var policy in new[] { "login", "signup", "email", "invite", "messages" })
         {
             builder.UseSetting($"RateLimits:{policy}:PermitLimit", "1000");
             builder.UseSetting($"RateLimits:{policy}:Window", "00:01:00");
