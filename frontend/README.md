@@ -22,7 +22,7 @@ pnpm install
 pnpm dev
 ```
 
-The dashboard runs on http://localhost:5173 and calls the API on https://localhost:5080 (override with `VITE_API_URL` in `apps/web/.env.local`, see `apps/web/.env.example`). Start the API first (`infra/README.md`) to see "API: Healthy".
+The dashboard runs on http://localhost:5173. Vite proxies `/api` and `/health` to the API on https://localhost:5080, so the browser stays on one origin and the SameSite session/CSRF cookies work (see `apps/web/vite.config.ts`). Start the API **and** the Workers host first (`infra/README.md`): sign-up and password emails arrive in Mailpit (http://localhost:8025) only while Workers runs. Without the API every page redirects to the login screen.
 
 ## Scripts
 

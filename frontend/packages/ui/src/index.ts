@@ -2,6 +2,7 @@ export { Avatar } from './components/avatar';
 export { Badge, type BadgeProps } from './components/badge';
 export { Button, type ButtonProps } from './components/button';
 export { buttonVariants } from './components/button-variants';
+export { Card, FieldError, Label } from './components/card';
 export { Checkbox } from './components/checkbox';
 export { Input, NativeSelect, Textarea } from './components/input';
 export { Switch } from './components/switch';

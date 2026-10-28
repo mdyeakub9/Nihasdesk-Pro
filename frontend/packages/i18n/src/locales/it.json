@@ -18,8 +18,6 @@
   "sidebar": {
     "tagline": "Area clienti",
     "navigation": "Navigazione principale",
-    "setupGuide": "Configurazione · {{completed}}/{{total}}",
-    "setupProgress": "Avanzamento configurazione",
     "workspace": "Area di lavoro",
     "growManage": "Crescita e gestione",
     "onDuty": "In servizio"
@@ -229,5 +227,73 @@
         "action": "Apri chat"
       }
     }
+  },
+  "auth": {
+    "logout": "Esci",
+    "email": "Email",
+    "password": "Password",
+    "name": "Il tuo nome",
+    "businessName": "Nome dell'attività",
+    "rememberMe": "Ricordami",
+    "passwordHint": "Almeno 12 caratteri. Qualche parola insieme è facile da ricordare e difficile da indovinare.",
+    "backToLogin": "Torna all'accesso",
+    "login": {
+      "title": "Accedi",
+      "intro": "Bentornato nella tua inbox.",
+      "submit": "Accedi",
+      "forgot": "Password dimenticata?",
+      "noAccount": "Nuovo su Nihasdesk?",
+      "signupLink": "Crea un account"
+    },
+    "signup": {
+      "title": "Crea la tua area di lavoro",
+      "intro": "Una sola inbox per Messenger, Instagram e WhatsApp, con un agente IA che risponde per te.",
+      "submit": "Crea account",
+      "haveAccount": "Hai già un account?",
+      "loginLink": "Accedi"
+    },
+    "checkEmail": {
+      "title": "Controlla la tua email",
+      "text": "Abbiamo inviato un link di conferma a {{email}}. Scade tra un'ora.",
+      "textNoEmail": "Ti abbiamo inviato un link di conferma. Scade tra un'ora.",
+      "resend": "Invia un nuovo link",
+      "resent": "Se questo account deve ancora essere confermato, un nuovo link è in arrivo."
+    },
+    "verify": {
+      "title": "Conferma dell'email",
+      "working": "Un momento…",
+      "failedTitle": "Link non valido",
+      "requestNew": "Richiedi un nuovo link"
+    },
+    "forgot": {
+      "title": "Reimposta la password",
+      "intro": "Inserisci l'email del tuo account e ti invieremo un link.",
+      "submit": "Invia link",
+      "sent": "Se esiste un account con questa email, il link è in arrivo. Scade tra un'ora."
+    },
+    "reset": {
+      "title": "Scegli una nuova password",
+      "intro": "Verrai disconnesso ovunque e potrai accedere con la nuova password.",
+      "newPassword": "Nuova password",
+      "confirmPassword": "Ripeti la nuova password",
+      "submit": "Salva password",
+      "done": "Password cambiata. Accedi con la nuova password."
+    }
+  },
+  "validation": {
+    "required": "Obbligatorio.",
+    "email": "Inserisci un indirizzo email valido.",
+    "passwordLength": "Usa da 12 a 128 caratteri.",
+    "passwordMismatch": "Le password non coincidono."
+  },
+  "authErrors": {
+    "invalidCredentials": "Email o password non corretti.",
+    "emailNotVerified": "Conferma prima il tuo indirizzo email. Controlla la posta o chiedi un nuovo link.",
+    "invalidToken": "Questo link non è valido, è già stato usato o è scaduto.",
+    "noWorkspace": "Questo account non ha un'area di lavoro.",
+    "weakPassword": "Scegli una password diversa.",
+    "breachedPassword": "Questa password compare in violazioni di dati note. Scegline un'altra.",
+    "rateLimited": "Troppi tentativi. Attendi qualche minuto e riprova.",
+    "generic": "Qualcosa è andato storto. Riprova."
   }
 }

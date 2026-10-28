@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { fakeApi } from '../../test/fake-api';
 import { renderApp } from '../../test/render-app';
 
 const conversationList = () => screen.findByRole('list', { name: 'Conversations' });
@@ -12,10 +13,7 @@ const waitForRows = (list: HTMLElement) => within(list).findAllByRole('link');
 
 describe('Inbox', () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => new Response('Healthy', { status: 200 })),
-    );
+    fakeApi();
   });
 
   it('lists open conversations, newest first, with an empty conversation area', async () => {
