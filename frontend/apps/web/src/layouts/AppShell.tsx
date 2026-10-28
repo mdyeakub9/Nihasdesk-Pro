@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { NotificationPermissionBanner } from '../components/NotificationPermissionBanner';
 import { useDocumentSettings } from '../components/useDocumentSettings';
+import { MfaReminder } from '../features/account/MfaReminder';
+import { ReauthDialog } from '../features/account/ReauthDialog';
 import { useUiStore } from '../stores/ui-store';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -34,11 +36,13 @@ export function AppShell() {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
+        <MfaReminder />
         <NotificationPermissionBanner />
         <main className="flex min-h-0 flex-1 flex-col">
           <Outlet />
         </main>
       </div>
+      <ReauthDialog />
     </div>
   );
 }

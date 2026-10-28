@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../../lib/api';
+import { withReauth } from '../account/reauth';
 import type { Role } from '../session/types';
 
 export type Member = { userId: string; name: string; email: string; role: Role; joinedAt: string };
@@ -57,8 +58,10 @@ export const useRevokeInvitation = () =>
 
 export const useChangeRole = () =>
   useTeamMutation(({ userId, role }: { userId: string; role: 'admin' | 'member' }) =>
-    apiPatch(`/api/v1/team/members/${encodeURIComponent(userId)}`, { role }),
+    withReauth(() => apiPatch(`/api/v1/team/members/${encodeURIComponent(userId)}`, { role })),
   );
 
 export const useRemoveMember = () =>
-  useTeamMutation((userId: string) => apiDelete(`/api/v1/team/members/${encodeURIComponent(userId)}`));
+  useTeamMutation((userId: string) =>
+    withReauth(() => apiDelete(`/api/v1/team/members/${encodeURIComponent(userId)}`)),
+  );

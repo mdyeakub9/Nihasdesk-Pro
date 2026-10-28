@@ -3,7 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router';
 
 /** Settings sections; more (workspace, channels, AI) arrive with their features. */
-const sections = [{ to: 'team', label: 'settings.team' }] as const;
+const sections = [
+  { to: 'team', label: 'settings.team' },
+  { to: 'security', label: 'settings.security' },
+] as const;
 
 export function SettingsLayout() {
   const { t } = useTranslation();

@@ -278,6 +278,16 @@
       "confirmPassword": "Ripeti la nuova password",
       "submit": "Salva password",
       "done": "Password cambiata. Accedi con la nuova password."
+    },
+    "mfa": {
+      "title": "Accesso in due passaggi",
+      "intro": "Inserisci il codice di 6 cifre dalla tua app di autenticazione.",
+      "recoveryIntro": "Inserisci uno dei tuoi codici di recupero. Ogni codice funziona una sola volta.",
+      "code": "Codice",
+      "recoveryCode": "Codice di recupero",
+      "submit": "Continua",
+      "useRecovery": "Usa un codice di recupero",
+      "useCode": "Usa l'app di autenticazione"
     }
   },
   "validation": {
@@ -294,11 +304,15 @@
     "weakPassword": "Scegli una password diversa.",
     "breachedPassword": "Questa password compare in violazioni di dati note. Scegline un'altra.",
     "rateLimited": "Troppi tentativi. Attendi qualche minuto e riprova.",
-    "generic": "Qualcosa è andato storto. Riprova."
+    "generic": "Qualcosa è andato storto. Riprova.",
+    "invalidMfaCode": "Il codice non è corretto. Prova il codice più recente dell'app.",
+    "mfaChallengeExpired": "Il tempo per questo passaggio è scaduto. Accedi di nuovo.",
+    "reauthRequired": "Inserisci di nuovo la password per continuare."
   },
   "settings": {
     "sections": "Sezioni delle impostazioni",
-    "team": "Team"
+    "team": "Team",
+    "security": "Sicurezza"
   },
   "team": {
     "intro": "Invita le persone che rispondono ai tuoi clienti. Titolari e Amministratori gestiscono il team; i Membri lavorano nell'inbox.",
@@ -339,5 +353,54 @@
     "ownerIsFixed": "Il Titolare non può essere rimosso o modificato.",
     "invitationInvalid": "Questo invito non è valido, è già stato usato o è scaduto. Chiedine uno nuovo.",
     "emailHasAccount": "Questa email ha già un account Nihasdesk. Unirsi a una seconda area di lavoro arriverà più avanti."
+  },
+  "account": {
+    "reauth": {
+      "title": "Conferma che sei tu",
+      "intro": "Inserisci la password per continuare. Non te la chiederemo di nuovo per 10 minuti.",
+      "submit": "Conferma"
+    },
+    "reminder": {
+      "text": "Proteggi il tuo negozio: attiva l'accesso in due passaggi, così una password rubata da sola non basta.",
+      "action": "Attivalo"
+    },
+    "mfa": {
+      "title": "Accesso in due passaggi",
+      "intro": "Dopo la password, l'accesso chiede anche un codice da un'app di autenticazione (Google Authenticator, Microsoft Authenticator, 1Password…).",
+      "on": "Attivo",
+      "off": "Non attivo",
+      "setUp": "Configura",
+      "turnOn": "Attiva",
+      "turnOff": "Disattiva",
+      "confirmOff": "Sì, disattiva",
+      "newCodes": "Nuovi codici di recupero",
+      "codesLeft_one": "{{count}} codice di recupero rimasto",
+      "codesLeft_other": "{{count}} codici di recupero rimasti",
+      "scan": "Inquadra il codice QR con l'app di autenticazione, poi inserisci il codice di 6 cifre che mostra.",
+      "qrLabel": "Codice QR per l'app di autenticazione",
+      "manual": "Non riesci a inquadrarlo? Inserisci questa chiave:",
+      "codesWarning": "Conserva questi codici di recupero in un posto sicuro. Ognuno ti fa accedere una volta se perdi il telefono. Li vedi solo adesso.",
+      "codesLabel": "Codici di recupero",
+      "download": "Scarica",
+      "copy": "Copia",
+      "saved": "Li ho salvati"
+    },
+    "sessions": {
+      "title": "Dispositivi connessi",
+      "intro": "Disconnetti i dispositivi che non riconosci o non usi più.",
+      "device": "{{browser}} su {{os}}",
+      "unknown": "Dispositivo sconosciuto",
+      "thisDevice": "Questo dispositivo",
+      "lastActive": "Ultima attività {{date}}",
+      "signOut": "Disconnetti",
+      "signOutOthers": "Disconnetti tutti gli altri dispositivi"
+    },
+    "password": {
+      "title": "Password",
+      "intro": "Cambiando la password vieni disconnesso da tutti gli altri dispositivi.",
+      "current": "Password attuale",
+      "submit": "Cambia password",
+      "changed": "Password cambiata. Gli altri dispositivi sono stati disconnessi."
+    }
   }
 }

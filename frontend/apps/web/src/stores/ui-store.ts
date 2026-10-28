@@ -9,10 +9,13 @@ type UiState = {
   /** Starts from the system setting; not persisted until user preferences exist server side (SEC-14). */
   theme: Theme;
   notificationBannerDismissed: boolean;
+  /** Owner reminder to turn on two-step sign-in (ADR 0015); session only. */
+  mfaReminderDismissed: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;
   setTheme: (theme: Theme) => void;
   dismissNotificationBanner: () => void;
+  dismissMfaReminder: () => void;
 };
 
 function systemTheme(): Theme {
@@ -25,8 +28,10 @@ export const useUiStore = create<UiState>()((set) => ({
   sidebarOpen: false,
   theme: systemTheme(),
   notificationBannerDismissed: false,
+  mfaReminderDismissed: false,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   closeSidebar: () => set({ sidebarOpen: false }),
   setTheme: (theme) => set({ theme }),
   dismissNotificationBanner: () => set({ notificationBannerDismissed: true }),
+  dismissMfaReminder: () => set({ mfaReminderDismissed: true }),
 }));

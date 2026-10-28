@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Checkbox, FieldError, Label } from '@nihasdesk/ui';
 import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
@@ -12,6 +13,7 @@ import { useStartSession } from '../session/useSession';
 import { AuthCard } from './AuthLayout';
 import { authErrorMessage, isErrorCode } from './errors';
 import { Field } from './Field';
+import { MfaStep } from './MfaStep';
 import { emailField, passwordMax } from './schemas';
 
 export function LoginPage() {
@@ -33,16 +35,31 @@ export function LoginPage() {
     resolver: zodResolver(schema),
     defaultValues: { email: '', password: '', rememberMe: false },
   });
+  const [needsCode, setNeedsCode] = useState(false);
+  const finish = (session: Session) => {
+    startSession(session);
+    void navigate(safeReturnTo(params.get('returnTo')), { replace: true });
+  };
   const login = useMutation({
-    mutationFn: (values: Values) => apiPost<Session>('/api/v1/auth/login', values),
-    onSuccess: (session) => {
-      startSession(session);
-      void navigate(safeReturnTo(params.get('returnTo')), { replace: true });
-    },
+    mutationFn: (values: Values) => apiPost<Session | { mfaRequired: true }>('/api/v1/auth/login', values),
+    // People with two-step sign-in get no session yet, only the request for a code.
+    onSuccess: (result) => ('mfaRequired' in result ? setNeedsCode(true) : finish(result)),
   });
 
   const { errors } = form.formState;
   const rememberMe = useWatch({ control: form.control, name: 'rememberMe' });
+
+  if (needsCode) {
+    return (
+      <MfaStep
+        onSignedIn={finish}
+        onRestart={() => {
+          setNeedsCode(false);
+          login.reset();
+        }}
+      />
+    );
+  }
 
   return (
     <AuthCard title={t('auth.login.title')} intro={t('auth.login.intro')}>

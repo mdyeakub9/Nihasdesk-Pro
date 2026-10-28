@@ -18,6 +18,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Team (PR 3a backend): permission matrix (`docs/standards/permissions.md`), invitations (48 h, hashed single-use tokens, ADR 0014), team list, role changes, member removal with session revocation, audit events; public preview/accept creates the account. Re-auth and MFA follow in 3b.
 - Team UI: Settings → Team (invite with role, pending invitations with resend/revoke, role change, remove with confirmation; actions shown per role) and the public accept-invitation page.
 - Security (PR 3b backend, ADR 0015): optional TOTP MFA (encrypted secret, hashed one-time recovery codes, MFA step at login with lockout), password re-auth for 10 minutes before role changes, removals and MFA changes, own session list and sign-out of other devices, password change. MFA stays optional for Owners during the beta.
+- Security UI: two-step code (or recovery code) step at sign-in, Settings → Security (MFA setup with QR code and one-time recovery codes, devices list, password change), a password dialog that retries risky actions after re-auth, and a dismissible reminder for Owners without MFA.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

@@ -2,7 +2,14 @@ import { vi } from 'vitest';
 import type { Session } from '../features/session/types';
 
 export const testSession: Session = {
-  user: { id: 'u-1', name: 'Md Yeakub', email: 'owner@example.com', language: 'en', emailVerified: true },
+  user: {
+    id: 'u-1',
+    name: 'Md Yeakub',
+    email: 'owner@example.com',
+    language: 'en',
+    emailVerified: true,
+    mfaEnabled: true,
+  },
   workspace: { id: 'w-1', name: 'Almanaam' },
   role: 'owner',
 };
