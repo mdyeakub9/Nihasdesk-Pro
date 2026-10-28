@@ -15,6 +15,7 @@ import { ImportPage } from './features/catalog/ImportPage';
 import { ProductEditorPage } from './features/catalog/ProductEditorPage';
 import { ProductsPage } from './features/catalog/ProductsPage';
 import { ChannelsPage } from './features/channels/ChannelsPage';
+import { AiSettingsPage } from './features/ai/AiSettingsPage';
 import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
 import { TeamPage } from './features/team/TeamPage';
 import { AppShell } from './layouts/AppShell';
@@ -76,6 +77,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <Navigate to="team" replace /> },
           { path: 'team', element: <TeamPage /> },
           { path: 'channels', element: <ChannelsPage /> },
+          { path: 'ai', element: <AiSettingsPage /> },
           { path: 'security', element: <SecurityPage /> },
         ],
       },
