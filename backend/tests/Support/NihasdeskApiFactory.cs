@@ -46,7 +46,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         // Tests run the webhook processor and the sender step by step.
         builder.UseSetting("Channels:BackgroundProcessing", "false");
         // Generous by default; rate-limit tests pass their own limits.
-        foreach (var policy in new[] { "login", "signup", "email", "invite", "messages" })
+        foreach (var policy in new[] { "login", "signup", "email", "invite", "messages", "uploads" })
         {
             builder.UseSetting($"RateLimits:{policy}:PermitLimit", "1000");
             builder.UseSetting($"RateLimits:{policy}:Window", "00:01:00");

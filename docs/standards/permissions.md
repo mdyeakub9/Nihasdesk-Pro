@@ -14,7 +14,9 @@ The API checks every permission on the server, reading the member's **current** 
 | `team.remove_admin` — remove an Admin | ✅ | ❌ | ❌ |
 | Inbox work (read, reply, take over / return to AI, notes, status, assign, edit contacts; later order approvals) | ✅ | ✅ | ✅ |
 | `channels.manage` — connect and disconnect channels (Facebook Pages) | ✅ | ✅ | ❌ |
-| Settings, AI, catalog, policies _(with those modules)_ | ✅ | ✅ | ❌ |
+| `catalog.view` — see products, variants, prices and stock | ✅ | ✅ | ✅ |
+| `catalog.manage` — create and edit products, CSV import (ADR 0018) | ✅ | ✅ | ❌ |
+| Settings, AI, policies _(with those modules)_ | ✅ | ✅ | ❌ |
 | Billing, workspace deletion, ownership transfer _(later)_ | ✅ | ❌ | ❌ |
 
 ## Rules

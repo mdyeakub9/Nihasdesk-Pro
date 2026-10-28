@@ -36,3 +36,9 @@ _Status: draft._
 | `conversation.outside_window` | 409 | The customer's last message is older than 24 hours; Meta channels don't allow a free reply (SEC-43) |
 | `channel.not_found` | 404 | Channel connection not in this workspace — also for other workspaces' IDs (SEC-06) |
 | `channel.not_configured` | 400 | The Meta app (App ID / secret) isn't configured on this server |
+| `catalog.product_not_found` | 404 | Product (or variant) not in this workspace — also for other workspaces' IDs (SEC-06) |
+| `catalog.handle_taken` | 409 | Another product already uses this handle |
+| `catalog.handle_fixed` | 400 | A product's handle can't be changed |
+| `catalog.sku_taken` | 409 | A SKU is already used by another product of the workspace |
+| `catalog.import_no_file` / `catalog.import_too_large` / `catalog.import_not_csv` | 400 | No file, over 2 MB, or not UTF-8 CSV text (SEC-04) |
+| `catalog.import_conflict` | 422 (in the report) | The catalog changed during the import; nothing was saved |
