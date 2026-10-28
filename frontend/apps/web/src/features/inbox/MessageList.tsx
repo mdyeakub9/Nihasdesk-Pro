@@ -1,8 +1,17 @@
 import { Avatar, Badge, Button, cn } from '@nihasdesk/ui';
-import { CheckCheck, ExternalLink, ShoppingBag, Sparkles, StickyNote } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCheck,
+  Clock,
+  ExternalLink,
+  ShoppingBag,
+  Sparkles,
+  StickyNote,
+} from 'lucide-react';
 import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format';
+import { useOlderMessages } from './api';
 import type { Conversation, Message, ProductCard } from './types';
 
 function ProductMessage({ product }: { product: ProductCard }) {
@@ -77,8 +86,17 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
         {message.delivery && (
           <>
             {' '}
-            · {t(`message.delivery.${message.delivery}`)}
-            <CheckCheck className="size-3.5" aria-hidden="true" />
+            ·{' '}
+            <span className={cn(message.delivery === 'failed' && 'font-medium text-destructive')}>
+              {t(`message.delivery.${message.delivery}`)}
+            </span>
+            {message.delivery === 'failed' ? (
+              <AlertCircle className="size-3.5 text-destructive" aria-hidden="true" />
+            ) : message.delivery === 'pending' ? (
+              <Clock className="size-3.5" aria-hidden="true" />
+            ) : (
+              <CheckCheck className="size-3.5" aria-hidden="true" />
+            )}
           </>
         )}
       </p>
@@ -91,13 +109,28 @@ export function MessageList({ conversation }: { conversation: Conversation }) {
   const language = i18n.resolvedLanguage ?? 'en';
   const endRef = useRef<HTMLLIElement>(null);
   const today = new Date().toISOString();
+  const older = useOlderMessages(conversation.id);
+  const lastId = conversation.messages.at(-1)?.id;
 
+  // Follow new messages at the bottom; loading older ones above doesn't jump.
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' });
-  }, [conversation.messages.length]);
+  }, [lastId]);
 
   return (
     <ol aria-label={t('message.history')} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6">
+      {conversation.olderCursor && (
+        <li className="flex justify-center">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={older.isPending}
+            onClick={() => conversation.olderCursor && older.mutate(conversation.olderCursor)}
+          >
+            {t('message.loadOlder')}
+          </Button>
+        </li>
+      )}
       {conversation.messages.map((message, index) => {
         const previous = conversation.messages[index - 1];
         const newDay = !previous || !isSameDay(previous.sentAt, message.sentAt);

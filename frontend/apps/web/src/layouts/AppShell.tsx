@@ -5,11 +5,13 @@ import { NotificationPermissionBanner } from '../components/NotificationPermissi
 import { useDocumentSettings } from '../components/useDocumentSettings';
 import { MfaReminder } from '../features/account/MfaReminder';
 import { ReauthDialog } from '../features/account/ReauthDialog';
+import { useInboxRealtime } from '../features/inbox/realtime';
 import { useUiStore } from '../stores/ui-store';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppShell() {
+  useInboxRealtime();
   const { t } = useTranslation();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const closeSidebar = useUiStore((state) => state.closeSidebar);

@@ -89,10 +89,12 @@ export function CustomerPanel({ conversation }: { conversation: Conversation }) 
             active: formatAge(contact.lastActiveAt, language),
           })}
         </p>
-        <p className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="size-3.5" aria-hidden="true" />
-          {[place, contact.language].filter(Boolean).join(' · ')}
-        </p>
+        {(place || contact.language) && (
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="size-3.5" aria-hidden="true" />
+            {[place, contact.language].filter(Boolean).join(' · ')}
+          </p>
+        )}
         {conversation.labels.length > 0 && (
           <ul aria-label={t('customer.labels')} className="flex flex-wrap gap-1.5 pt-1">
             {conversation.labels.map((label) => (
@@ -137,7 +139,10 @@ export function CustomerPanel({ conversation }: { conversation: Conversation }) 
             id={aiSwitchId}
             checked={conversation.aiEnabled}
             disabled={update.isPending}
-            onCheckedChange={(checked) => update.mutate({ aiEnabled: checked })}
+            // Turning the AI off hands the conversation to the team.
+            onCheckedChange={(checked) =>
+              update.mutate(checked ? { aiEnabled: true } : { aiEnabled: false, responder: 'human' })
+            }
           />
           <label htmlFor={aiSwitchId} className="text-[13px] font-medium text-foreground">
             {t('customer.aiAssistance')}

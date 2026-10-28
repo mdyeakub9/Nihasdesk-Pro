@@ -22,6 +22,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Inbox core (ADR 0016): Contacts module (contact per person, channel identities, find-or-create on first message, view/edit) and Inbox module (one conversation per contact and channel, statuses waiting/open/done, AI/human responder, per-member unread, notes, assignment, cursor lists with filters), `IInboxIngest` for channels, SignalR hub with IDs-only events per workspace. Team replies are stored; channel delivery comes with the channels.
 - Messenger backend (ADR 0017): connect Facebook Pages with Facebook Login (encrypted Page tokens, one workspace per Page, audit), signed webhook with encrypted raw storage and background processing into the inbox, team replies sent through the Send API with retries, 24-hour window enforced. Processing runs in the API until SignalR has a backplane.
 - Settings → Channels: connect Facebook Pages (leaves only for Facebook Login), list and disconnect Pages, explain the Facebook result; Owner/Admin only; Instagram and WhatsApp shown as coming soon.
+- Inbox live: the dashboard inbox reads the Inbox API instead of made-up data (list, conversation, older messages, replies with delivery state, notes, status, take over, AI on/off, read state), live updates over SignalR, 24-hour window explained; Notifications show their empty state until their API exists.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

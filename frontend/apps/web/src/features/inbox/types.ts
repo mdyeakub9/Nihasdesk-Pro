@@ -1,6 +1,7 @@
-/** Phase 1 channels (PRD 4.3). */
+/** Meta channels (PRD 4.3); also the inbox's channel filter. */
 export const channels = ['messenger', 'instagram', 'whatsapp'] as const;
-export type Channel = (typeof channels)[number];
+/** `website` is the chat widget (ADR 0016). */
+export type Channel = (typeof channels)[number] | 'website';
 
 /** waiting = a customer waits for the team (handoff); done = resolved. */
 export type ConversationStatus = 'waiting' | 'open' | 'done';
@@ -30,7 +31,8 @@ export type Message = {
   internal?: boolean;
   /** Catalog product shown to the customer (prices and stock come from the catalog, never the model). */
   product?: ProductCard;
-  delivery?: 'sent' | 'delivered' | 'read';
+  /** Team replies to a channel (ADR 0017): queued, sent, or given up. */
+  delivery?: 'pending' | 'sent' | 'failed' | 'delivered' | 'read';
 };
 
 export type ConversationSummary = {
@@ -67,6 +69,8 @@ export type Conversation = ConversationSummary & {
   handoffCount: number;
   /** AI allowed for this conversation at all (PRD 4.8: AI on/off per conversation). */
   aiEnabled: boolean;
+  /** Loads the next older page of messages, when there is one. */
+  olderCursor?: string;
 };
 
 export type ConversationPatch = Partial<Pick<Conversation, 'status' | 'responder' | 'aiEnabled'>>;

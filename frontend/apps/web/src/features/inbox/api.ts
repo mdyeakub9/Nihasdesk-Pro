@@ -1,42 +1,134 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Conversation, ConversationPatch, ConversationSummary } from './types';
+import { useTranslation } from 'react-i18next';
+import { ApiError, apiGet, apiPatch, apiPost } from '../../lib/api';
+import { useSession } from '../session/useSession';
+import type {
+  Channel,
+  Conversation,
+  ConversationPatch,
+  ConversationSummary,
+  LeadStatus,
+  Message,
+} from './types';
 
 /*
- * Data access for the inbox. Until the Inbox API exists, dev and test builds read an in-memory mock;
- * production builds get no data (the mock is tree-shaken out) and show empty states.
- * When the API lands, only the functions below change — components keep using the hooks.
+ * Data access for the inbox (Inbox API, ADR 0016). The API's shapes are mapped to the types the
+ * components already use, so components keep using the hooks below.
  */
 
-const loadMock = () => import('../../mocks/inbox');
+type ApiConversationSummary = {
+  id: string;
+  contactId: string;
+  contactName: string | null;
+  channel: Channel;
+  status: ConversationSummary['status'];
+  responder: ConversationSummary['responder'];
+  aiEnabled: boolean;
+  leadStatus: LeadStatus;
+  assigneeId: string | null;
+  unread: boolean;
+  preview: string;
+  lastMessageAt: string;
+};
 
-async function listConversations(): Promise<ConversationSummary[]> {
-  if (import.meta.env.DEV) {
-    return (await loadMock()).listConversations();
-  }
-  return [];
+type ApiContact = {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  language: string | null;
+  createdAt: string;
+};
+
+type ApiMessage = {
+  id: string;
+  author: Message['author'];
+  authorUserId: string | null;
+  authorName: string | null;
+  text: string;
+  internal: boolean;
+  sentAt: string;
+  delivery: 'none' | 'pending' | 'sent' | 'failed';
+};
+
+type ConversationPage = { items: ApiConversationSummary[]; nextCursor: string | null };
+type MessagePage = { items: ApiMessage[]; before: string | null };
+
+/** The inbox list shows the newest conversations; filters and counts work on these in the browser. */
+export const listLimit = 100;
+
+const path = (id: string) => `/api/v1/conversations/${encodeURIComponent(id)}`;
+
+/** Fields the list needs per user; filled in by the hooks (the API sends IDs, not names for the viewer). */
+type Raw<T> = Omit<T, 'assignedToMe'> & { assigneeId: string | null };
+
+function toSummary(c: ApiConversationSummary): Raw<ConversationSummary> {
+  return {
+    id: c.id,
+    contactName: c.contactName ?? '',
+    channel: c.channel,
+    status: c.status,
+    responder: c.responder,
+    unread: c.unread,
+    assigneeId: c.assigneeId,
+    preview: c.preview,
+    lastMessageAt: c.lastMessageAt,
+  };
 }
 
-async function getConversation(id: string): Promise<Conversation | null> {
-  if (import.meta.env.DEV) {
-    return (await loadMock()).getConversation(id);
-  }
-  return null;
+function toMessage(m: ApiMessage): Message {
+  return {
+    id: m.id,
+    author: m.author,
+    text: m.text,
+    sentAt: m.sentAt,
+    ...(m.authorName ? { authorName: m.authorName } : {}),
+    ...(m.internal ? { internal: true } : {}),
+    ...(m.delivery !== 'none' ? { delivery: m.delivery } : {}),
+  };
 }
 
-async function patchConversation(id: string, patch: ConversationPatch): Promise<void> {
-  if (import.meta.env.DEV) {
-    (await loadMock()).updateConversation(id, patch);
-    return;
-  }
-  throw new Error('Inbox API is not available yet.');
+async function listConversations(): Promise<Raw<ConversationSummary>[]> {
+  const page = await apiGet<ConversationPage>(`/api/v1/conversations?limit=${listLimit}`);
+  return page.items.map(toSummary);
 }
 
-async function postMessage(id: string, text: string, internal: boolean): Promise<void> {
-  if (import.meta.env.DEV) {
-    (await loadMock()).sendMessage(id, text, internal);
-    return;
+async function getConversation(id: string): Promise<Raw<Conversation> | null> {
+  try {
+    const [detail, messages] = await Promise.all([
+      apiGet<{ conversation: ApiConversationSummary; contact: ApiContact | null }>(path(id)),
+      apiGet<MessagePage>(`${path(id)}/messages?limit=50`),
+    ]);
+    const c = detail.conversation;
+    return {
+      ...toSummary(c),
+      aiEnabled: c.aiEnabled,
+      leadStatus: c.leadStatus,
+      contact: {
+        name: detail.contact?.name ?? '',
+        ...(detail.contact?.phone ? { phone: detail.contact.phone } : {}),
+        ...(detail.contact?.email ? { email: detail.contact.email } : {}),
+        language: detail.contact?.language ?? '',
+        firstSeenAt: detail.contact?.createdAt ?? c.lastMessageAt,
+        lastActiveAt: c.lastMessageAt,
+      },
+      messages: messages.items.map(toMessage),
+      ...(messages.before ? { olderCursor: messages.before } : {}),
+      labels: [],
+      orderCount: 0,
+      handoffCount: 0,
+    };
+  } catch (error) {
+    // Unknown IDs and other workspaces' IDs both answer 404 (SEC-06).
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
   }
-  throw new Error('Inbox API is not available yet.');
+}
+
+function withoutCursor<T extends { olderCursor?: string }>(value: T): Omit<T, 'olderCursor'> {
+  const copy = { ...value };
+  delete copy.olderCursor;
+  return copy;
 }
 
 export const inboxKeys = {
@@ -45,27 +137,78 @@ export const inboxKeys = {
   detail: (id: string) => [...inboxKeys.all, 'detail', id] as const,
 };
 
+/** Display name for people without one yet (the channel didn't share it). */
+function useViewer() {
+  const { t } = useTranslation();
+  const { data: session } = useSession();
+  return {
+    userId: session?.user.id,
+    name: (name: string) => name || t('inbox.unknownCustomer'),
+  };
+}
+
 export function useConversations() {
-  return useQuery({ queryKey: inboxKeys.list(), queryFn: listConversations });
+  const viewer = useViewer();
+  return useQuery({
+    queryKey: inboxKeys.list(),
+    queryFn: listConversations,
+    select: (list): ConversationSummary[] =>
+      list.map(({ assigneeId, ...c }) => ({
+        ...c,
+        contactName: viewer.name(c.contactName),
+        assignedToMe: !!assigneeId && assigneeId === viewer.userId,
+      })),
+  });
 }
 
 export function useConversation(id: string) {
   const queryClient = useQueryClient();
+  const viewer = useViewer();
   return useQuery({
     queryKey: inboxKeys.detail(id),
     queryFn: async () => {
       const conversation = await getConversation(id);
-      // Opening marks the conversation read, so the list's unread state changes too.
-      void queryClient.invalidateQueries({ queryKey: inboxKeys.list() });
+      if (conversation?.unread) {
+        // Opening marks it read for this member; the list's unread state follows.
+        await apiPost(`${path(id)}/read`);
+        void queryClient.invalidateQueries({ queryKey: inboxKeys.list() });
+      }
       return conversation;
     },
+    select: (c): Conversation | null =>
+      c && {
+        ...c,
+        unread: false,
+        contactName: viewer.name(c.contactName),
+        contact: { ...c.contact, name: viewer.name(c.contact.name) },
+        assignedToMe: !!c.assigneeId && c.assigneeId === viewer.userId,
+      },
+  });
+}
+
+/** Loads the next older page of messages into the open conversation. */
+export function useOlderMessages(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (cursor: string) =>
+      apiGet<MessagePage>(`${path(id)}/messages?limit=50&before=${encodeURIComponent(cursor)}`),
+    onSuccess: (page) =>
+      queryClient.setQueryData<Raw<Conversation> | null>(
+        inboxKeys.detail(id),
+        (current) =>
+          current && {
+            ...withoutCursor(current),
+            messages: [...page.items.map(toMessage), ...current.messages],
+            ...(page.before ? { olderCursor: page.before } : {}),
+          },
+      ),
   });
 }
 
 export function useUpdateConversation(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (patch: ConversationPatch) => patchConversation(id, patch),
+    mutationFn: (patch: ConversationPatch) => apiPatch(path(id), patch),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });
 }
@@ -73,7 +216,8 @@ export function useUpdateConversation(id: string) {
 export function useSendMessage(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ text, internal }: { text: string; internal: boolean }) => postMessage(id, text, internal),
+    mutationFn: ({ text, internal }: { text: string; internal: boolean }) =>
+      apiPost(`${path(id)}/${internal ? 'notes' : 'messages'}`, { text }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });
 }

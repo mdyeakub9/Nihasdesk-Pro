@@ -67,7 +67,8 @@
   "channels": {
     "messenger": "Messenger",
     "instagram": "Instagram",
-    "whatsapp": "WhatsApp"
+    "whatsapp": "WhatsApp",
+    "website": "Website chat"
   },
   "inbox": {
     "title": "Conversations",
@@ -91,7 +92,8 @@
     "empty": {
       "title": "No conversation selected",
       "text": "Pick a conversation from the list to read it, reply or take over from the AI."
-    }
+    },
+    "unknownCustomer": "Unknown customer"
   },
   "conversation": {
     "notFound": "Conversation not found",
@@ -121,8 +123,11 @@
     "delivery": {
       "sent": "Sent",
       "delivered": "Delivered",
-      "read": "Read"
-    }
+      "read": "Read",
+      "pending": "Sending…",
+      "failed": "Not delivered"
+    },
+    "loadOlder": "Load older messages"
   },
   "composer": {
     "mode": "Message type",
@@ -133,7 +138,8 @@
     "aiPreparing": "AI is answering this customer. Sending a reply takes the conversation over.",
     "enterToSend": "Enter to send",
     "send": "Send",
-    "saveNote": "Add note"
+    "saveNote": "Add note",
+    "outsideWindow": "The customer's last message is more than 24 hours old, so the channel doesn't allow a reply now. Add an internal note, or answer when they write again."
   },
   "customer": {
     "title": "Customer details",
