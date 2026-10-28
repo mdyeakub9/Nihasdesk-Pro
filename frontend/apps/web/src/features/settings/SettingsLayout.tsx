@@ -1,22 +1,27 @@
 import { cn } from '@nihasdesk/ui';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router';
+import { useSession } from '../session/useSession';
+import type { Role } from '../session/types';
 
-/** Settings sections; more (workspace, channels, AI) arrive with their features. */
-const sections = [
+/** Settings sections; more (workspace, AI) arrive with their features. `roles` only hides; the API decides. */
+const sections: { to: string; label: string; roles?: Role[] }[] = [
   { to: 'team', label: 'settings.team' },
+  { to: 'channels', label: 'settings.channels', roles: ['owner', 'admin'] },
   { to: 'security', label: 'settings.security' },
-] as const;
+];
 
 export function SettingsLayout() {
   const { t } = useTranslation();
+  const { data: session } = useSession();
+  const visible = sections.filter(({ roles }) => !roles || (session && roles.includes(session.role)));
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="flex flex-col gap-6 p-4 md:p-8">
         <h1 className="text-[28px] leading-9 font-semibold">{t('nav.settings')}</h1>
         <nav aria-label={t('settings.sections')} className="flex gap-1 border-b">
-          {sections.map(({ to, label }) => (
+          {visible.map(({ to, label }) => (
             <NavLink
               key={to}
               to={to}

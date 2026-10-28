@@ -11,6 +11,7 @@ import { NotificationsPage } from './features/notifications/NotificationsPage';
 import { SecurityPage } from './features/account/SecurityPage';
 import { RedirectIfSignedIn, RequireSession } from './features/session/guards';
 import { SettingsLayout } from './features/settings/SettingsLayout';
+import { ChannelsPage } from './features/channels/ChannelsPage';
 import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
 import { TeamPage } from './features/team/TeamPage';
 import { AppShell } from './layouts/AppShell';
@@ -67,6 +68,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="team" replace /> },
           { path: 'team', element: <TeamPage /> },
+          { path: 'channels', element: <ChannelsPage /> },
           { path: 'security', element: <SecurityPage /> },
         ],
       },

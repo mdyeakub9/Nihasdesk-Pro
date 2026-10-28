@@ -18,6 +18,8 @@ const messages: Record<string, string> = {
   'team.owner_is_fixed': 'teamErrors.ownerIsFixed',
   'team.invitation_invalid': 'teamErrors.invitationInvalid',
   'team.email_has_account': 'teamErrors.emailHasAccount',
+  'channel.not_configured': 'channelSettings.errors.notConfigured',
+  'channel.not_found': 'channelSettings.errors.notFound',
 };
 
 export function authErrorMessage(error: unknown, t: TFunction): string {
