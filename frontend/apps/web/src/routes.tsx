@@ -8,6 +8,7 @@ import { SignupPage } from './features/auth/SignupPage';
 import { VerifyEmailPage } from './features/auth/VerifyEmailPage';
 import { InboxPage } from './features/inbox/InboxPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
+import { SecurityPage } from './features/account/SecurityPage';
 import { RedirectIfSignedIn, RequireSession } from './features/session/guards';
 import { SettingsLayout } from './features/settings/SettingsLayout';
 import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
@@ -66,6 +67,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="team" replace /> },
           { path: 'team', element: <TeamPage /> },
+          { path: 'security', element: <SecurityPage /> },
         ],
       },
       ...comingSoon.map((section) => ({ path: section, element: <ComingSoonPage section={section} /> })),

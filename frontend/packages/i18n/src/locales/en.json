@@ -278,6 +278,16 @@
       "confirmPassword": "Repeat new password",
       "submit": "Save password",
       "done": "Password changed. Sign in with your new password."
+    },
+    "mfa": {
+      "title": "Two-step sign-in",
+      "intro": "Enter the 6-digit code from your authenticator app.",
+      "recoveryIntro": "Enter one of your recovery codes. Each code works once.",
+      "code": "Code",
+      "recoveryCode": "Recovery code",
+      "submit": "Continue",
+      "useRecovery": "Use a recovery code instead",
+      "useCode": "Use the authenticator app instead"
     }
   },
   "validation": {
@@ -294,11 +304,15 @@
     "weakPassword": "Choose a different password.",
     "breachedPassword": "This password appears in known data breaches. Choose a different one.",
     "rateLimited": "Too many attempts. Wait a few minutes and try again.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "invalidMfaCode": "That code isn’t right. Try the newest code from your app.",
+    "mfaChallengeExpired": "This step timed out. Sign in again.",
+    "reauthRequired": "Enter your password again to continue."
   },
   "settings": {
     "sections": "Settings sections",
-    "team": "Team"
+    "team": "Team",
+    "security": "Security"
   },
   "team": {
     "intro": "Invite the people who answer your customers. Owners and Admins manage the team; Members work in the inbox.",
@@ -339,5 +353,54 @@
     "ownerIsFixed": "The Owner can’t be removed or changed.",
     "invitationInvalid": "This invitation is invalid, already used or expired. Ask for a new one.",
     "emailHasAccount": "This email already has a Nihasdesk account. Joining a second workspace comes later."
+  },
+  "account": {
+    "reauth": {
+      "title": "Confirm it’s you",
+      "intro": "Enter your password to continue. You won’t be asked again for 10 minutes.",
+      "submit": "Confirm"
+    },
+    "reminder": {
+      "text": "Protect your shop: turn on two-step sign-in so a stolen password alone can’t open your account.",
+      "action": "Turn it on"
+    },
+    "mfa": {
+      "title": "Two-step sign-in",
+      "intro": "After your password, sign-in also asks for a code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…).",
+      "on": "On",
+      "off": "Off",
+      "setUp": "Set up",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "confirmOff": "Yes, turn off",
+      "newCodes": "New recovery codes",
+      "codesLeft_one": "{{count}} recovery code left",
+      "codesLeft_other": "{{count}} recovery codes left",
+      "scan": "Scan the QR code with your authenticator app, then enter the 6-digit code it shows.",
+      "qrLabel": "QR code for your authenticator app",
+      "manual": "Can’t scan? Enter this key:",
+      "codesWarning": "Save these recovery codes somewhere safe. Each one signs you in once if you lose your phone. They are shown only now.",
+      "codesLabel": "Recovery codes",
+      "download": "Download",
+      "copy": "Copy",
+      "saved": "I’ve saved them"
+    },
+    "sessions": {
+      "title": "Signed-in devices",
+      "intro": "Sign out devices you don’t recognise or no longer use.",
+      "device": "{{browser}} on {{os}}",
+      "unknown": "Unknown device",
+      "thisDevice": "This device",
+      "lastActive": "Last active {{date}}",
+      "signOut": "Sign out",
+      "signOutOthers": "Sign out all other devices"
+    },
+    "password": {
+      "title": "Password",
+      "intro": "Changing your password signs you out on all other devices.",
+      "current": "Current password",
+      "submit": "Change password",
+      "changed": "Password changed. Other devices were signed out."
+    }
   }
 }
