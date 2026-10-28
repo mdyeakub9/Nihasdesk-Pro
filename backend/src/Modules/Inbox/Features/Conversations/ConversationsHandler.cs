@@ -127,13 +127,23 @@ internal sealed class ConversationsHandler(
             return InboxErrors.NotFound;
         }
 
+        var now = time.GetUtcNow();
+        if (!isInternal && !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
+        {
+            return InboxErrors.OutsideWindow;
+        }
+
         var me = await MeAsync(ct);
-        var message = Message.FromTeam(tenant.TenantId, conversation.Id, me.UserId, me.DisplayName, request.Text, isInternal, time.GetUtcNow());
+        var message = Message.FromTeam(tenant.TenantId, conversation.Id, me.UserId, me.DisplayName, request.Text, isInternal, now);
         db.Messages.Add(message);
         if (!isInternal)
         {
-            // Delivery to the channel comes with the channel modules (ADR 0016).
             conversation.RepliedByTeam(message);
+            if (conversation.ChannelConnectionId is not null)
+            {
+                // Sent by the channel's background sender (ADR 0017).
+                message.QueueDelivery(now);
+            }
         }
 
         await db.SaveChangesAsync(ct);
@@ -269,7 +279,7 @@ internal sealed class ConversationsHandler(
     }
 
     private static MessageResponse ToResponse(Message m) =>
-        new(m.Id, InboxValues.Text(m.Author), m.AuthorUserId, m.AuthorName, m.Text, m.Internal, m.SentAt);
+        new(m.Id, InboxValues.Text(m.Author), m.AuthorUserId, m.AuthorName, m.Text, m.Internal, m.SentAt, InboxValues.Text(m.Delivery));
 
     private sealed class ConversationRow
     {

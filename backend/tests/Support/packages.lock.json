@@ -211,6 +211,9 @@
         "type": "Project",
         "dependencies": {
           "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Contacts": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.Modules.Inbox": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"
         }
       },

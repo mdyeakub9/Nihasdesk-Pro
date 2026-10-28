@@ -35,6 +35,9 @@ public interface IContactDirectory
     /// </summary>
     Task<Guid> FindOrCreateAsync(string channel, string externalId, string? name, CancellationToken cancellationToken);
 
+    /// <summary>The contact's address on <paramref name="channel"/> (e.g. the Messenger PSID), for sending replies.</summary>
+    Task<string?> FindChannelIdAsync(Guid contactId, string channel, CancellationToken cancellationToken);
+
     /// <summary>Contacts by ID; IDs of other workspaces are simply missing from the result.</summary>
     Task<IReadOnlyDictionary<Guid, ContactSummary>> GetAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
 }

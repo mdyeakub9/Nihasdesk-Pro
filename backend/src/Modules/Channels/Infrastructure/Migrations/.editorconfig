@@ -1,0 +1,3 @@
+[*.cs]
+# EF Core generated migrations: reviewed by hand, not by style analyzers.
+generated_code = true

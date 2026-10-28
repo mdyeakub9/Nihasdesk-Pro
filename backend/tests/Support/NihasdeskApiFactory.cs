@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Modules.Channels.Infrastructure.Meta;
 using Nihasdesk.Modules.Identity.Infrastructure;
 
 namespace Nihasdesk.TestSupport;
@@ -23,6 +24,10 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
 
     public FakeHibpHandler Hibp { get; } = new();
 
+    public FakeMetaGraphHandler Meta { get; } = new();
+
+    public const string MetaVerifyToken = "tests-only-verify-token";
+
     protected override void ConfigureClient(HttpClient client)
     {
         base.ConfigureClient(client);
@@ -35,6 +40,11 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         builder.UseEnvironment("Testing");
         builder.UseSetting($"ConnectionStrings:{PersistenceServiceCollectionExtensions.AppConnectionName}", database.AppConnectionString);
         builder.UseSetting("App:DashboardUrl", DashboardUrl);
+        builder.UseSetting("Meta:AppId", "tests-app");
+        builder.UseSetting("Meta:AppSecret", FakeMetaGraphHandler.AppSecret);
+        builder.UseSetting("Meta:WebhookVerifyToken", MetaVerifyToken);
+        // Tests run the webhook processor and the sender step by step.
+        builder.UseSetting("Channels:BackgroundProcessing", "false");
         // Generous by default; rate-limit tests pass their own limits.
         foreach (var policy in new[] { "login", "signup", "email", "invite", "messages" })
         {
@@ -57,6 +67,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
             services.AddHttpClient("hibp").ConfigurePrimaryHttpMessageHandler(() => Hibp);
+            services.AddHttpClient(MetaGraphClient.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Meta);
         });
     }
 
@@ -69,9 +80,21 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         }
     }
 
+    /// <summary>Handles stored Meta webhooks like the background processor would.</summary>
+    public async Task ProcessMetaWebhooksAsync()
+    {
+        var processor = Services.GetRequiredService<MessengerWebhookProcessor>();
+        while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+    }
+
+    /// <summary>Sends due team replies like the background sender would.</summary>
+    public Task<int> SendRepliesAsync() => Services.GetRequiredService<MessengerSender>().SendOnceAsync(CancellationToken.None);
+
     /// <summary>A browser-like client: HTTPS (the session cookie is Secure) with its own cookie jar.</summary>
-    public ApiClient CreateApiClient() =>
-        new(CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") }));
+    public ApiClient CreateApiClient(bool followRedirects = true) =>
+        new(CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = followRedirects }));
 }
 
 /// <summary>Captures sent email. Reading <see cref="Sent"/> first delivers the outbox.</summary>

@@ -44,6 +44,10 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("channel");
 
+                    b.Property<Guid?>("ChannelConnectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("channel_connection_id");
+
                     b.Property<Guid>("ContactId")
                         .HasColumnType("uuid")
                         .HasColumnName("contact_id");
@@ -136,6 +140,21 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Delivery")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("delivery");
+
+                    b.Property<int>("DeliveryAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("delivery_attempts");
+
+                    b.Property<string>("DeliveryError")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("delivery_error");
+
                     b.Property<string>("ExternalId")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -144,6 +163,10 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                     b.Property<bool>("Internal")
                         .HasColumnType("boolean")
                         .HasColumnName("internal");
+
+                    b.Property<DateTimeOffset?>("NextDeliveryAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_delivery_at");
 
                     b.Property<DateTimeOffset>("SentAt")
                         .HasColumnType("timestamp with time zone")
@@ -165,6 +188,10 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_messages");
+
+                    b.HasIndex("NextDeliveryAt")
+                        .HasDatabaseName("ix_messages_next_delivery_at")
+                        .HasFilter("delivery = 'pending'");
 
                     b.HasIndex("ConversationId", "SentAt", "Id")
                         .HasDatabaseName("ix_messages_conversation_id_sent_at_id");

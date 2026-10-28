@@ -33,3 +33,6 @@ _Status: draft._
 | `conversation.not_found` | 404 | Conversation not in this workspace — also for other workspaces' IDs (SEC-06) |
 | `conversation.assignee_not_member` | 400 | Conversations can only be assigned to members of this workspace |
 | `contact.not_found` | 404 | Contact not in this workspace — also for other workspaces' IDs (SEC-06) |
+| `conversation.outside_window` | 409 | The customer's last message is older than 24 hours; Meta channels don't allow a free reply (SEC-43) |
+| `channel.not_found` | 404 | Channel connection not in this workspace — also for other workspaces' IDs (SEC-06) |
+| `channel.not_configured` | 400 | The Meta app (App ID / secret) isn't configured on this server |
