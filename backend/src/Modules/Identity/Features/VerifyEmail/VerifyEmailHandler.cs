@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Features.Me;
+using Nihasdesk.Modules.Identity.Infrastructure.Audit;
 using Nihasdesk.Modules.Identity.Infrastructure.Sessions;
 using Nihasdesk.SharedKernel;
 
@@ -19,7 +20,7 @@ internal sealed class VerifyEmailValidator : AbstractValidator<VerifyEmailReques
 }
 
 /// <summary>Confirms the email from the link and signs the user in (browser session, ADR 0010).</summary>
-internal sealed class VerifyEmailHandler(UserManager<User> users, SessionSignIn sessions)
+internal sealed class VerifyEmailHandler(UserManager<User> users, SessionSignIn sessions, AuditLog audit)
 {
     public async Task<Result<MeResponse>> HandleAsync(VerifyEmailRequest request, CancellationToken cancellationToken)
     {
@@ -35,6 +36,8 @@ internal sealed class VerifyEmailHandler(UserManager<User> users, SessionSignIn 
             return AuthErrors.InvalidToken;
         }
 
-        return await sessions.SignInAsync(user, remember: false, cancellationToken);
+        var signedIn = await sessions.SignInAsync(user, remember: false, cancellationToken);
+        await audit.WriteAsync(AuditActions.EmailVerified, user.Id, signedIn.IsSuccess ? signedIn.Value.Workspace.Id : null, cancellationToken);
+        return signedIn;
     }
 }

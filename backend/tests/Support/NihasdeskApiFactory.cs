@@ -19,6 +19,8 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
 
     public TestClock Clock { get; } = new();
 
+    public FakeHibpHandler Hibp { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -43,6 +45,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
             services.AddSingleton<IEmailSender>(Emails);
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
+            services.AddHttpClient("hibp").ConfigurePrimaryHttpMessageHandler(() => Hibp);
         });
     }
 

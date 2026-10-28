@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Features.Me;
+using Nihasdesk.Modules.Identity.Infrastructure.Audit;
 using Nihasdesk.Modules.Identity.Infrastructure.Sessions;
 using Nihasdesk.SharedKernel;
 
@@ -27,7 +28,8 @@ internal sealed class LoginHandler(
     UserManager<User> users,
     SignInManager<User> signInManager,
     IPasswordHasher<User> hasher,
-    SessionSignIn sessions)
+    SessionSignIn sessions,
+    AuditLog audit)
 {
     private static readonly User TimingDummy = new();
 
@@ -37,6 +39,7 @@ internal sealed class LoginHandler(
         if (user is null)
         {
             hasher.HashPassword(TimingDummy, request.Password);
+            await audit.WriteAsync(AuditActions.LoginFailed, userId: null, tenantId: null, cancellationToken);
             return AuthErrors.InvalidCredentials;
         }
 
@@ -45,16 +48,23 @@ internal sealed class LoginHandler(
         {
             // Identity rejects unverified accounts before checking the password; check it ourselves
             // so "not verified" is only revealed to someone who knows the password.
-            return await users.CheckPasswordAsync(user, request.Password)
-                ? AuthErrors.EmailNotVerified
-                : AuthErrors.InvalidCredentials;
+            var passwordOk = await users.CheckPasswordAsync(user, request.Password);
+            await audit.WriteAsync(AuditActions.LoginFailed, user.Id, tenantId: null, cancellationToken);
+            return passwordOk ? AuthErrors.EmailNotVerified : AuthErrors.InvalidCredentials;
         }
 
         if (!result.Succeeded)
         {
+            await audit.WriteAsync(result.IsLockedOut ? AuditActions.LoginLockedOut : AuditActions.LoginFailed, user.Id, tenantId: null, cancellationToken);
             return AuthErrors.InvalidCredentials;
         }
 
-        return await sessions.SignInAsync(user, request.RememberMe, cancellationToken);
+        var signedIn = await sessions.SignInAsync(user, request.RememberMe, cancellationToken);
+        if (signedIn.IsSuccess)
+        {
+            await audit.WriteAsync(AuditActions.LoginSucceeded, user.Id, signedIn.Value.Workspace.Id, cancellationToken);
+        }
+
+        return signedIn;
     }
 }

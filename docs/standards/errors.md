@@ -15,6 +15,7 @@ _Status: draft._
 | `csrf.invalid` | 400 | Missing or invalid `X-XSRF-TOKEN` (SEC-03) |
 | `auth.invalid_credentials` | 401 | Wrong email or password, or the account is locked — deliberately one answer (SEC-26) |
 | `auth.email_not_verified` | 403 | Correct password, email not confirmed yet |
-| `auth.invalid_token` | 400 | Verification (later: reset/invitation) link invalid or expired |
+| `auth.invalid_token` | 400 | Verification or reset link invalid, used or expired (later also invitations) |
 | `auth.no_workspace` | 403 | Account has no workspace membership |
 | `auth.weak_password` | 400 | Password rejected by the password policy (ADR 0009) |
+| `auth.breached_password` | 400 | Password found in Have I Been Pwned (ADR 0009) |

@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Infrastructure.Tenancy;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Domain;
 using Nihasdesk.Modules.Identity.Infrastructure;
+using Nihasdesk.Modules.Identity.Infrastructure.Audit;
 using Nihasdesk.Modules.Identity.Infrastructure.Email;
 using Nihasdesk.SharedKernel;
 
@@ -20,16 +20,26 @@ internal sealed class SignupHandler(
     IdentityModuleDbContext db,
     TenantContext tenantContext,
     IEmailSender email,
-    IOptions<DashboardOptions> dashboard)
+    DashboardLinks links,
+    AuditLog audit)
 {
     public async Task<Result> HandleAsync(SignupRequest request, CancellationToken cancellationToken)
     {
         var language = request.Language ?? "en";
         var address = request.Email.Trim();
 
-        if (await users.FindByEmailAsync(address) is not null)
+        // Password policy (incl. breached check) first, for every email: otherwise a rejected
+        // password would only be reported for unregistered emails and reveal the others.
+        var passwordError = await ValidatePasswordAsync(request.Password);
+        if (passwordError is not null)
         {
-            await email.SendAsync(AuthEmails.AccountExists(address, language, Link("/login")), cancellationToken);
+            return Result.Failure(passwordError);
+        }
+
+        if (await users.FindByEmailAsync(address) is { } existing)
+        {
+            await email.SendAsync(AuthEmails.AccountExists(address, language, links.Login), cancellationToken);
+            await audit.WriteAsync(AuditActions.SignupExistingEmail, existing.Id, tenantId: null, cancellationToken);
             return Result.Success();
         }
 
@@ -48,11 +58,11 @@ internal sealed class SignupHandler(
             if (created.Errors.Any(e => e.Code is nameof(IdentityErrorDescriber.DuplicateEmail) or nameof(IdentityErrorDescriber.DuplicateUserName)))
             {
                 // Lost a race with a parallel signup for the same email: same answer as above.
-                await email.SendAsync(AuthEmails.AccountExists(address, language, Link("/login")), cancellationToken);
+                await email.SendAsync(AuthEmails.AccountExists(address, language, links.Login), cancellationToken);
                 return Result.Success();
             }
 
-            return Result.Failure(AuthErrors.WeakPassword);
+            return Result.Failure(AuthErrors.ForPassword(created.Errors));
         }
 
         db.AddRange(organization, workspace, Membership.Create(workspace.Id, user.Id, Role.Owner));
@@ -60,12 +70,25 @@ internal sealed class SignupHandler(
         await transaction.CommitAsync(cancellationToken);
 
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
-        await email.SendAsync(AuthEmails.VerifyEmail(address, language, user.DisplayName, VerifyLink(user.Id, token)), cancellationToken);
+        await email.SendAsync(
+            AuthEmails.VerifyEmail(address, language, user.DisplayName, links.VerifyEmail(user.Id, token)),
+            cancellationToken);
+        await audit.WriteAsync(AuditActions.Signup, user.Id, workspace.Id, cancellationToken);
         return Result.Success();
     }
 
-    private string VerifyLink(Guid userId, string token) =>
-        Link($"/verify-email?user={userId}&token={Uri.EscapeDataString(token)}");
+    private async Task<Error?> ValidatePasswordAsync(string password)
+    {
+        var candidate = new User();
+        foreach (var validator in users.PasswordValidators)
+        {
+            var result = await validator.ValidateAsync(users, candidate, password);
+            if (!result.Succeeded)
+            {
+                return AuthErrors.ForPassword(result.Errors);
+            }
+        }
 
-    private string Link(string path) => dashboard.Value.DashboardUrl.TrimEnd('/') + path;
+        return null;
+    }
 }

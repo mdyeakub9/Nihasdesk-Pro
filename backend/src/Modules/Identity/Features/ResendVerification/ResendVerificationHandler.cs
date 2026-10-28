@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Infrastructure;
@@ -16,7 +15,7 @@ internal sealed class ResendVerificationValidator : AbstractValidator<ResendVeri
 }
 
 /// <summary>Sends a new verification link if the account exists and is unverified; the answer is always the same.</summary>
-internal sealed class ResendVerificationHandler(UserManager<User> users, IEmailSender email, IOptions<DashboardOptions> dashboard)
+internal sealed class ResendVerificationHandler(UserManager<User> users, IEmailSender email, DashboardLinks links)
 {
     public async Task HandleAsync(ResendVerificationRequest request, CancellationToken cancellationToken)
     {
@@ -27,7 +26,8 @@ internal sealed class ResendVerificationHandler(UserManager<User> users, IEmailS
         }
 
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
-        var link = dashboard.Value.DashboardUrl.TrimEnd('/') + $"/verify-email?user={user.Id}&token={Uri.EscapeDataString(token)}";
-        await email.SendAsync(AuthEmails.VerifyEmail(user.Email!, user.Language, user.DisplayName, link), cancellationToken);
+        await email.SendAsync(
+            AuthEmails.VerifyEmail(user.Email!, user.Language, user.DisplayName, links.VerifyEmail(user.Id, token)),
+            cancellationToken);
     }
 }

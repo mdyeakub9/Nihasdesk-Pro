@@ -21,4 +21,11 @@ internal static class AuthErrors
 
     public static readonly Error WeakPassword =
         Error.Validation("auth.weak_password", "Choose a different password.");
+
+    public static readonly Error BreachedPassword =
+        Error.Validation("auth.breached_password", "This password appears in known data breaches. Choose a different one.");
+
+    /// <summary>Maps Identity password errors to our catalog.</summary>
+    public static Error ForPassword(IEnumerable<Microsoft.AspNetCore.Identity.IdentityError> errors) =>
+        errors.Any(e => e.Code == Infrastructure.Passwords.BreachedPasswordValidator.ErrorCode) ? BreachedPassword : WeakPassword;
 }

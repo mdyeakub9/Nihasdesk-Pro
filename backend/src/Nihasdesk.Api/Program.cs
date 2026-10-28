@@ -46,7 +46,11 @@ foreach (var module in ModuleCatalog.All)
 var app = builder.Build();
 
 app.UseMiddleware<SecurityHeadersMiddleware>();
-app.UseExceptionHandler();
+// Malformed requests (e.g. bad JSON) stay 400 in every environment, not 500.
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = exception => exception is BadHttpRequestException bad ? bad.StatusCode : StatusCodes.Status500InternalServerError,
+});
 app.UseStatusCodePages();
 app.UseCors(DashboardCorsPolicy);
 app.UseRateLimiter();

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 
 namespace Nihasdesk.Infrastructure.Tenancy;
@@ -11,7 +12,8 @@ public static class TenantClaims
 /// <summary>
 /// Sets <see cref="TenantContext"/> from the authenticated session, and only from there
 /// (CLAUDE.md rule 1): tenant IDs in headers, query strings or bodies are never read.
-/// Runs after authentication.
+/// Anonymous endpoints (signup, login, …) never get a tenant from an existing session; they work
+/// on no tenant data, and signing in may start a different one. Runs after authentication and routing.
 /// </summary>
 public sealed class TenantResolutionMiddleware(RequestDelegate next)
 {
@@ -20,7 +22,9 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(tenantContext);
 
-        if (context.User.Identity?.IsAuthenticated == true
+        var anonymousEndpoint = context.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null;
+        if (!anonymousEndpoint
+            && context.User.Identity?.IsAuthenticated == true
             && Guid.TryParse(context.User.FindFirst(TenantClaims.TenantId)?.Value, out var tenantId)
             && tenantId != Guid.Empty)
         {
