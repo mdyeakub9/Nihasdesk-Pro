@@ -20,6 +20,12 @@ const messages: Record<string, string> = {
   'team.email_has_account': 'teamErrors.emailHasAccount',
   'channel.not_configured': 'channelSettings.errors.notConfigured',
   'channel.not_found': 'channelSettings.errors.notFound',
+  'catalog.product_not_found': 'products.errors.notFound',
+  'catalog.sku_taken': 'products.errors.skuTaken',
+  'catalog.handle_taken': 'products.errors.handleTaken',
+  'catalog.import_no_file': 'products.import.errors.noFile',
+  'catalog.import_too_large': 'products.import.tooLarge',
+  'catalog.import_not_csv': 'products.import.errors.notCsv',
 };
 
 export function authErrorMessage(error: unknown, t: TFunction): string {

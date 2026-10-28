@@ -33,6 +33,10 @@ export const json = (body: unknown, status = 200) =>
 
 export const problem = (status: number, code: string) => json({ status, code, title: code }, status);
 
+/** JSON bodies are parsed; anything else (e.g. FormData for uploads) is passed as it is. */
+const parseBody = (body: BodyInit | null | undefined): unknown =>
+  typeof body === 'string' ? JSON.parse(body) : (body ?? undefined);
+
 /** Replaces fetch with a small fake of the API; returns the mock to inspect calls. */
 export function fakeApi({ session = testSession, health, post = {}, routes = {} }: FakeApiOptions = {}) {
   let current = session;
@@ -47,12 +51,12 @@ export function fakeApi({ session = testSession, health, post = {}, routes = {} 
     const parsed = new URL(url, 'http://localhost');
     const path = parsed.pathname;
     const route = routes[`${method} ${path}`];
-    if (route) return route(init?.body ? JSON.parse(String(init.body)) : undefined, parsed);
+    if (route) return route(parseBody(init?.body), parsed);
 
     if (method === 'POST') {
       if (path === '/api/v1/auth/logout') current = null;
       const handler = post[path];
-      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      const body = parseBody(init?.body);
       const response = handler ? await handler(body, parsed) : new Response(null, { status: 204 });
       // Like the real API: a successful login or verification starts a session.
       if (response.ok && (path === '/api/v1/auth/login' || path === '/api/v1/auth/verify-email')) {
@@ -72,7 +76,7 @@ export function callsTo(fetchMock: ReturnType<typeof fakeApi>, path: string) {
   return fetchMock.mock.calls
     .filter(([input]) => String(input).endsWith(path))
     .map(([, init]) => ({
-      body: init?.body ? JSON.parse(String(init.body)) : undefined,
+      body: parseBody(init?.body),
       headers: new Headers(init?.headers),
     }));
 }

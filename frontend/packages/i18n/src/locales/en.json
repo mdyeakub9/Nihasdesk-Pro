@@ -443,5 +443,122 @@
       "notConfigured": "Facebook isn't set up on this server yet. Ask the Nihasdesk team for help.",
       "notFound": "This connection no longer exists. Refresh the page."
     }
+  },
+  "products": {
+    "add": "Add product",
+    "importCsv": "Import CSV",
+    "search": "Search products",
+    "searchPlaceholder": "Name, SKU, brand or category",
+    "status": "Status",
+    "statuses": {
+      "all": "All",
+      "active": "Active",
+      "draft": "Draft",
+      "archived": "Archived"
+    },
+    "columns": {
+      "product": "Product",
+      "status": "Status",
+      "price": "Price",
+      "stock": "Stock",
+      "variants": "Variants"
+    },
+    "notTracked": "Not tracked",
+    "inStock_one": "{{count}} in stock",
+    "inStock_other": "{{count}} in stock",
+    "loadMore": "Load more",
+    "noMatch": "No products match.",
+    "empty": {
+      "title": "No products yet",
+      "text": "Add your products by hand or import a CSV (Shopify exports work as they are). The AI answers prices and stock only from here."
+    },
+    "back": "Back to products",
+    "new": "New product",
+    "notFound": "Product not found",
+    "save": "Save",
+    "saved": "Saved.",
+    "readOnly": "Only Owners and Admins can change products.",
+    "handle": "Handle: {{handle}}",
+    "sections": {
+      "details": "Details",
+      "options": "Options",
+      "variants_one": "{{count}} variant",
+      "variants_other": "{{count}} variants"
+    },
+    "noOptions": "No options: the product is sold in one version. Add options like Size or Colour to sell variants.",
+    "addOption": "Add option",
+    "removeOption": "Remove option {{number}}",
+    "addVariant": "Add variant",
+    "removeVariant": "Remove variant {{number}}",
+    "variantNumber": "Variant {{number}}",
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "status": "Status",
+      "vendor": "Brand",
+      "productType": "Product type",
+      "category": "Category",
+      "tags": "Tags (comma separated)",
+      "optionName": "Option {{number}}",
+      "price": "Price",
+      "compareAtPrice": "Compare-at price",
+      "cost": "Cost (team only)",
+      "currency": "Currency",
+      "sku": "SKU",
+      "barcode": "Barcode (EAN/UPC)",
+      "weight": "Weight (g)",
+      "inventoryPolicy": "When out of stock",
+      "trackInventory": "Track stock",
+      "stock": "In stock",
+      "requiresShipping": "Needs shipping"
+    },
+    "policy": {
+      "deny": "Stop selling",
+      "continue": "Keep selling"
+    },
+    "errors": {
+      "title": "A title is required.",
+      "optionName": "Give the option a name.",
+      "money": "Use an amount like 89.00.",
+      "whole": "Use a whole number.",
+      "currency": "Use a 3-letter code like EUR.",
+      "server": "Please check these fields:",
+      "notFound": "This product no longer exists.",
+      "skuTaken": "A SKU is already used by another product.",
+      "handleTaken": "Another product already uses this handle."
+    },
+    "import": {
+      "title": "Import products",
+      "step1": "1. Get the template",
+      "templateHint": "Use our template, or export your products from Shopify and upload that file as it is. Excel files with semicolons work too.",
+      "template": "Download template",
+      "step2": "2. Choose your CSV file",
+      "file": "CSV file (max 2 MB, 5,000 rows)",
+      "tooLarge": "The file is larger than 2 MB.",
+      "preview": "Check file",
+      "step3": "3. Check and import",
+      "done": "Import finished",
+      "productsCreated_one": "{{count}} new product",
+      "productsCreated_other": "{{count}} new products",
+      "productsUpdated_one": "{{count}} product updated",
+      "productsUpdated_other": "{{count}} products updated",
+      "variantsCreated_one": "{{count}} new variant",
+      "variantsCreated_other": "{{count}} new variants",
+      "variantsUpdated_one": "{{count}} variant updated",
+      "variantsUpdated_other": "{{count}} variants updated",
+      "issues_one": "{{count}} problem to fix before importing:",
+      "issues_other": "{{count}} problems to fix before importing:",
+      "issuesTable": "Problems in the file",
+      "line": "Line",
+      "column": "Column",
+      "problem": "Problem",
+      "apply": "Import",
+      "allOrNothing": "Everything is saved at once, or nothing.",
+      "toProducts": "Go to products",
+      "errors": {
+        "noFile": "Choose a CSV file first.",
+        "notCsv": "This isn’t a CSV text file. Save it as CSV (UTF-8) and try again."
+      }
+    }
   }
 }

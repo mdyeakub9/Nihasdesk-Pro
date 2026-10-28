@@ -443,5 +443,122 @@
       "notConfigured": "Facebook non è ancora configurato su questo server. Chiedi aiuto al team Nihasdesk.",
       "notFound": "Questo collegamento non esiste più. Aggiorna la pagina."
     }
+  },
+  "products": {
+    "add": "Aggiungi prodotto",
+    "importCsv": "Importa CSV",
+    "search": "Cerca prodotti",
+    "searchPlaceholder": "Nome, SKU, marca o categoria",
+    "status": "Stato",
+    "statuses": {
+      "all": "Tutti",
+      "active": "Attivo",
+      "draft": "Bozza",
+      "archived": "Archiviato"
+    },
+    "columns": {
+      "product": "Prodotto",
+      "status": "Stato",
+      "price": "Prezzo",
+      "stock": "Magazzino",
+      "variants": "Varianti"
+    },
+    "notTracked": "Non monitorato",
+    "inStock_one": "{{count}} disponibile",
+    "inStock_other": "{{count}} disponibili",
+    "loadMore": "Carica altri",
+    "noMatch": "Nessun prodotto corrisponde.",
+    "empty": {
+      "title": "Ancora nessun prodotto",
+      "text": "Aggiungi i prodotti a mano o importa un CSV (gli export di Shopify vanno bene così come sono). L’IA risponde su prezzi e disponibilità solo da qui."
+    },
+    "back": "Torna ai prodotti",
+    "new": "Nuovo prodotto",
+    "notFound": "Prodotto non trovato",
+    "save": "Salva",
+    "saved": "Salvato.",
+    "readOnly": "Solo Proprietari e Admin possono modificare i prodotti.",
+    "handle": "Handle: {{handle}}",
+    "sections": {
+      "details": "Dettagli",
+      "options": "Opzioni",
+      "variants_one": "{{count}} variante",
+      "variants_other": "{{count}} varianti"
+    },
+    "noOptions": "Nessuna opzione: il prodotto è venduto in una sola versione. Aggiungi opzioni come Taglia o Colore per vendere varianti.",
+    "addOption": "Aggiungi opzione",
+    "removeOption": "Rimuovi opzione {{number}}",
+    "addVariant": "Aggiungi variante",
+    "removeVariant": "Rimuovi variante {{number}}",
+    "variantNumber": "Variante {{number}}",
+    "fields": {
+      "title": "Titolo",
+      "description": "Descrizione",
+      "status": "Stato",
+      "vendor": "Marca",
+      "productType": "Tipo di prodotto",
+      "category": "Categoria",
+      "tags": "Tag (separati da virgola)",
+      "optionName": "Opzione {{number}}",
+      "price": "Prezzo",
+      "compareAtPrice": "Prezzo di confronto",
+      "cost": "Costo (solo team)",
+      "currency": "Valuta",
+      "sku": "SKU",
+      "barcode": "Codice a barre (EAN/UPC)",
+      "weight": "Peso (g)",
+      "inventoryPolicy": "Se esaurito",
+      "trackInventory": "Monitora magazzino",
+      "stock": "Disponibili",
+      "requiresShipping": "Richiede spedizione"
+    },
+    "policy": {
+      "deny": "Smetti di vendere",
+      "continue": "Continua a vendere"
+    },
+    "errors": {
+      "title": "Il titolo è obbligatorio.",
+      "optionName": "Dai un nome all’opzione.",
+      "money": "Usa un importo come 89,00.",
+      "whole": "Usa un numero intero.",
+      "currency": "Usa un codice di 3 lettere come EUR.",
+      "server": "Controlla questi campi:",
+      "notFound": "Questo prodotto non esiste più.",
+      "skuTaken": "Uno SKU è già usato da un altro prodotto.",
+      "handleTaken": "Un altro prodotto usa già questo handle."
+    },
+    "import": {
+      "title": "Importa prodotti",
+      "step1": "1. Scarica il modello",
+      "templateHint": "Usa il nostro modello, oppure esporta i prodotti da Shopify e carica quel file così com’è. Vanno bene anche i file Excel con punto e virgola.",
+      "template": "Scarica modello",
+      "step2": "2. Scegli il file CSV",
+      "file": "File CSV (max 2 MB, 5.000 righe)",
+      "tooLarge": "Il file supera i 2 MB.",
+      "preview": "Controlla file",
+      "step3": "3. Controlla e importa",
+      "done": "Importazione completata",
+      "productsCreated_one": "{{count}} nuovo prodotto",
+      "productsCreated_other": "{{count}} nuovi prodotti",
+      "productsUpdated_one": "{{count}} prodotto aggiornato",
+      "productsUpdated_other": "{{count}} prodotti aggiornati",
+      "variantsCreated_one": "{{count}} nuova variante",
+      "variantsCreated_other": "{{count}} nuove varianti",
+      "variantsUpdated_one": "{{count}} variante aggiornata",
+      "variantsUpdated_other": "{{count}} varianti aggiornate",
+      "issues_one": "{{count}} problema da correggere prima di importare:",
+      "issues_other": "{{count}} problemi da correggere prima di importare:",
+      "issuesTable": "Problemi nel file",
+      "line": "Riga",
+      "column": "Colonna",
+      "problem": "Problema",
+      "apply": "Importa",
+      "allOrNothing": "Tutto viene salvato insieme, oppure niente.",
+      "toProducts": "Vai ai prodotti",
+      "errors": {
+        "noFile": "Scegli prima un file CSV.",
+        "notCsv": "Questo non è un file di testo CSV. Salvalo come CSV (UTF-8) e riprova."
+      }
+    }
   }
 }
