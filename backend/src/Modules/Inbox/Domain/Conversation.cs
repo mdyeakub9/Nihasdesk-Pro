@@ -74,8 +74,16 @@ internal sealed class Conversation : TenantEntity
         return new Conversation(tenantId, contactId, channel) { LastMessageAt = now, ChannelConnectionId = connectionId };
     }
 
+    /// <summary>When the AI should answer; null when it shouldn't (ADR 0019).</summary>
+    public DateTimeOffset? AiReplyDueAt { get; private set; }
+
+    /// <summary>Wait this long after a customer message, so a burst of short messages gets one answer.</summary>
+    public static readonly TimeSpan AiReplyDelay = TimeSpan.FromSeconds(4);
+
+    public bool AiAnswers => Responder == Responder.Ai && AiEnabled;
+
     /// <summary>A customer wrote: reopen when done; wait for the team when a human is answering.</summary>
-    public void Received(Message message, Guid? connectionId)
+    public void Received(Message message, Guid? connectionId, DateTimeOffset now)
     {
         Touch(message);
         ChannelConnectionId = connectionId ?? ChannelConnectionId;
@@ -88,6 +96,8 @@ internal sealed class Conversation : TenantEntity
         {
             Status = ConversationStatus.Open;
         }
+
+        AiReplyDueAt = AiAnswers ? now + AiReplyDelay : null;
     }
 
     /// <summary>A team member replied: they take over, and the customer no longer waits.</summary>
@@ -95,15 +105,42 @@ internal sealed class Conversation : TenantEntity
     {
         Touch(message);
         Responder = Responder.Human;
+        AiReplyDueAt = null;
         if (Status == ConversationStatus.Waiting)
         {
             Status = ConversationStatus.Open;
         }
     }
 
+    /// <summary>The AI answered (ADR 0019).</summary>
+    public void RepliedByAi(Message message)
+    {
+        if (message.Author != MessageAuthor.Ai)
+        {
+            throw new InvalidOperationException("Not an AI message.");
+        }
+
+        Touch(message);
+    }
+
+    /// <summary>The AI picked up the due reply; a new customer message makes it due again.</summary>
+    public void AiReplyStarted() => AiReplyDueAt = null;
+
+    /// <summary>The AI can't (or mustn't) answer: the team takes over and the customer waits for them.</summary>
+    public void HandOffToTeam()
+    {
+        Responder = Responder.Human;
+        Status = ConversationStatus.Waiting;
+        AiReplyDueAt = null;
+    }
+
     public void SetStatus(ConversationStatus status) => Status = status;
 
-    public void TakeOver() => Responder = Responder.Human;
+    public void TakeOver()
+    {
+        Responder = Responder.Human;
+        AiReplyDueAt = null;
+    }
 
     public void ReturnToAi()
     {
@@ -114,7 +151,14 @@ internal sealed class Conversation : TenantEntity
         }
     }
 
-    public void SetAiEnabled(bool enabled) => AiEnabled = enabled;
+    public void SetAiEnabled(bool enabled)
+    {
+        AiEnabled = enabled;
+        if (!enabled)
+        {
+            AiReplyDueAt = null;
+        }
+    }
 
     public void SetLeadStatus(LeadStatus leadStatus) => LeadStatus = leadStatus;
 

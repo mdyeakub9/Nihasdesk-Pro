@@ -1,0 +1,110 @@
+using Microsoft.EntityFrameworkCore;
+using Nihasdesk.Modules.Inbox.Contracts;
+using Nihasdesk.Modules.Inbox.Domain;
+using Nihasdesk.Modules.Inbox.Realtime;
+using Nihasdesk.SharedKernel;
+
+namespace Nihasdesk.Modules.Inbox.Infrastructure;
+
+internal sealed class AiConversations(
+    InboxDbContext db,
+    ITenantContext tenant,
+    InboxNotifier notifier,
+    TimeProvider time) : IAiConversations
+{
+    public async Task<IReadOnlyList<DueAiReply>> DueAsync(int limit, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        // SECURITY DEFINER lookup (migration AddAiReplies): IDs only, no message content.
+        var rows = await db.Database
+            .SqlQuery<DueRow>($"SELECT tenant_id, conversation_id FROM inbox.due_ai_replies({now}, {limit})")
+            .ToListAsync(cancellationToken);
+        return rows.Select(r => new DueAiReply(r.TenantId, r.ConversationId)).ToList();
+    }
+
+    public async Task<AiConversation?> ClaimAsync(Guid conversationId, int historySize, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var locked = await db.Database
+            .SqlQuery<Guid>($"SELECT id AS value FROM inbox.conversations WHERE id = {conversationId} AND ai_reply_due_at <= {now} FOR UPDATE SKIP LOCKED")
+            .ToListAsync(cancellationToken);
+        if (locked.Count == 0)
+        {
+            return null;
+        }
+
+        var conversation = await db.Conversations.SingleAsync(c => c.Id == conversationId, cancellationToken);
+        conversation.AiReplyStarted();
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        if (!conversation.AiAnswers || !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
+        {
+            return null;
+        }
+
+        var history = await db.Messages
+            .AsNoTracking()
+            .Where(m => m.ConversationId == conversationId && !m.Internal)
+            .OrderByDescending(m => m.SentAt)
+            .ThenByDescending(m => m.Id)
+            .Take(historySize)
+            .Select(m => new { m.Author, m.Text, m.SentAt })
+            .ToListAsync(cancellationToken);
+        var aiHasReplied = await db.Messages.AnyAsync(m => m.ConversationId == conversationId && m.Author == MessageAuthor.Ai && !m.Internal, cancellationToken);
+
+        return new AiConversation(
+            conversation.Id,
+            conversation.ContactId,
+            conversation.Channel,
+            aiHasReplied,
+            history.AsEnumerable().Reverse().Select(m => new AiHistoryMessage(m.Author.ToString().ToLowerInvariant(), m.Text, m.SentAt)).ToList());
+    }
+
+    public async Task<bool> ReplyAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken)
+    {
+        var conversation = await db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
+        var now = time.GetUtcNow();
+        // The team may have taken over while the AI was thinking: then the AI stays silent.
+        if (conversation is null || !conversation.AiAnswers || !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
+        {
+            return false;
+        }
+
+        var sentAt = now;
+        foreach (var text in messages)
+        {
+            var message = Message.FromAi(tenant.TenantId, conversation.Id, text, sentAt);
+            db.Messages.Add(message);
+            conversation.RepliedByAi(message);
+            if (conversation.ChannelConnectionId is not null)
+            {
+                message.QueueDelivery(sentAt);
+            }
+
+            // Keeps the order of disclosure and answer, also for the channel.
+            sentAt = sentAt.AddMilliseconds(1);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, cancellationToken);
+        return true;
+    }
+
+    public async Task HandOffAsync(Guid conversationId, string teamNote, CancellationToken cancellationToken)
+    {
+        var conversation = await db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
+        if (conversation is null)
+        {
+            return;
+        }
+
+        conversation.HandOffToTeam();
+        db.Messages.Add(Message.AiNote(tenant.TenantId, conversation.Id, teamNote, time.GetUtcNow()));
+        await db.SaveChangesAsync(cancellationToken);
+        await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, cancellationToken);
+    }
+
+    private sealed record DueRow(Guid TenantId, Guid ConversationId);
+}

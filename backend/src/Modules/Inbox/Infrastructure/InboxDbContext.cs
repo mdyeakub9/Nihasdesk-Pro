@@ -38,6 +38,9 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             conversation.HasIndex(c => new { c.TenantId, c.ContactId, c.Channel }).IsUnique();
             // The inbox list: newest activity first, keyset pagination.
             conversation.HasIndex(c => new { c.TenantId, c.LastMessageAt, c.Id }).IsDescending(false, true, true);
+            conversation.Ignore(c => c.AiAnswers);
+            // The AI reply queue (ADR 0019).
+            conversation.HasIndex(c => c.AiReplyDueAt).HasFilter("ai_reply_due_at IS NOT NULL");
         });
 
         modelBuilder.Entity<Message>(message =>

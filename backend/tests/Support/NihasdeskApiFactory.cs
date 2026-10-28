@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Modules.AiAgent.Agent;
+using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Channels.Infrastructure.Meta;
 using Nihasdesk.Modules.Identity.Infrastructure;
 
@@ -25,6 +27,8 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
     public FakeHibpHandler Hibp { get; } = new();
 
     public FakeMetaGraphHandler Meta { get; } = new();
+
+    public FakeAi Ai { get; } = new();
 
     public const string MetaVerifyToken = "tests-only-verify-token";
 
@@ -45,6 +49,9 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         builder.UseSetting("Meta:WebhookVerifyToken", MetaVerifyToken);
         // Tests run the webhook processor and the sender step by step.
         builder.UseSetting("Channels:BackgroundProcessing", "false");
+        builder.UseSetting("Ai:BackgroundProcessing", "false");
+        // Low enough for the limit test to reach.
+        builder.UseSetting("Ai:MaxRepliesPerConversationPerHour", "3");
         // Generous by default; rate-limit tests pass their own limits.
         foreach (var policy in new[] { "login", "signup", "email", "invite", "messages", "uploads" })
         {
@@ -68,6 +75,8 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
             services.AddSingleton<TimeProvider>(Clock);
             services.AddHttpClient("hibp").ConfigurePrimaryHttpMessageHandler(() => Hibp);
             services.AddHttpClient(MetaGraphClient.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Meta);
+            services.RemoveAll<ILlmProvider>();
+            services.AddSingleton(Ai.Provider);
         });
     }
 
@@ -87,6 +96,13 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
         {
         }
+    }
+
+    /// <summary>Lets the AI answer due conversations, after the short wait for more customer messages.</summary>
+    public async Task<int> RunAiAsync()
+    {
+        Clock.Advance(TimeSpan.FromSeconds(5));
+        return await Services.GetRequiredService<AiReplyProcessor>().ProcessOnceAsync(CancellationToken.None);
     }
 
     /// <summary>Sends due team replies like the background sender would.</summary>

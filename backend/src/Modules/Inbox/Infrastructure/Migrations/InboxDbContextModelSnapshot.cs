@@ -34,6 +34,10 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("ai_enabled");
 
+                    b.Property<DateTimeOffset?>("AiReplyDueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ai_reply_due_at");
+
                     b.Property<Guid?>("AssigneeId")
                         .HasColumnType("uuid")
                         .HasColumnName("assignee_id");
@@ -98,6 +102,10 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_conversations");
+
+                    b.HasIndex("AiReplyDueAt")
+                        .HasDatabaseName("ix_conversations_ai_reply_due_at")
+                        .HasFilter("ai_reply_due_at IS NOT NULL");
 
                     b.HasIndex("TenantId", "ContactId", "Channel")
                         .IsUnique()

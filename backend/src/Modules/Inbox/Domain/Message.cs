@@ -77,11 +77,19 @@ internal sealed class Message : TenantEntity
             Internal = isInternal,
         };
 
+    /// <summary>An AI reply to the customer (ADR 0019).</summary>
+    public static Message FromAi(Guid tenantId, Guid conversationId, string text, DateTimeOffset sentAt) =>
+        new(tenantId, conversationId, MessageAuthor.Ai, CheckText(text), sentAt);
+
+    /// <summary>A note from the AI to the team, e.g. why it handed over. Never sent to the customer.</summary>
+    public static Message AiNote(Guid tenantId, Guid conversationId, string text, DateTimeOffset sentAt) =>
+        new(tenantId, conversationId, MessageAuthor.Ai, CheckText(text), sentAt) { Internal = true };
+
     public void QueueDelivery(DateTimeOffset now)
     {
-        if (Author != MessageAuthor.Agent || Internal)
+        if (Author == MessageAuthor.Customer || Internal)
         {
-            throw new InvalidOperationException("Only team replies are delivered.");
+            throw new InvalidOperationException("Only replies to the customer are delivered.");
         }
 
         Delivery = DeliveryStatus.Pending;

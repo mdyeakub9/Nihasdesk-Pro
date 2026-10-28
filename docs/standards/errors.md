@@ -42,3 +42,5 @@ _Status: draft._
 | `catalog.sku_taken` | 409 | A SKU is already used by another product of the workspace |
 | `catalog.import_no_file` / `catalog.import_too_large` / `catalog.import_not_csv` | 400 | No file, over 2 MB, or not UTF-8 CSV text (SEC-04) |
 | `catalog.import_conflict` | 422 (in the report) | The catalog changed during the import; nothing was saved |
+| `ai.not_found` | 404 | Question or taught answer not in this workspace — also for other workspaces' IDs (SEC-06) |
+| `ai.question_resolved` | 409 | The question was already answered or dismissed |

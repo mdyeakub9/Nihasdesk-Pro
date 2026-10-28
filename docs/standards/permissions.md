@@ -16,7 +16,9 @@ The API checks every permission on the server, reading the member's **current** 
 | `channels.manage` — connect and disconnect channels (Facebook Pages) | ✅ | ✅ | ❌ |
 | `catalog.view` — see products, variants, prices and stock | ✅ | ✅ | ✅ |
 | `catalog.manage` — create and edit products, CSV import (ADR 0018) | ✅ | ✅ | ❌ |
-| Settings, AI, policies _(with those modules)_ | ✅ | ✅ | ❌ |
+| `ai.view` — see the questions the AI couldn't answer and the taught answers | ✅ | ✅ | ✅ |
+| `ai.teach` — answer those questions, add and edit taught answers (ADR 0019) | ✅ | ✅ | ❌ |
+| Settings, AI settings, policies _(with those modules)_ | ✅ | ✅ | ❌ |
 | Billing, workspace deletion, ownership transfer _(later)_ | ✅ | ❌ | ❌ |
 
 ## Rules
