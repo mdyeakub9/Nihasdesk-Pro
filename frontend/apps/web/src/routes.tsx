@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router';
+import { Navigate, type RouteObject } from 'react-router';
 import { AuthLayout } from './features/auth/AuthLayout';
 import { CheckEmailPage } from './features/auth/CheckEmailPage';
 import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
@@ -9,13 +9,16 @@ import { VerifyEmailPage } from './features/auth/VerifyEmailPage';
 import { InboxPage } from './features/inbox/InboxPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
 import { RedirectIfSignedIn, RequireSession } from './features/session/guards';
+import { SettingsLayout } from './features/settings/SettingsLayout';
+import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
+import { TeamPage } from './features/team/TeamPage';
 import { AppShell } from './layouts/AppShell';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 /** Phase 1 sections that only have a placeholder so far. */
-const comingSoon = ['orders', 'leads', 'customers', 'products', 'analytics', 'settings'] as const;
+const comingSoon = ['orders', 'leads', 'customers', 'products', 'analytics'] as const;
 
 export const routes: RouteObject[] = [
   {
@@ -42,6 +45,7 @@ export const routes: RouteObject[] = [
       { path: 'verify-email', element: <VerifyEmailPage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
       { path: 'reset-password', element: <ResetPasswordPage /> },
+      { path: 'accept-invitation', element: <AcceptInvitationPage /> },
     ],
   },
   {
@@ -56,6 +60,14 @@ export const routes: RouteObject[] = [
       { path: 'inbox', element: <InboxPage /> },
       { path: 'inbox/:conversationId', element: <InboxPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
+      {
+        path: 'settings',
+        element: <SettingsLayout />,
+        children: [
+          { index: true, element: <Navigate to="team" replace /> },
+          { path: 'team', element: <TeamPage /> },
+        ],
+      },
       ...comingSoon.map((section) => ({ path: section, element: <ComingSoonPage section={section} /> })),
       { path: '*', element: <NotFoundPage /> },
     ],

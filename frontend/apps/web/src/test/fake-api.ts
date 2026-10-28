@@ -16,6 +16,8 @@ type FakeApiOptions = {
   health?: () => Response;
   /** Answers for POST paths, e.g. '/api/v1/auth/login'. Unlisted POSTs answer 204. */
   post?: Record<string, Handler>;
+  /** Any other route as 'METHOD /path', e.g. 'GET /api/v1/team/members'. */
+  routes?: Record<string, Handler>;
 };
 
 export const json = (body: unknown, status = 200) =>
@@ -24,7 +26,7 @@ export const json = (body: unknown, status = 200) =>
 export const problem = (status: number, code: string) => json({ status, code, title: code }, status);
 
 /** Replaces fetch with a small fake of the API; returns the mock to inspect calls. */
-export function fakeApi({ session = testSession, health, post = {} }: FakeApiOptions = {}) {
+export function fakeApi({ session = testSession, health, post = {}, routes = {} }: FakeApiOptions = {}) {
   let current = session;
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString();
@@ -34,8 +36,11 @@ export function fakeApi({ session = testSession, health, post = {} }: FakeApiOpt
     if (url.endsWith('/api/v1/csrf')) return json({ token: 'test-csrf-token' });
     if (url.endsWith('/api/v1/me')) return current ? json(current) : problem(401, 'auth.unauthorized');
 
+    const path = new URL(url, 'http://localhost').pathname;
+    const route = routes[`${method} ${path}`];
+    if (route) return route(init?.body ? JSON.parse(String(init.body)) : undefined);
+
     if (method === 'POST') {
-      const path = new URL(url, 'http://localhost').pathname;
       if (path === '/api/v1/auth/logout') current = null;
       const handler = post[path];
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;

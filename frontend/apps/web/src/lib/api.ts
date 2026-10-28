@@ -81,3 +81,20 @@ export async function apiPost<T = undefined>(path: string, body?: unknown): Prom
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }
+
+/** PATCH a JSON body; returns undefined for empty answers. */
+export async function apiPatch(path: string, body: unknown): Promise<void> {
+  await apiFetch(path, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  await apiFetch(path, { method: 'DELETE' });
+}
+
+export async function apiGet<T>(path: string): Promise<T> {
+  return (await (await apiFetch(path)).json()) as T;
+}

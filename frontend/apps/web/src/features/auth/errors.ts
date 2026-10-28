@@ -9,6 +9,12 @@ const messages: Record<string, string> = {
   'auth.no_workspace': 'authErrors.noWorkspace',
   'auth.weak_password': 'authErrors.weakPassword',
   'auth.breached_password': 'authErrors.breachedPassword',
+  'team.forbidden': 'teamErrors.forbidden',
+  'team.not_found': 'teamErrors.notFound',
+  'team.already_member': 'teamErrors.alreadyMember',
+  'team.owner_is_fixed': 'teamErrors.ownerIsFixed',
+  'team.invitation_invalid': 'teamErrors.invitationInvalid',
+  'team.email_has_account': 'teamErrors.emailHasAccount',
 };
 
 export function authErrorMessage(error: unknown, t: TFunction): string {

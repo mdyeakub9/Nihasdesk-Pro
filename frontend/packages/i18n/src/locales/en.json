@@ -295,5 +295,49 @@
     "breachedPassword": "This password appears in known data breaches. Choose a different one.",
     "rateLimited": "Too many attempts. Wait a few minutes and try again.",
     "generic": "Something went wrong. Please try again."
+  },
+  "settings": {
+    "sections": "Settings sections",
+    "team": "Team"
+  },
+  "team": {
+    "intro": "Invite the people who answer your customers. Owners and Admins manage the team; Members work in the inbox.",
+    "role": "Role",
+    "roleOf": "Role of {{name}}",
+    "you": "you",
+    "joined": "joined {{date}}",
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "remove": "Remove",
+    "removeConfirm": "Yes, remove",
+    "cancel": "Cancel",
+    "invite": {
+      "title": "Invite a team member",
+      "placeholder": "name@example.com",
+      "submit": "Send invitation",
+      "sent": "Invitation sent. The link is valid for 48 hours."
+    },
+    "pending": {
+      "title_one": "{{count}} pending invitation",
+      "title_other": "{{count}} pending invitations",
+      "expires": "expires {{date}}",
+      "resend": "Resend",
+      "revoke": "Revoke"
+    }
+  },
+  "acceptInvite": {
+    "title": "Join {{workspace}}",
+    "intro": "{{inviter}} invited {{email}} as {{role}}. Choose your name and a password to join.",
+    "submit": "Join the team",
+    "loading": "Opening your invitation…",
+    "invalidTitle": "Invitation not valid"
+  },
+  "teamErrors": {
+    "forbidden": "Your role does not allow this.",
+    "notFound": "This item no longer exists.",
+    "alreadyMember": "This person is already in the team.",
+    "ownerIsFixed": "The Owner can’t be removed or changed.",
+    "invitationInvalid": "This invitation is invalid, already used or expired. Ask for a new one.",
+    "emailHasAccount": "This email already has a Nihasdesk account. Joining a second workspace comes later."
   }
 }
