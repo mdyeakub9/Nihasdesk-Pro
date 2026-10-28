@@ -14,6 +14,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code?: string,
+    /** The parsed JSON body, e.g. validation `errors` or an import report. */
+    readonly body?: unknown,
   ) {
     super(code ? `API error ${status} (${code})` : `API request failed with status ${status}`);
     this.name = 'ApiError';
@@ -40,13 +42,17 @@ export async function getCsrfToken(): Promise<string> {
   return csrfToken;
 }
 
-async function errorCode(response: Response): Promise<string | undefined> {
+async function errorBody(response: Response): Promise<unknown> {
   try {
-    const body = (await response.clone().json()) as { code?: unknown };
-    return typeof body.code === 'string' ? body.code : undefined;
+    return await response.clone().json();
   } catch {
     return undefined;
   }
+}
+
+async function errorCode(response: Response): Promise<string | undefined> {
+  const body = (await errorBody(response)) as { code?: unknown } | undefined;
+  return typeof body?.code === 'string' ? body.code : undefined;
 }
 
 async function send(path: string, init: RequestInit): Promise<Response> {
@@ -71,7 +77,7 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, await errorCode(response));
+    throw new ApiError(response.status, await errorCode(response), await errorBody(response));
   }
   return response;
 }
@@ -94,6 +100,21 @@ export async function apiPatch(path: string, body: unknown): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+}
+
+/** PUT a JSON body; returns the parsed JSON response. */
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const response = await apiFetch(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return (await response.json()) as T;
+}
+
+/** POST a form with files (multipart; the browser sets the boundary). CSRF header like any change. */
+export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
+  return (await (await apiFetch(path, { method: 'POST', body: form })).json()) as T;
 }
 
 export async function apiDelete(path: string): Promise<void> {
