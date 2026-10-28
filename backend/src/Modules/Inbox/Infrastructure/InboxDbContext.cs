@@ -46,9 +46,13 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             message.Property(m => m.Text).HasMaxLength(Message.TextMaxLength);
             message.Property(m => m.AuthorName).HasMaxLength(Message.AuthorNameMaxLength);
             message.Property(m => m.ExternalId).HasMaxLength(Message.ExternalIdMaxLength);
+            message.Property(m => m.DeliveryError).HasMaxLength(Message.DeliveryErrorMaxLength);
             LowerCaseText(message.Property(m => m.Author));
+            LowerCaseText(message.Property(m => m.Delivery));
             message.HasOne<Conversation>().WithMany().HasForeignKey(m => m.ConversationId).OnDelete(DeleteBehavior.Cascade);
             message.HasIndex(m => new { m.ConversationId, m.SentAt, m.Id });
+            // The background sender's queue (ADR 0017).
+            message.HasIndex(m => m.NextDeliveryAt).HasFilter("delivery = 'pending'");
             // Webhook retries deliver the same channel message again.
             message.HasIndex(m => new { m.TenantId, m.ConversationId, m.ExternalId })
                 .IsUnique()

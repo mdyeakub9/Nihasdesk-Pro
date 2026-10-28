@@ -54,6 +54,9 @@ internal sealed class Conversation : TenantEntity
 
     public Guid? AssigneeId { get; private set; }
 
+    /// <summary>The connected channel account (e.g. Facebook Page) replies go out through; null for the website widget.</summary>
+    public Guid? ChannelConnectionId { get; private set; }
+
     public DateTimeOffset LastMessageAt { get; private set; }
 
     /// <summary>Last customer message; unread markers compare against it.</summary>
@@ -61,20 +64,21 @@ internal sealed class Conversation : TenantEntity
 
     public string Preview { get; private set; } = string.Empty;
 
-    public static Conversation Start(Guid tenantId, Guid contactId, string channel, DateTimeOffset now)
+    public static Conversation Start(Guid tenantId, Guid contactId, string channel, Guid? connectionId, DateTimeOffset now)
     {
         if (contactId == Guid.Empty)
         {
             throw new ArgumentException("ContactId is required.", nameof(contactId));
         }
 
-        return new Conversation(tenantId, contactId, channel) { LastMessageAt = now };
+        return new Conversation(tenantId, contactId, channel) { LastMessageAt = now, ChannelConnectionId = connectionId };
     }
 
     /// <summary>A customer wrote: reopen when done; wait for the team when a human is answering.</summary>
-    public void Received(Message message)
+    public void Received(Message message, Guid? connectionId)
     {
         Touch(message);
+        ChannelConnectionId = connectionId ?? ChannelConnectionId;
         LastInboundAt = message.SentAt;
         if (Responder == Responder.Human)
         {

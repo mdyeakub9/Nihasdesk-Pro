@@ -25,7 +25,7 @@ internal sealed class InboxIngest(
         // timestamptz needs UTC; channels may send any offset.
         var sentAt = message.SentAt.ToUniversalTime();
         var contactId = await contacts.FindOrCreateAsync(message.Channel, message.ExternalContactId, message.ContactName, cancellationToken);
-        var conversation = await FindOrStartAsync(contactId, message.Channel, sentAt, cancellationToken);
+        var conversation = await FindOrStartAsync(contactId, message.Channel, message.ConnectionId, sentAt, cancellationToken);
 
         if (message.ExternalMessageId is { } externalId
             && await db.Messages.Where(m => m.ConversationId == conversation.Id && m.ExternalId == externalId)
@@ -36,7 +36,7 @@ internal sealed class InboxIngest(
 
         var stored = Message.FromCustomer(tenant.TenantId, conversation.Id, message.Text, message.ExternalMessageId, sentAt);
         db.Messages.Add(stored);
-        conversation.Received(stored);
+        conversation.Received(stored, message.ConnectionId);
         try
         {
             await db.SaveChangesAsync(cancellationToken);
@@ -56,7 +56,7 @@ internal sealed class InboxIngest(
         return new InboundResult(conversation.Id, stored.Id, Duplicate: false);
     }
 
-    private async Task<Conversation> FindOrStartAsync(Guid contactId, string channel, DateTimeOffset now, CancellationToken cancellationToken)
+    private async Task<Conversation> FindOrStartAsync(Guid contactId, string channel, Guid? connectionId, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var existing = await db.Conversations.SingleOrDefaultAsync(c => c.ContactId == contactId && c.Channel == channel, cancellationToken);
         if (existing is not null)
@@ -64,7 +64,7 @@ internal sealed class InboxIngest(
             return existing;
         }
 
-        var conversation = Conversation.Start(tenant.TenantId, contactId, channel, now);
+        var conversation = Conversation.Start(tenant.TenantId, contactId, channel, connectionId, now);
         db.Conversations.Add(conversation);
         try
         {
