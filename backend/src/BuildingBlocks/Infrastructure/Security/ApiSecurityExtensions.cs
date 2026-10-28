@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Nihasdesk.Infrastructure.Security;
 
-/// <summary>Named rate-limit policies (SEC-07), configurable under <c>RateLimits</c>. Per client IP, except <see cref="Messages"/>.</summary>
+/// <summary>Named rate-limit policies (SEC-07), configurable under <c>RateLimits</c>. Per client IP, except <see cref="Messages"/> and <see cref="Uploads"/>.</summary>
 public static class RatePolicies
 {
     public const string Login = "login";
@@ -25,6 +25,9 @@ public static class RatePolicies
 
     /// <summary>Team replies and notes in the inbox; per signed-in user.</summary>
     public const string Messages = "messages";
+
+    /// <summary>File uploads (CSV import, later documents and images); per signed-in user (SEC-07).</summary>
+    public const string Uploads = "uploads";
 }
 
 public sealed class RateLimitSettings
@@ -45,6 +48,7 @@ public static class ApiSecurityExtensions
         [RatePolicies.Email] = new() { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) },
         [RatePolicies.Invite] = new() { PermitLimit = 30, Window = TimeSpan.FromHours(1) },
         [RatePolicies.Messages] = new() { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) },
+        [RatePolicies.Uploads] = new() { PermitLimit = 30, Window = TimeSpan.FromHours(1) },
     };
 
     /// <summary>Antiforgery for cookie-authenticated APIs (SEC-03) and auth rate limits (SEC-07).</summary>
@@ -91,7 +95,7 @@ public static class ApiSecurityExtensions
     }
 
     private static string PartitionKey(string policy, HttpContext context) =>
-        policy == RatePolicies.Messages && context.User.FindFirstValue(ClaimTypes.NameIdentifier) is { } userId
+        policy is RatePolicies.Messages or RatePolicies.Uploads && context.User.FindFirstValue(ClaimTypes.NameIdentifier) is { } userId
             ? "user:" + userId
             : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
