@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nihasdesk.Infrastructure.Email;
+using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Modules.Identity.Infrastructure;
 
 namespace Nihasdesk.TestSupport;
 
@@ -20,6 +22,12 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
     public TestClock Clock { get; } = new();
 
     public FakeHibpHandler Hibp { get; } = new();
+
+    protected override void ConfigureClient(HttpClient client)
+    {
+        base.ConfigureClient(client);
+        Emails.Deliver = DeliverEmailsAsync;
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -43,10 +51,22 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         {
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(Emails);
+            // The API only queues email; tests deliver the outbox on demand instead of a Workers host.
+            services.AddOptions<EmailOutboxOptions>();
+            services.AddSingleton<EmailOutboxDispatcher<IdentityModuleDbContext>>();
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
             services.AddHttpClient("hibp").ConfigurePrimaryHttpMessageHandler(() => Hibp);
         });
+    }
+
+    /// <summary>Delivers everything due in the outbox, like the Workers host would.</summary>
+    public async Task DeliverEmailsAsync()
+    {
+        var dispatcher = Services.GetRequiredService<EmailOutboxDispatcher<IdentityModuleDbContext>>();
+        while (await dispatcher.DispatchOnceAsync(CancellationToken.None) > 0)
+        {
+        }
     }
 
     /// <summary>A browser-like client: HTTPS (the session cookie is Secure) with its own cookie jar.</summary>
@@ -54,14 +74,33 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         new(CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") }));
 }
 
+/// <summary>Captures sent email. Reading <see cref="Sent"/> first delivers the outbox.</summary>
 public sealed class FakeEmailSender : IEmailSender
 {
     private readonly ConcurrentQueue<EmailMessage> _sent = new();
 
-    public IReadOnlyList<EmailMessage> Sent => [.. _sent];
+    /// <summary>Set by the factory: delivers due outbox emails before tests look at them.</summary>
+    internal Func<Task>? Deliver { get; set; }
+
+    /// <summary>When set, sending throws this, like an SMTP outage.</summary>
+    public Func<Exception>? Fail { get; set; }
+
+    public IReadOnlyList<EmailMessage> Sent
+    {
+        get
+        {
+            Deliver?.Invoke().GetAwaiter().GetResult();
+            return [.. _sent];
+        }
+    }
 
     public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {
+        if (Fail is { } fail)
+        {
+            throw fail();
+        }
+
         _sent.Enqueue(message);
         return Task.CompletedTask;
     }

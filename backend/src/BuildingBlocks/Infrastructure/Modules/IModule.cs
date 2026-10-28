@@ -16,4 +16,9 @@ public interface IModule
     void AddServices(IServiceCollection services, IConfiguration configuration);
 
     void MapEndpoints(IEndpointRouteBuilder endpoints);
+
+    /// <summary>Background work run by the Workers host (outbox delivery, scheduled jobs). Most modules have none yet.</summary>
+    void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
 }

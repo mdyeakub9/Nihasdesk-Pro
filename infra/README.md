@@ -43,5 +43,14 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    ```
    - https://localhost:5080/health — liveness (process is up)
    - https://localhost:5080/health/ready — readiness (PostgreSQL, Redis, RabbitMQ reachable)
+6. Run the Workers host as well — it delivers queued email (ADR 0013); without it nothing reaches Mailpit. Give it the same app connection string once:
+   ```bash
+   cd backend/src/Nihasdesk.Workers
+   dotnet user-secrets set "ConnectionStrings:Postgres" "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk_app;Password=<APP_DB_PASSWORD>"
+   ```
+   ```bash
+   dotnet run --project backend/src/Nihasdesk.Workers
+   ```
+   In Visual Studio: solution → **Configure Startup Projects** → **Multiple startup projects** → start `Nihasdesk.Api` and `Nihasdesk.Workers`.
 
 Stop with `docker compose -f infra/docker-compose.yml down` (add `-v` to delete local data).

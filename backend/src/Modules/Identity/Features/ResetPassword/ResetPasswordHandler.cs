@@ -1,7 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Nihasdesk.Infrastructure.Email;
+using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Infrastructure;
 using Nihasdesk.Modules.Identity.Infrastructure.Audit;
@@ -30,7 +30,7 @@ internal sealed class ResetPasswordValidator : AbstractValidator<ResetPasswordRe
 internal sealed class ResetPasswordHandler(
     UserManager<User> users,
     IdentityModuleDbContext db,
-    IEmailSender email,
+    IEmailOutbox email,
     DashboardLinks links,
     AuditLog audit)
 {
@@ -54,7 +54,7 @@ internal sealed class ResetPasswordHandler(
         await users.ResetAccessFailedCountAsync(user);
         await users.SetLockoutEndDateAsync(user, lockoutEnd: null);
 
-        await email.SendAsync(AuthEmails.PasswordChanged(user.Email!, user.Language, user.DisplayName, links.Login), cancellationToken);
+        await email.EnqueueAsync(AuthEmails.PasswordChanged(user.Email!, user.Language, user.DisplayName, links.Login), cancellationToken);
         await audit.WriteAsync(AuditActions.PasswordReset, user.Id, tenantId: null, cancellationToken);
         return Result.Success();
     }

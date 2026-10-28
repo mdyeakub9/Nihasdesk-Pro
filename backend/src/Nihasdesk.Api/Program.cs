@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Nihasdesk.Api;
 using Nihasdesk.Api.Middleware;
-using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Infrastructure.Health;
 using Nihasdesk.Infrastructure.Security;
 using Nihasdesk.Infrastructure.Tenancy;
@@ -34,7 +33,6 @@ builder.Services.AddCors(options =>
         .AllowCredentials()));
 
 builder.Services.AddDependencyHealthChecks(builder.Configuration);
-builder.Services.AddEmail(builder.Configuration);
 // CSRF tokens (SEC-03) and auth rate limits (SEC-07).
 builder.Services.AddApiSecurity(builder.Configuration);
 

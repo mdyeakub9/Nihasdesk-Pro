@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using Nihasdesk.Infrastructure.Email;
+using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Tenancy;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Domain;
@@ -19,7 +19,7 @@ internal sealed class SignupHandler(
     UserManager<User> users,
     IdentityModuleDbContext db,
     TenantContext tenantContext,
-    IEmailSender email,
+    IEmailOutbox email,
     DashboardLinks links,
     AuditLog audit)
 {
@@ -38,7 +38,7 @@ internal sealed class SignupHandler(
 
         if (await users.FindByEmailAsync(address) is { } existing)
         {
-            await email.SendAsync(AuthEmails.AccountExists(address, language, links.Login), cancellationToken);
+            await email.EnqueueAsync(AuthEmails.AccountExists(address, language, links.Login), cancellationToken);
             await audit.WriteAsync(AuditActions.SignupExistingEmail, existing.Id, tenantId: null, cancellationToken);
             return Result.Success();
         }
@@ -58,7 +58,7 @@ internal sealed class SignupHandler(
             if (created.Errors.Any(e => e.Code is nameof(IdentityErrorDescriber.DuplicateEmail) or nameof(IdentityErrorDescriber.DuplicateUserName)))
             {
                 // Lost a race with a parallel signup for the same email: same answer as above.
-                await email.SendAsync(AuthEmails.AccountExists(address, language, links.Login), cancellationToken);
+                await email.EnqueueAsync(AuthEmails.AccountExists(address, language, links.Login), cancellationToken);
                 return Result.Success();
             }
 
@@ -67,12 +67,13 @@ internal sealed class SignupHandler(
 
         db.AddRange(organization, workspace, Membership.Create(workspace.Id, user.Id, Role.Owner));
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
 
+        // Queued in the same transaction: no account without its email, no email without its account.
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
-        await email.SendAsync(
+        await email.EnqueueAsync(
             AuthEmails.VerifyEmail(address, language, user.DisplayName, links.VerifyEmail(user.Id, token)),
             cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         await audit.WriteAsync(AuditActions.Signup, user.Id, workspace.Id, cancellationToken);
         return Result.Success();
     }
