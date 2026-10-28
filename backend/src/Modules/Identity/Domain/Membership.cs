@@ -16,6 +16,17 @@ internal sealed class Membership : TenantEntity
 
     public Role Role { get; private set; }
 
+    /// <summary>Admin ⇄ Member. The Owner role is fixed (ownership transfer comes later).</summary>
+    public void ChangeRole(Role role)
+    {
+        if (Role == Role.Owner || role == Role.Owner)
+        {
+            throw new InvalidOperationException("The Owner role can't be given or taken here.");
+        }
+
+        Role = role;
+    }
+
     public static Membership Create(Guid tenantId, Guid userId, Role role)
     {
         if (userId == Guid.Empty)

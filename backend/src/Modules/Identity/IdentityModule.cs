@@ -17,6 +17,7 @@ using Nihasdesk.Modules.Identity.Features.Me;
 using Nihasdesk.Modules.Identity.Features.ResendVerification;
 using Nihasdesk.Modules.Identity.Features.ResetPassword;
 using Nihasdesk.Modules.Identity.Features.Signup;
+using Nihasdesk.Modules.Identity.Features.Team;
 using Nihasdesk.Modules.Identity.Features.VerifyEmail;
 using Nihasdesk.Modules.Identity.Infrastructure;
 using Nihasdesk.Modules.Identity.Infrastructure.Audit;
@@ -111,6 +112,12 @@ public sealed class IdentityModule : IModule
         services.AddScoped<LoginHandler>();
         services.AddScoped<MeHandler>();
         services.AddScoped<ForgotPasswordHandler>();
+        services.AddScoped<CurrentMember>();
+        services.AddScoped<TeamHandler>();
+        services.AddScoped<AcceptInvitationHandler>();
+        services.AddScoped<IValidator<InviteRequest>, InviteValidator>();
+        services.AddScoped<IValidator<ChangeRoleRequest>, ChangeRoleValidator>();
+        services.AddScoped<IValidator<AcceptInvitationRequest>, AcceptInvitationValidator>();
         services.AddScoped<ResetPasswordHandler>();
         services.AddScoped<IValidator<ForgotPasswordRequest>, ForgotPasswordValidator>();
         services.AddScoped<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
@@ -120,7 +127,11 @@ public sealed class IdentityModule : IModule
         services.AddScoped<IValidator<LoginRequest>, LoginValidator>();
     }
 
-    public void MapEndpoints(IEndpointRouteBuilder endpoints) => AuthEndpoints.Map(endpoints);
+    public void MapEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        AuthEndpoints.Map(endpoints);
+        TeamEndpoints.Map(endpoints);
+    }
 
     /// <summary>Workers: delivers the Identity email outbox (ADR 0013). No auth or HTTP services.</summary>
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)

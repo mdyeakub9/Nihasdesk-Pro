@@ -29,6 +29,8 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
 
     public DbSet<Membership> Memberships => Set<Membership>();
 
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+
     public DbSet<UserSession> Sessions => Set<UserSession>();
 
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
@@ -81,6 +83,20 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
             membership.HasOne<User>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
             membership.HasIndex(m => new { m.TenantId, m.UserId }).IsUnique();
             membership.HasIndex(m => m.UserId);
+        });
+
+        builder.Entity<Invitation>(invitation =>
+        {
+            invitation.ToTable("invitations");
+            invitation.Property(i => i.Email).HasMaxLength(Invitation.EmailMaxLength);
+            invitation.Property(i => i.Role).HasConversion(
+                role => role.ToString().ToLowerInvariant(),
+                value => Enum.Parse<Role>(value, ignoreCase: true));
+            invitation.Property(i => i.Role).HasMaxLength(20);
+            invitation.HasOne<Workspace>().WithMany().HasForeignKey(i => i.TenantId).HasPrincipalKey(w => w.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+            invitation.HasIndex(i => i.TokenHash).IsUnique();
+            invitation.HasIndex(i => new { i.TenantId, i.Email });
         });
 
         builder.Entity<UserSession>(session =>

@@ -19,3 +19,9 @@ _Status: draft._
 | `auth.no_workspace` | 403 | Account has no workspace membership |
 | `auth.weak_password` | 400 | Password rejected by the password policy (ADR 0009) |
 | `auth.breached_password` | 400 | Password found in Have I Been Pwned (ADR 0009) |
+| `team.forbidden` | 403 | The member's role lacks the permission (docs/standards/permissions.md) |
+| `team.not_found` | 404 | Invitation or member not in this workspace — also for other workspaces' IDs (SEC-06) |
+| `team.already_member` | 409 | The invited email is already in the team |
+| `team.owner_is_fixed` | 400 | The Owner can't be removed or have their role changed |
+| `team.invitation_invalid` | 404 | Invitation link unknown, used, revoked or expired |
+| `team.email_has_account` | 409 | The invited email already has an account (one workspace per person in Phase 1, ADR 0014) |
