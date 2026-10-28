@@ -8,6 +8,14 @@
   <ItemGroup>
     <ProjectReference Include="..\BuildingBlocks\SharedKernel\Nihasdesk.SharedKernel.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\AiAgent\Nihasdesk.Modules.AiAgent.csproj" />
+    <ProjectReference Include="..\Modules\Billing\Nihasdesk.Modules.Billing.csproj" />
+    <ProjectReference Include="..\Modules\Channels\Nihasdesk.Modules.Channels.csproj" />
+    <ProjectReference Include="..\Modules\Commerce\Nihasdesk.Modules.Commerce.csproj" />
+    <ProjectReference Include="..\Modules\Contacts\Nihasdesk.Modules.Contacts.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Nihasdesk.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Inbox\Nihasdesk.Modules.Inbox.csproj" />
+    <ProjectReference Include="..\Modules\Shipping\Nihasdesk.Modules.Shipping.csproj" />
   </ItemGroup>
 
 </Project>

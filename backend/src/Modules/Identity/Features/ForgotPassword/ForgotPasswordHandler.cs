@@ -1,6 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Nihasdesk.Infrastructure.Email;
+using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Infrastructure;
 using Nihasdesk.Modules.Identity.Infrastructure.Audit;
@@ -19,7 +19,7 @@ internal sealed class ForgotPasswordValidator : AbstractValidator<ForgotPassword
 /// Sends a reset link (valid 1 hour) to verified accounts. The answer is the same for unknown,
 /// unverified and verified emails (SEC-26).
 /// </summary>
-internal sealed class ForgotPasswordHandler(UserManager<User> users, IEmailSender email, DashboardLinks links, AuditLog audit)
+internal sealed class ForgotPasswordHandler(UserManager<User> users, IEmailOutbox email, DashboardLinks links, AuditLog audit)
 {
     public async Task HandleAsync(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
@@ -30,7 +30,7 @@ internal sealed class ForgotPasswordHandler(UserManager<User> users, IEmailSende
         }
 
         var token = await users.GeneratePasswordResetTokenAsync(user);
-        await email.SendAsync(
+        await email.EnqueueAsync(
             AuthEmails.ResetPassword(user.Email!, user.Language, user.DisplayName, links.ResetPassword(user.Id, token)),
             cancellationToken);
         await audit.WriteAsync(AuditActions.PasswordResetRequested, user.Id, tenantId: null, cancellationToken);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Domain;
@@ -101,6 +102,8 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
             audit.HasIndex(a => a.OccurredAt);
             audit.HasIndex(a => a.UserId);
         });
+
+        builder.MapEmailOutbox();
 
         builder.ApplyTenantQueryFilters(this);
     }

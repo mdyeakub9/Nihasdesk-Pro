@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Identity.Accounts;
@@ -33,13 +34,9 @@ public sealed class IdentityModule : IModule
 
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddModuleDbContext<IdentityModuleDbContext>(configuration, IdentityModuleDbContext.Schema);
+        AddPersistence(services, configuration);
         services.AddOptions<DashboardOptions>().Bind(configuration.GetSection(DashboardOptions.SectionName));
-
-        // One key ring for all API instances, so sessions and tokens survive restarts and scale-out.
-        services.AddDataProtection()
-            .SetApplicationName("Nihasdesk")
-            .PersistKeysToDbContext<IdentityModuleDbContext>();
+        services.AddEmailOutbox<IdentityModuleDbContext>();
 
         services.AddIdentityCore<User>(options =>
             {
@@ -124,4 +121,22 @@ public sealed class IdentityModule : IModule
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints) => AuthEndpoints.Map(endpoints);
+
+    /// <summary>Workers: delivers the Identity email outbox (ADR 0013). No auth or HTTP services.</summary>
+    public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+        AddPersistence(services, configuration);
+        services.AddEmailOutboxDispatcher<IdentityModuleDbContext>(configuration);
+    }
+
+    private static void AddPersistence(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddModuleDbContext<IdentityModuleDbContext>(configuration, IdentityModuleDbContext.Schema);
+
+        // One key ring for the API and Workers: sessions, tokens and outbox emails survive restarts
+        // and scale-out, and Workers can read what the API encrypted.
+        services.AddDataProtection()
+            .SetApplicationName("Nihasdesk")
+            .PersistKeysToDbContext<IdentityModuleDbContext>();
+    }
 }

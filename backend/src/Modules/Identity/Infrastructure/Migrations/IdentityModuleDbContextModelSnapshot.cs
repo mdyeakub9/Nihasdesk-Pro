@@ -127,6 +127,49 @@ namespace Nihasdesk.Modules.Identity.Infrastructure.Migrations
                     b.ToTable("user_tokens", "identity");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Infrastructure.Email.Outbox.OutboxEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("FailedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failed_at");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<byte[]>("ProtectedMessage")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("protected_message");
+
+                    b.HasKey("Id")
+                        .HasName("pk_email_outbox");
+
+                    b.HasIndex("NextAttemptAt")
+                        .HasDatabaseName("ix_email_outbox_next_attempt_at")
+                        .HasFilter("failed_at IS NULL");
+
+                    b.ToTable("email_outbox", "identity");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.Identity.Accounts.User", b =>
                 {
                     b.Property<Guid>("Id")
