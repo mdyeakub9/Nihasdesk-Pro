@@ -24,6 +24,7 @@ public sealed class InboxModule : IModule
         services.AddSingleton<InboxNotifier>();
         services.AddScoped<IInboxIngest, InboxIngest>();
         services.AddScoped<IOutboundMessages, OutboundMessages>();
+        services.AddScoped<IAiConversations, AiConversations>();
         services.AddScoped<ConversationsHandler>();
         services.AddScoped<IValidator<ListConversationsQuery>, ListConversationsValidator>();
         services.AddScoped<IValidator<ListMessagesQuery>, ListMessagesValidator>();

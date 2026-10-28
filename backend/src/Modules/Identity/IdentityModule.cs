@@ -128,6 +128,7 @@ public sealed class IdentityModule : IModule
         services.AddScoped<TeamHandler>();
         services.AddScoped<ITeamDirectory, TeamDirectory>();
         services.AddScoped<IAuditTrail, AuditTrail>();
+        services.AddScoped<IWorkspaceInfo, WorkspaceInfo>();
         services.AddScoped<AcceptInvitationHandler>();
         services.AddScoped<IValidator<InviteRequest>, InviteValidator>();
         services.AddScoped<IValidator<ChangeRoleRequest>, ChangeRoleValidator>();

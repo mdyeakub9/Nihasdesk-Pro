@@ -12,7 +12,8 @@ internal sealed class InboxIngest(
     InboxDbContext db,
     IContactDirectory contacts,
     ITenantContext tenant,
-    InboxNotifier notifier) : IInboxIngest
+    InboxNotifier notifier,
+    TimeProvider time) : IInboxIngest
 {
     public async Task<InboundResult> ReceiveAsync(InboundMessage message, CancellationToken cancellationToken)
     {
@@ -36,7 +37,7 @@ internal sealed class InboxIngest(
 
         var stored = Message.FromCustomer(tenant.TenantId, conversation.Id, message.Text, message.ExternalMessageId, sentAt);
         db.Messages.Add(stored);
-        conversation.Received(stored, message.ConnectionId);
+        conversation.Received(stored, message.ConnectionId, time.GetUtcNow());
         try
         {
             await db.SaveChangesAsync(cancellationToken);
