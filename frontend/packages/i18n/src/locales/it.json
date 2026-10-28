@@ -635,6 +635,13 @@
       "reply_too_long": "troppo lunga",
       "empty_reply": "nessuna risposta",
       "too_many_tool_rounds": "troppi passaggi"
+    },
+    "failed": "L’IA non ha potuto rispondere: {{reason}}.",
+    "failedReasons": {
+      "http_401": "OpenAI non ha accettato la chiave API (401) — controlla la chiave e la regione del progetto",
+      "http_429": "OpenAI ha rifiutato per ora (429): credito esaurito o troppe richieste",
+      "output_limit": "ha finito lo spazio per la risposta (limite di output)",
+      "other": "il fornitore IA ha avuto un errore ({{code}})"
     }
   }
 }

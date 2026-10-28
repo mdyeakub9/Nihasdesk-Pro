@@ -635,6 +635,13 @@
       "reply_too_long": "too long",
       "empty_reply": "no answer",
       "too_many_tool_rounds": "it took too many steps"
+    },
+    "failed": "The AI couldn’t answer: {{reason}}.",
+    "failedReasons": {
+      "http_401": "OpenAI didn’t accept the API key (401) — check the key and the project region",
+      "http_429": "OpenAI refused for now (429): no credit left or too many requests",
+      "output_limit": "it ran out of room for the answer (output limit)",
+      "other": "the AI provider failed ({{code}})"
     }
   }
 }
