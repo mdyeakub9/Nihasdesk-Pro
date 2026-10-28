@@ -295,5 +295,49 @@
     "breachedPassword": "Questa password compare in violazioni di dati note. Scegline un'altra.",
     "rateLimited": "Troppi tentativi. Attendi qualche minuto e riprova.",
     "generic": "Qualcosa è andato storto. Riprova."
+  },
+  "settings": {
+    "sections": "Sezioni delle impostazioni",
+    "team": "Team"
+  },
+  "team": {
+    "intro": "Invita le persone che rispondono ai tuoi clienti. Titolari e Amministratori gestiscono il team; i Membri lavorano nell'inbox.",
+    "role": "Ruolo",
+    "roleOf": "Ruolo di {{name}}",
+    "you": "tu",
+    "joined": "dal {{date}}",
+    "members_one": "{{count}} membro",
+    "members_other": "{{count}} membri",
+    "remove": "Rimuovi",
+    "removeConfirm": "Sì, rimuovi",
+    "cancel": "Annulla",
+    "invite": {
+      "title": "Invita un membro del team",
+      "placeholder": "nome@esempio.it",
+      "submit": "Invia invito",
+      "sent": "Invito inviato. Il link è valido per 48 ore."
+    },
+    "pending": {
+      "title_one": "{{count}} invito in attesa",
+      "title_other": "{{count}} inviti in attesa",
+      "expires": "scade il {{date}}",
+      "resend": "Invia di nuovo",
+      "revoke": "Revoca"
+    }
+  },
+  "acceptInvite": {
+    "title": "Unisciti a {{workspace}}",
+    "intro": "{{inviter}} ha invitato {{email}} come {{role}}. Scegli il tuo nome e una password per unirti.",
+    "submit": "Unisciti al team",
+    "loading": "Apertura dell'invito…",
+    "invalidTitle": "Invito non valido"
+  },
+  "teamErrors": {
+    "forbidden": "Il tuo ruolo non lo consente.",
+    "notFound": "Questo elemento non esiste più.",
+    "alreadyMember": "Questa persona fa già parte del team.",
+    "ownerIsFixed": "Il Titolare non può essere rimosso o modificato.",
+    "invitationInvalid": "Questo invito non è valido, è già stato usato o è scaduto. Chiedine uno nuovo.",
+    "emailHasAccount": "Questa email ha già un account Nihasdesk. Unirsi a una seconda area di lavoro arriverà più avanti."
   }
 }

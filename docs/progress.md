@@ -16,6 +16,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Email outbox (ADR 0013): API queues email in the module transaction (encrypted), Workers delivers with SKIP LOCKED, 8 retries over ~1 day, rows deleted after sending. Closes the response-time enumeration gap. Workers host now loads modules (`IModule.AddWorkerServices`).
 - Dashboard auth: login, signup, check-email, verify-email, forgot/reset password pages (React Hook Form + Zod, it/en errors), real session from `/api/v1/me` with route guards and logout, CSRF-aware API client, Vite dev proxy for same-origin cookies. Mock session removed.
 - Team (PR 3a backend): permission matrix (`docs/standards/permissions.md`), invitations (48 h, hashed single-use tokens, ADR 0014), team list, role changes, member removal with session revocation, audit events; public preview/accept creates the account. Re-auth and MFA follow in 3b.
+- Team UI: Settings → Team (invite with role, pending invitations with resend/revoke, role change, remove with confirmation; actions shown per role) and the public accept-invitation page.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
