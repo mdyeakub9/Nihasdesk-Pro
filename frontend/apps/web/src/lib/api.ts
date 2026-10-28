@@ -4,6 +4,11 @@
  */
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
+/** Absolute URL of an API path (for clients that don't use fetch, e.g. SignalR). */
+export function apiUrl(path: string): string {
+  return `${apiBaseUrl}${path}`;
+}
+
 /** A failed API call; `code` is the stable error code from Problem Details (docs/standards/errors.md). */
 export class ApiError extends Error {
   constructor(
@@ -24,7 +29,7 @@ export function resetCsrfToken() {
   csrfToken = null;
 }
 
-async function getCsrfToken(): Promise<string> {
+export async function getCsrfToken(): Promise<string> {
   if (!csrfToken) {
     const response = await fetch(`${apiBaseUrl}/api/v1/csrf`, { credentials: 'include' });
     if (!response.ok) {

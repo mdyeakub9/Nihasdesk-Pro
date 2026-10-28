@@ -14,7 +14,8 @@ export const testSession: Session = {
   role: 'owner',
 };
 
-type Handler = (body: unknown) => Response | Promise<Response>;
+/** `url` is the full request URL, for handlers that read query parameters. */
+type Handler = (body: unknown, url: URL) => Response | Promise<Response>;
 
 type FakeApiOptions = {
   /** Signed-in user, or null for a signed-out browser. */
@@ -43,15 +44,16 @@ export function fakeApi({ session = testSession, health, post = {}, routes = {} 
     if (url.endsWith('/api/v1/csrf')) return json({ token: 'test-csrf-token' });
     if (url.endsWith('/api/v1/me')) return current ? json(current) : problem(401, 'auth.unauthorized');
 
-    const path = new URL(url, 'http://localhost').pathname;
+    const parsed = new URL(url, 'http://localhost');
+    const path = parsed.pathname;
     const route = routes[`${method} ${path}`];
-    if (route) return route(init?.body ? JSON.parse(String(init.body)) : undefined);
+    if (route) return route(init?.body ? JSON.parse(String(init.body)) : undefined, parsed);
 
     if (method === 'POST') {
       if (path === '/api/v1/auth/logout') current = null;
       const handler = post[path];
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
-      const response = handler ? await handler(body) : new Response(null, { status: 204 });
+      const response = handler ? await handler(body, parsed) : new Response(null, { status: 204 });
       // Like the real API: a successful login or verification starts a session.
       if (response.ok && (path === '/api/v1/auth/login' || path === '/api/v1/auth/verify-email')) {
         current = (await response.clone().json()) as Session;

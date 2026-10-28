@@ -14,7 +14,8 @@ export default defineConfig({
     // SameSite and would not travel from http://localhost:5173 to https://localhost:5080 otherwise.
     // `secure: false` only skips verifying the local .NET dev certificate inside Node.
     proxy: {
-      '/api': { target: apiTarget, secure: false },
+      // `ws`: the inbox hub (SignalR) upgrades to a WebSocket under /api (ADR 0016).
+      '/api': { target: apiTarget, secure: false, ws: true },
       '/health': { target: apiTarget, secure: false },
     },
   },

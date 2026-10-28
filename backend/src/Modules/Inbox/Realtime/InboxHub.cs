@@ -28,13 +28,22 @@ internal sealed class InboxHub(TenantContext tenant, ITeamDirectory team) : Hub
 
         // Hub calls get their own scope, so the request's tenant isn't set here yet.
         tenant.SetTenant(tenantId);
-        if (await team.FindAsync(userId, Context.ConnectionAborted) is null)
+        try
         {
-            Context.Abort();
+            if (await team.FindAsync(userId, Context.ConnectionAborted) is null)
+            {
+                Context.Abort();
+                return;
+            }
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, InboxNotifier.Group(tenantId), Context.ConnectionAborted);
+        }
+        catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
+        {
+            // The browser left while we were checking (page reload, tab closed): nothing to do.
             return;
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, InboxNotifier.Group(tenantId), Context.ConnectionAborted);
         await base.OnConnectedAsync();
     }
 }

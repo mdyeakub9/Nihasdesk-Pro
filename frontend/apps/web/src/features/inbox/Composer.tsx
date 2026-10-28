@@ -1,8 +1,9 @@
-import { Button, Tabs, TabsList, TabsTrigger, Textarea } from '@nihasdesk/ui';
+import { Button, FieldError, Tabs, TabsList, TabsTrigger, Textarea } from '@nihasdesk/ui';
 import { Send, Sparkles } from 'lucide-react';
 import { useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChannelIcon } from '../../components/ChannelIcon';
+import { authErrorMessage, isErrorCode } from '../auth/errors';
 import { useSendMessage } from './api';
 import type { Conversation } from './types';
 
@@ -38,7 +39,13 @@ export function Composer({ conversation }: { conversation: Conversation }) {
       )}
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <Tabs value={mode} onValueChange={(value) => setMode(value as Mode)}>
+          <Tabs
+            value={mode}
+            onValueChange={(value) => {
+              setMode(value as Mode);
+              send.reset();
+            }}
+          >
             <TabsList aria-label={t('composer.mode')}>
               <TabsTrigger value="reply">{t('composer.reply')}</TabsTrigger>
               <TabsTrigger value="note">{t('composer.note')}</TabsTrigger>
@@ -60,6 +67,13 @@ export function Composer({ conversation }: { conversation: Conversation }) {
           onKeyDown={onKeyDown}
           rows={2}
         />
+        {send.error && (
+          <FieldError>
+            {isErrorCode(send.error, 'conversation.outside_window')
+              ? t('composer.outsideWindow')
+              : authErrorMessage(send.error, t)}
+          </FieldError>
+        )}
         <div className="flex items-center justify-end gap-3">
           <span className="text-xs text-muted-foreground">{t('composer.enterToSend')}</span>
           <Button type="submit" disabled={!text.trim() || send.isPending}>

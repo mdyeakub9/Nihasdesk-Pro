@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import instagram from '../assets/channels/instagram.svg';
 import messengerBadge from '../assets/channels/messenger-badge.svg';
 import messenger from '../assets/channels/messenger.svg';
+import website from '../assets/channels/website.svg';
 import whatsapp from '../assets/channels/whatsapp.svg';
 import type { Channel } from '../features/inbox/types';
 
@@ -10,6 +11,7 @@ const icons: Record<Channel, { full: string; badge: string }> = {
   messenger: { full: messenger, badge: messengerBadge },
   instagram: { full: instagram, badge: instagram },
   whatsapp: { full: whatsapp, badge: whatsapp },
+  website: { full: website, badge: website },
 };
 
 type ChannelIconProps = {

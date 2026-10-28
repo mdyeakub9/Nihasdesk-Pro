@@ -67,7 +67,8 @@
   "channels": {
     "messenger": "Messenger",
     "instagram": "Instagram",
-    "whatsapp": "WhatsApp"
+    "whatsapp": "WhatsApp",
+    "website": "Chat del sito"
   },
   "inbox": {
     "title": "Conversazioni",
@@ -91,7 +92,8 @@
     "empty": {
       "title": "Nessuna conversazione selezionata",
       "text": "Scegli una conversazione dall'elenco per leggerla, rispondere o subentrare all'IA."
-    }
+    },
+    "unknownCustomer": "Cliente sconosciuto"
   },
   "conversation": {
     "notFound": "Conversazione non trovata",
@@ -121,8 +123,11 @@
     "delivery": {
       "sent": "Inviato",
       "delivered": "Consegnato",
-      "read": "Letto"
-    }
+      "read": "Letto",
+      "pending": "Invio in corso…",
+      "failed": "Non consegnato"
+    },
+    "loadOlder": "Carica messaggi precedenti"
   },
   "composer": {
     "mode": "Tipo di messaggio",
@@ -133,7 +138,8 @@
     "aiPreparing": "L'IA sta rispondendo a questo cliente. Inviando una risposta subentri tu.",
     "enterToSend": "Invio per inviare",
     "send": "Invia",
-    "saveNote": "Aggiungi nota"
+    "saveNote": "Aggiungi nota",
+    "outsideWindow": "L'ultimo messaggio del cliente ha più di 24 ore, quindi il canale non permette di rispondere ora. Aggiungi una nota interna o rispondi quando scrive di nuovo."
   },
   "customer": {
     "title": "Dettagli cliente",
