@@ -26,6 +26,13 @@ internal sealed class OpenAiProvider(HttpClient http, IOptions<AiOptions> option
             ["messages"] = new JsonArray([.. request.Messages.Select(ToJson)]),
             ["max_completion_tokens"] = request.MaxOutputTokens,
         };
+        // Reasoning models (gpt-5 family) count their thinking in the output budget; "low" leaves room
+        // for the answer. Empty for models without reasoning, which reject the parameter.
+        if (!string.IsNullOrEmpty(options.Value.ReasoningEffort))
+        {
+            body["reasoning_effort"] = options.Value.ReasoningEffort;
+        }
+
         if (request.Tools.Count > 0)
         {
             body["tools"] = new JsonArray([.. request.Tools.Select(t => (JsonNode)new JsonObject
@@ -62,7 +69,8 @@ internal sealed class OpenAiProvider(HttpClient http, IOptions<AiOptions> option
 
             using var json = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(cancellationToken));
             var root = json.RootElement;
-            var choice = root.GetProperty("choices")[0].GetProperty("message");
+            var first = root.GetProperty("choices")[0];
+            var choice = first.GetProperty("message");
             var text = choice.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String ? content.GetString() : null;
             var calls = new List<LlmToolCall>();
             if (choice.TryGetProperty("tool_calls", out var toolCalls) && toolCalls.ValueKind == JsonValueKind.Array)
@@ -75,6 +83,13 @@ internal sealed class OpenAiProvider(HttpClient http, IOptions<AiOptions> option
                         function.GetProperty("name").GetString() ?? string.Empty,
                         function.GetProperty("arguments").GetString() ?? "{}"));
                 }
+            }
+
+            // Out of output tokens before any answer: say so, rather than "empty reply".
+            if (string.IsNullOrWhiteSpace(text) && calls.Count == 0
+                && first.TryGetProperty("finish_reason", out var finish) && finish.GetString() == "length")
+            {
+                throw new LlmException("output_limit");
             }
 
             var usage = root.TryGetProperty("usage", out var u)
@@ -126,7 +141,11 @@ internal sealed class AiOptions
     /// <summary>The model that writes replies.</summary>
     public string ReplyModel { get; set; } = "gpt-5-mini";
 
-    public int MaxOutputTokens { get; set; } = 600;
+    /// <summary>Includes a reasoning model's thinking; the reply itself stays short (prompt, guardrail).</summary>
+    public int MaxOutputTokens { get; set; } = 2000;
+
+    /// <summary><c>minimal</c> / <c>low</c> / <c>medium</c> / <c>high</c> for reasoning models; empty for others.</summary>
+    public string? ReasoningEffort { get; set; } = "low";
 
     public int HistorySize { get; set; } = 20;
 

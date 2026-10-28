@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Nihasdesk.TestSupport" />
+    <!-- The OpenAI request/response mapping is tested against canned answers. -->
+    <InternalsVisibleTo Include="Nihasdesk.Api.Tests" />
   </ItemGroup>
 
 </Project>
