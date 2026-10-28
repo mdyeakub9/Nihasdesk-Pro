@@ -37,4 +37,10 @@ internal static class AuditActions
     public const string Logout = "auth.logout";
     public const string PasswordResetRequested = "auth.password_reset_requested";
     public const string PasswordReset = "auth.password_reset";
+    public const string InvitationCreated = "team.invitation_created";
+    public const string InvitationResent = "team.invitation_resent";
+    public const string InvitationRevoked = "team.invitation_revoked";
+    public const string InvitationAccepted = "team.invitation_accepted";
+    public const string MemberRoleChanged = "team.member_role_changed";
+    public const string MemberRemoved = "team.member_removed";
 }

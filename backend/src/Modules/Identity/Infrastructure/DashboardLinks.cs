@@ -11,5 +11,7 @@ internal sealed class DashboardLinks(IOptions<DashboardOptions> options)
 
     public string ResetPassword(Guid userId, string token) => Build($"/reset-password?user={userId}&token={Uri.EscapeDataString(token)}");
 
+    public string AcceptInvitation(string token) => Build($"/accept-invitation?token={Uri.EscapeDataString(token)}");
+
     private string Build(string path) => options.Value.DashboardUrl.TrimEnd('/') + path;
 }

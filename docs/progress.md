@@ -15,6 +15,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Identity password & audit (PR 2b): forgot/reset password (1 h token, single use, revokes all sessions, notice email), HIBP breached-password check (k-anonymity, fail-open), append-only audit log with IP and 12-month retention (ADR 0012). Fixed: signing up or in while already signed in returned 500.
 - Email outbox (ADR 0013): API queues email in the module transaction (encrypted), Workers delivers with SKIP LOCKED, 8 retries over ~1 day, rows deleted after sending. Closes the response-time enumeration gap. Workers host now loads modules (`IModule.AddWorkerServices`).
 - Dashboard auth: login, signup, check-email, verify-email, forgot/reset password pages (React Hook Form + Zod, it/en errors), real session from `/api/v1/me` with route guards and logout, CSRF-aware API client, Vite dev proxy for same-origin cookies. Mock session removed.
+- Team (PR 3a backend): permission matrix (`docs/standards/permissions.md`), invitations (48 h, hashed single-use tokens, ADR 0014), team list, role changes, member removal with session revocation, audit events; public preview/accept creates the account. Re-auth and MFA follow in 3b.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

@@ -72,6 +72,23 @@ internal static class AuthEmails
         return Render(to, subject, greeting, body, action, loginLink, footer);
     }
 
+    /// <summary>Invitation to join a workspace (ADR 0014); written in the inviter's language.</summary>
+    public static EmailMessage Invitation(string to, string language, string workspace, string inviter, string link)
+    {
+        var it = IsItalian(language);
+        var subject = it ? $"{inviter} ti invita su Nihasdesk" : $"{inviter} invited you to Nihasdesk";
+        var greeting = it ? "Ciao," : "Hi,";
+        var body = it
+            ? $"{inviter} ti ha invitato a unirti al team di {workspace} su Nihasdesk. L'invito scade tra 48 ore."
+            : $"{inviter} invited you to join the {workspace} team on Nihasdesk. The invitation expires in 48 hours.";
+        var action = it ? "Accetta l'invito" : "Accept invitation";
+        var footer = it
+            ? "Se non conosci questa persona, ignora questa email."
+            : "If you don't know this person, you can ignore this email.";
+
+        return Render(to, subject, greeting, body, action, link, footer);
+    }
+
     private static bool IsItalian(string language) => language.StartsWith("it", StringComparison.OrdinalIgnoreCase);
 
     private static EmailMessage Render(string to, string subject, string greeting, string body, string action, string link, string footer)

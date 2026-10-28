@@ -18,6 +18,9 @@ public static class RatePolicies
 
     /// <summary>Endpoints that send email: resend verification, later password reset and invitations.</summary>
     public const string Email = "email";
+
+    /// <summary>Team invitations (create, resend).</summary>
+    public const string Invite = "invite";
 }
 
 public sealed class RateLimitSettings
@@ -36,6 +39,7 @@ public static class ApiSecurityExtensions
         [RatePolicies.Login] = new() { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) },
         [RatePolicies.Signup] = new() { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) },
         [RatePolicies.Email] = new() { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) },
+        [RatePolicies.Invite] = new() { PermitLimit = 30, Window = TimeSpan.FromHours(1) },
     };
 
     /// <summary>Antiforgery for cookie-authenticated APIs (SEC-03) and auth rate limits (SEC-07).</summary>
