@@ -319,7 +319,8 @@
     "sections": "Sezioni delle impostazioni",
     "team": "Team",
     "channels": "Canali",
-    "security": "Sicurezza"
+    "security": "Sicurezza",
+    "ai": "IA"
   },
   "team": {
     "intro": "Invita le persone che rispondono ai tuoi clienti. Titolari e Amministratori gestiscono il team; i Membri lavorano nell'inbox.",
@@ -559,6 +560,81 @@
         "noFile": "Scegli prima un file CSV.",
         "notCsv": "Questo non è un file di testo CSV. Salvalo come CSV (UTF-8) e riprova."
       }
+    }
+  },
+  "aiSettings": {
+    "title": "Assistente IA",
+    "intro": "L’IA risponde ai clienti dal tuo catalogo e dalle risposte che il team le ha insegnato. Quando non sa, passa la conversazione al team.",
+    "notConfigured": "L’IA non è ancora collegata su questo server (manca la chiave OpenAI). Fino ad allora risponde il team.",
+    "enabled": "L’IA risponde ai clienti",
+    "tone": "Tono",
+    "tones": {
+      "friendly": "Amichevole e informale",
+      "formal": "Cortese e formale"
+    },
+    "instructions": "Le tue indicazioni per l’IA",
+    "instructionsPlaceholder": "es. Ricorda sempre che la spedizione è gratuita sopra i 50 €. Non promettere date di consegna.",
+    "instructionsHint": "In parole semplici. L’IA le segue, ma mai contro le sue regole di sicurezza (niente prezzi inventati, niente link).",
+    "disclosure": "Primo messaggio ai clienti",
+    "disclosureHint": "Detto una volta, prima della prima risposta dell’IA, così i clienti sanno che parlano con un’IA (obbligatorio per legge UE). Lascia vuoto per il testo predefinito.",
+    "save": "Salva",
+    "saved": "Salvato.",
+    "ownersOnly": "Solo Proprietari e Admin possono modificare l’IA.",
+    "questions": {
+      "title": "Domande a cui l’IA non ha saputo rispondere",
+      "intro": "Scrivi la risposta una volta: l’IA la userà la prossima volta che qualcuno chiede.",
+      "empty": "Niente in attesa. Finora l’IA conosceva le risposte.",
+      "open": "Apri la conversazione",
+      "answerLabel": "La tua risposta",
+      "teach": "Insegna all’IA",
+      "dismiss": "Ignora",
+      "resolved": "Questa domanda è già stata risolta o ignorata.",
+      "notFound": "Questa domanda non esiste più."
+    },
+    "answers": {
+      "title_one": "Cosa ha imparato l’IA ({{count}})",
+      "title_other": "Cosa ha imparato l’IA ({{count}})",
+      "intro": "Risposte insegnate dal team. Disattivane una se non è più valida.",
+      "list": "Risposte insegnate",
+      "question": "Domanda",
+      "answer": "Risposta",
+      "active": "In uso",
+      "edit": "Modifica",
+      "add": "Aggiungi una risposta",
+      "save": "Aggiungi"
+    }
+  },
+  "aiTest": {
+    "title": "Chat di prova",
+    "intro": "Scrivi come un cliente. Niente viene salvato o inviato a nessuno.",
+    "messages": "Conversazione di prova",
+    "input": "Messaggio di prova",
+    "placeholder": "es. Avete la borsa nera disponibile?",
+    "send": "Invia",
+    "reset": "Ricomincia",
+    "thinking": "L’IA sta pensando…",
+    "tools": "Ha consultato: {{tools}}",
+    "handoff": "L’IA passerebbe questa conversazione al team ({{reason}}).",
+    "unknownHint": "In una chat reale questa domanda comparirebbe tra le “Domande a cui l’IA non ha saputo rispondere”.",
+    "blocked": "La bozza dell’IA verrebbe trattenuta ({{reason}}) e il team dovrebbe rispondere.",
+    "limit": "Troppi messaggi di prova nell’ultima ora. Riprova più tardi.",
+    "reasons": {
+      "unknown_answer": "non conosce la risposta",
+      "customer_asked_for_human": "il cliente vuole una persona",
+      "complaint": "reclamo",
+      "refund": "rimborso",
+      "order": "il cliente vuole ordinare",
+      "special_request": "richiesta speciale",
+      "low_confidence": "non è sicura",
+      "ai_unavailable": "l’IA non è disponibile ora",
+      "other": "altro"
+    },
+    "blockedReasons": {
+      "price_not_from_tool": "un prezzo che non viene dal catalogo",
+      "link_in_reply": "un link",
+      "reply_too_long": "troppo lunga",
+      "empty_reply": "nessuna risposta",
+      "too_many_tool_rounds": "troppi passaggi"
     }
   }
 }

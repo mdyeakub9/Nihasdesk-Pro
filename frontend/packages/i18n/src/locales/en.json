@@ -319,7 +319,8 @@
     "sections": "Settings sections",
     "team": "Team",
     "channels": "Channels",
-    "security": "Security"
+    "security": "Security",
+    "ai": "AI"
   },
   "team": {
     "intro": "Invite the people who answer your customers. Owners and Admins manage the team; Members work in the inbox.",
@@ -559,6 +560,81 @@
         "noFile": "Choose a CSV file first.",
         "notCsv": "This isn’t a CSV text file. Save it as CSV (UTF-8) and try again."
       }
+    }
+  },
+  "aiSettings": {
+    "title": "AI assistant",
+    "intro": "The AI answers customers from your catalog and the answers your team taught it. When it doesn’t know, it hands the conversation to your team.",
+    "notConfigured": "The AI isn’t connected on this server yet (no OpenAI key). Until then your team answers everything.",
+    "enabled": "AI answers customers",
+    "tone": "Tone",
+    "tones": {
+      "friendly": "Friendly and casual",
+      "formal": "Polite and formal"
+    },
+    "instructions": "Your guidance for the AI",
+    "instructionsPlaceholder": "e.g. Always mention that shipping is free over €50. Don’t promise delivery dates.",
+    "instructionsHint": "Plain language. The AI follows it, but never against its safety rules (no made-up prices, no links).",
+    "disclosure": "First message to customers",
+    "disclosureHint": "Said once, before the AI’s first answer, so customers know they are talking to an AI (required by EU law). Leave empty for the default.",
+    "save": "Save",
+    "saved": "Saved.",
+    "ownersOnly": "Only Owners and Admins can change the AI.",
+    "questions": {
+      "title": "Questions the AI couldn’t answer",
+      "intro": "Write the answer once: the AI uses it the next time someone asks.",
+      "empty": "Nothing waiting. The AI knew the answers so far.",
+      "open": "Open the conversation",
+      "answerLabel": "Your answer",
+      "teach": "Teach the AI",
+      "dismiss": "Dismiss",
+      "resolved": "This question was already answered or dismissed.",
+      "notFound": "This question no longer exists."
+    },
+    "answers": {
+      "title_one": "What the AI learned ({{count}})",
+      "title_other": "What the AI learned ({{count}})",
+      "intro": "Answers your team taught. Switch one off if it’s out of date.",
+      "list": "Taught answers",
+      "question": "Question",
+      "answer": "Answer",
+      "active": "In use",
+      "edit": "Edit",
+      "add": "Add an answer",
+      "save": "Add"
+    }
+  },
+  "aiTest": {
+    "title": "Test chat",
+    "intro": "Write like a customer. Nothing is saved or sent to anyone.",
+    "messages": "Test conversation",
+    "input": "Test message",
+    "placeholder": "e.g. Do you have the black bag in stock?",
+    "send": "Send",
+    "reset": "Start over",
+    "thinking": "The AI is thinking…",
+    "tools": "Looked up: {{tools}}",
+    "handoff": "The AI would hand this to your team ({{reason}}).",
+    "unknownHint": "In a real chat this question would appear under “Questions the AI couldn’t answer”.",
+    "blocked": "The AI’s draft would be held back ({{reason}}) and your team asked to answer.",
+    "limit": "Too many test messages in the last hour. Please try again later.",
+    "reasons": {
+      "unknown_answer": "it doesn’t know the answer",
+      "customer_asked_for_human": "the customer wants a person",
+      "complaint": "complaint",
+      "refund": "refund",
+      "order": "the customer wants to order",
+      "special_request": "special request",
+      "low_confidence": "not sure",
+      "ai_unavailable": "the AI isn’t available right now",
+      "other": "other"
+    },
+    "blockedReasons": {
+      "price_not_from_tool": "a price that isn’t from your catalog",
+      "link_in_reply": "a link",
+      "reply_too_long": "too long",
+      "empty_reply": "no answer",
+      "too_many_tool_rounds": "it took too many steps"
     }
   }
 }

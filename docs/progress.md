@@ -26,6 +26,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Catalog backend (ADR 0018): Shopify-style products and variants (handle, status, options, SKU, barcode, price/compare-at/cost in cents, stock, inventory policy, weight), editor API, Shopify CSV template/preview/import with per-row errors and update-by-SKU, `ICatalog` (active products, no cost) for the AI.
 - Products page: list, editor (options, variants, prices in cents), CSV import with preview.
 - AI agent core (ADR 0019): OpenAI EU behind `ILlmProvider`, replies from the catalog with tools, natural tone, AI disclosure once, guardrails (no made-up prices or links), limits, handoff to the team with a note, unanswered questions the team can teach (taught answers used next time), runs metered per workspace.
+- Settings → AI: AI on/off, tone, the owner's guidance, first message (disclosure), questions the AI couldn't answer with “Teach the AI”, taught answers (edit, switch off, add), and a test chat that uses the same AI without storing anything.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
