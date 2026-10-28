@@ -17,3 +17,7 @@ _Status: draft._
 - Password reset revokes every session of the user; the user signs in again with the new password.
 - Login answers `{ "mfaRequired": true }` for users with MFA; the dashboard then posts the code to `/api/v1/auth/login/mfa` within 5 minutes.
 - Risky actions (role change, member removal, turning MFA off, new recovery codes) answer `403 auth.reauth_required` unless the user signed in or re-entered the password in the last 10 minutes (ADR 0015).
+
+## Realtime (dashboard)
+- SignalR hub `/api/v1/hubs/inbox` (ADR 0016), signed-in members only. The negotiate request is a POST, so it needs `X-XSRF-TOKEN` like any other change.
+- Events carry IDs only (`conversationChanged` → `{ conversationId }`); the dashboard reloads the data through the REST API.

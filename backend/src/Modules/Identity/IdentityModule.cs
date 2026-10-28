@@ -10,6 +10,7 @@ using Nihasdesk.Infrastructure.Email.Outbox;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Identity.Accounts;
+using Nihasdesk.Modules.Identity.Contracts;
 using Nihasdesk.Modules.Identity.Features;
 using Nihasdesk.Modules.Identity.Features.Account;
 using Nihasdesk.Modules.Identity.Features.ForgotPassword;
@@ -125,6 +126,7 @@ public sealed class IdentityModule : IModule
         services.AddScoped<IValidator<ReauthRequest>, ReauthValidator>();
         services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordValidator>();
         services.AddScoped<TeamHandler>();
+        services.AddScoped<ITeamDirectory, TeamDirectory>();
         services.AddScoped<AcceptInvitationHandler>();
         services.AddScoped<IValidator<InviteRequest>, InviteValidator>();
         services.AddScoped<IValidator<ChangeRoleRequest>, ChangeRoleValidator>();

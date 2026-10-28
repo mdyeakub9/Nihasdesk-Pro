@@ -30,3 +30,6 @@ _Status: draft._
 | `auth.reauth_required` | 403 | Enter the password again (`POST /api/v1/account/reauth`); valid 10 minutes (ADR 0015) |
 | `auth.mfa_already_enabled` / `auth.mfa_not_enabled` | 409 | MFA state doesn't allow this action |
 | `auth.session_not_found` | 404 | Session not found among the user's own sessions |
+| `conversation.not_found` | 404 | Conversation not in this workspace — also for other workspaces' IDs (SEC-06) |
+| `conversation.assignee_not_member` | 400 | Conversations can only be assigned to members of this workspace |
+| `contact.not_found` | 404 | Contact not in this workspace — also for other workspaces' IDs (SEC-06) |

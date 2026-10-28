@@ -32,7 +32,10 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    ```bash
    cd backend
    dotnet ef database update --project src/Modules/Identity --startup-project src/Modules/Identity --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
+   dotnet ef database update --project src/Modules/Contacts --startup-project src/Modules/Contacts --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
+   dotnet ef database update --project src/Modules/Inbox --startup-project src/Modules/Inbox --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
    ```
+   Each module has its own migrations; run all of them after pulling new ones.
 5. Run the API (HTTPS only: session and CSRF cookies are `Secure`). Trust the .NET development certificate once:
    ```bash
    dotnet dev-certs https --trust
@@ -51,6 +54,7 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    ```bash
    dotnet run --project backend/src/Nihasdesk.Workers
    ```
+   Its launch profile sets the Development environment, which is what loads the user secrets above.
    In Visual Studio: solution → **Configure Startup Projects** → **Multiple startup projects** → start `Nihasdesk.Api` and `Nihasdesk.Workers`.
 
 Stop with `docker compose -f infra/docker-compose.yml down` (add `-v` to delete local data).

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Modules.Contacts.Infrastructure;
 using Nihasdesk.Modules.Identity.Infrastructure;
+using Nihasdesk.Modules.Inbox.Infrastructure;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -40,6 +42,16 @@ public sealed class PostgresDatabase : IAsyncDisposable
         await using (var migrator = IdentityModuleDbContextFactory.Create(owner))
         {
             await migrator.Database.MigrateAsync();
+        }
+
+        await using (var contacts = ContactsDbContextFactory.Create(owner))
+        {
+            await contacts.Database.MigrateAsync();
+        }
+
+        await using (var inbox = InboxDbContextFactory.Create(owner))
+        {
+            await inbox.Database.MigrateAsync();
         }
 
         database.AppConnectionString = new NpgsqlConnectionStringBuilder(owner)

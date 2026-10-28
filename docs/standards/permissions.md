@@ -12,7 +12,7 @@ The API checks every permission on the server, reading the member's **current** 
 | `team.change_role` — Admin ⇄ Member | ✅ | ❌ | ❌ |
 | `team.remove_member` — remove a Member | ✅ | ✅ | ❌ |
 | `team.remove_admin` — remove an Admin | ✅ | ❌ | ❌ |
-| Inbox work (reply, take over, notes, order approvals) | ✅ | ✅ | ✅ |
+| Inbox work (read, reply, take over / return to AI, notes, status, assign, edit contacts; later order approvals) | ✅ | ✅ | ✅ |
 | Settings, channels, AI, catalog, policies _(with those modules)_ | ✅ | ✅ | ❌ |
 | Billing, workspace deletion, ownership transfer _(later)_ | ✅ | ❌ | ❌ |
 
@@ -24,4 +24,4 @@ The API checks every permission on the server, reading the member's **current** 
 - Team changes are audited (SEC-47) and will require re-authentication once it exists (ADR 0010, PR 3b).
 
 ## In code
-`Nihasdesk.Modules.Identity.Domain.RolePermissions` holds this table; endpoints declare the permission they need (`RequirePermission`). Change both together, with a test per role.
+`Nihasdesk.Modules.Identity.Domain.RolePermissions` holds this table; endpoints declare the permission they need (`RequirePermission`). Change both together, with a test per role. Work every role may do (inbox, contacts) uses `Identity.Contracts.RequireTeamMember`: the user must still be a member of the workspace.
