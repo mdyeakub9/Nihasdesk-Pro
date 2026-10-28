@@ -12,6 +12,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Identity decisions recorded: Brevo email behind `IEmailSender` with Mailpit locally (ADR 0008), password policy with HIBP check (ADR 0009), server-side sessions with "remember me" (2 h idle / 12 h without it) and re-auth (ADR 0010), email via one SMTP adapter (Brevo relay / Mailpit), roles Owner / Admin / Member (ADR 0011).
 - Identity tenancy foundation: organizations, workspaces (TenantId = workspace), global users, memberships; tenant isolation with EF query filters + write guard and PostgreSQL RLS; app connects as non-owner `nihasdesk_app`; first migration; Critical tenant isolation tests on real PostgreSQL (Testcontainers).
 - Identity auth (PR 2a): signup → email verification → login/logout/me with server-side sessions (2 h idle / 12 h, remember me 14 d / 30 d), CSRF tokens, per-IP rate limits, lockout, SMTP email (Mailpit locally), login workspace lookup via a narrow SECURITY DEFINER function.
+- Identity password & audit (PR 2b): forgot/reset password (1 h token, single use, revokes all sessions, notice email), HIBP breached-password check (k-anonymity, fail-open), append-only audit log with IP and 12-month retention (ADR 0012). Fixed: signing up or in while already signed in returned 500.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

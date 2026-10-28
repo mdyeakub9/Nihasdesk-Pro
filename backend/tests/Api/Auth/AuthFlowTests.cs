@@ -156,6 +156,24 @@ public sealed class AuthFlowTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Signed_in_user_can_sign_up_or_switch_to_another_account()
+    {
+        using var client = Api.CreateApiClient();
+        var first = AuthFixture.NewEmail();
+        var second = AuthFixture.NewEmail();
+        (await client.SignupAndVerifyAsync(Api.Emails, first, "First Shop")).EnsureSuccessStatusCode();
+
+        // Still signed in to the first workspace while these run (regression: used to fail with 500).
+        Assert.Equal(HttpStatusCode.OK, (await client.SignupAndVerifyAsync(Api.Emails, second, "Second Shop")).StatusCode);
+        var me = await client.Http.GetFromJsonAsync<JsonElement>("/api/v1/me");
+        Assert.Equal("Second Shop", me.GetProperty("workspace").GetProperty("name").GetString());
+
+        Assert.Equal(HttpStatusCode.OK, (await client.LoginAsync(first)).StatusCode);
+        me = await client.Http.GetFromJsonAsync<JsonElement>("/api/v1/me");
+        Assert.Equal("First Shop", me.GetProperty("workspace").GetProperty("name").GetString());
+    }
+
+    [Fact]
     public async Task Me_without_a_session_is_unauthorized()
     {
         using var client = Api.CreateApiClient();

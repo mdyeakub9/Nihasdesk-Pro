@@ -39,6 +39,39 @@ internal static class AuthEmails
         return Render(to, subject, greeting, body, action, loginLink, ignore);
     }
 
+    public static EmailMessage ResetPassword(string to, string language, string name, string link)
+    {
+        var it = IsItalian(language);
+        var subject = it ? "Reimposta la password" : "Reset your password";
+        var greeting = it ? $"Ciao {name}," : $"Hi {name},";
+        var body = it
+            ? "abbiamo ricevuto una richiesta di reimpostare la password del tuo account Nihasdesk. Il link scade tra un'ora."
+            : "we received a request to reset the password of your Nihasdesk account. The link expires in one hour.";
+        var action = it ? "Reimposta password" : "Reset password";
+        var ignore = it
+            ? "Se non sei stato tu, ignora questa email: la password resta invariata."
+            : "If this wasn't you, ignore this email: your password stays the same.";
+
+        return Render(to, subject, greeting, body, action, link, ignore);
+    }
+
+    /// <summary>Notice after a reset, so the owner notices if it wasn't them (SEC-26).</summary>
+    public static EmailMessage PasswordChanged(string to, string language, string name, string loginLink)
+    {
+        var it = IsItalian(language);
+        var subject = it ? "La tua password è stata cambiata" : "Your password was changed";
+        var greeting = it ? $"Ciao {name}," : $"Hi {name},";
+        var body = it
+            ? "la password del tuo account Nihasdesk è stata cambiata e tutte le sessioni sono state chiuse."
+            : "the password of your Nihasdesk account was changed and all sessions were signed out.";
+        var action = it ? "Accedi" : "Sign in";
+        var footer = it
+            ? "Se non sei stato tu, reimposta subito la password e contattaci."
+            : "If this wasn't you, reset your password right away and contact us.";
+
+        return Render(to, subject, greeting, body, action, loginLink, footer);
+    }
+
     private static bool IsItalian(string language) => language.StartsWith("it", StringComparison.OrdinalIgnoreCase);
 
     private static EmailMessage Render(string to, string subject, string greeting, string body, string action, string link, string footer)

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Domain;
+using Nihasdesk.Modules.Identity.Infrastructure.Audit;
 using Nihasdesk.SharedKernel;
 
 namespace Nihasdesk.Modules.Identity.Infrastructure;
@@ -28,6 +29,8 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
     public DbSet<Membership> Memberships => Set<Membership>();
 
     public DbSet<UserSession> Sessions => Set<UserSession>();
+
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
 
     /// <summary>ASP.NET Core Data Protection key ring (cookies, tokens), shared by all API instances.</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
@@ -89,6 +92,15 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
         });
 
         builder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
+
+        builder.Entity<AuditEvent>(audit =>
+        {
+            audit.ToTable("audit_events");
+            audit.Property(a => a.Action).HasMaxLength(AuditEvent.ActionMaxLength);
+            audit.Property(a => a.IpAddress).HasMaxLength(AuditEvent.IpAddressMaxLength);
+            audit.HasIndex(a => a.OccurredAt);
+            audit.HasIndex(a => a.UserId);
+        });
 
         builder.ApplyTenantQueryFilters(this);
     }

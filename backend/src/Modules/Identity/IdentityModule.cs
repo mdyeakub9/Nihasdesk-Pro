@@ -10,12 +10,16 @@ using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Features;
+using Nihasdesk.Modules.Identity.Features.ForgotPassword;
 using Nihasdesk.Modules.Identity.Features.Login;
 using Nihasdesk.Modules.Identity.Features.Me;
 using Nihasdesk.Modules.Identity.Features.ResendVerification;
+using Nihasdesk.Modules.Identity.Features.ResetPassword;
 using Nihasdesk.Modules.Identity.Features.Signup;
 using Nihasdesk.Modules.Identity.Features.VerifyEmail;
 using Nihasdesk.Modules.Identity.Infrastructure;
+using Nihasdesk.Modules.Identity.Infrastructure.Audit;
+using Nihasdesk.Modules.Identity.Infrastructure.Passwords;
 using Nihasdesk.Modules.Identity.Infrastructure.Sessions;
 
 namespace Nihasdesk.Modules.Identity;
@@ -55,10 +59,19 @@ public sealed class IdentityModule : IModule
             })
             .AddEntityFrameworkStores<IdentityModuleDbContext>()
             .AddSignInManager()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddPasswordValidator<BreachedPasswordValidator>();
+
+        // ADR 0009: HIBP range API, short timeout, fail-open.
+        services.AddOptions<BreachedPasswordOptions>().Bind(configuration.GetSection(BreachedPasswordOptions.SectionName));
+        services.AddHttpClient(BreachedPasswordValidator.HttpClientName, client =>
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Nihasdesk-PasswordCheck"));
 
         // SEC-26: email and reset tokens expire within an hour.
-        services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(1));
+        // Configurable only so tests can prove expiry; never set above 1 hour.
+        var tokenLifespan = configuration.GetValue("Identity:TokenLifespan", TimeSpan.FromHours(1));
+        services.Configure<DataProtectionTokenProviderOptions>(options =>
+            options.TokenLifespan = tokenLifespan <= TimeSpan.FromHours(1) ? tokenLifespan : TimeSpan.FromHours(1));
 
         services.AddSingleton<DatabaseTicketStore>();
         services.AddAuthentication(IdentityConstants.ApplicationScheme)
@@ -91,12 +104,19 @@ public sealed class IdentityModule : IModule
             .Configure<DatabaseTicketStore>((options, store) => options.SessionStore = store);
         services.AddAuthorization();
 
+        services.AddHttpContextAccessor();
+        services.AddSingleton<AuditLog>();
+        services.AddSingleton<DashboardLinks>();
         services.AddScoped<SessionSignIn>();
         services.AddScoped<SignupHandler>();
         services.AddScoped<VerifyEmailHandler>();
         services.AddScoped<ResendVerificationHandler>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<MeHandler>();
+        services.AddScoped<ForgotPasswordHandler>();
+        services.AddScoped<ResetPasswordHandler>();
+        services.AddScoped<IValidator<ForgotPasswordRequest>, ForgotPasswordValidator>();
+        services.AddScoped<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
         services.AddScoped<IValidator<SignupRequest>, SignupValidator>();
         services.AddScoped<IValidator<VerifyEmailRequest>, VerifyEmailValidator>();
         services.AddScoped<IValidator<ResendVerificationRequest>, ResendVerificationValidator>();

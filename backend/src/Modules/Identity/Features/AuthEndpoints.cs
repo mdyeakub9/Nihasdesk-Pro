@@ -6,11 +6,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Security;
+using Nihasdesk.Infrastructure.Tenancy;
+using Nihasdesk.Modules.Identity.Features.ForgotPassword;
 using Nihasdesk.Modules.Identity.Features.Login;
 using Nihasdesk.Modules.Identity.Features.Me;
 using Nihasdesk.Modules.Identity.Features.ResendVerification;
+using Nihasdesk.Modules.Identity.Features.ResetPassword;
 using Nihasdesk.Modules.Identity.Features.Signup;
 using Nihasdesk.Modules.Identity.Features.VerifyEmail;
+using Nihasdesk.Modules.Identity.Infrastructure.Audit;
 
 namespace Nihasdesk.Modules.Identity.Features;
 
@@ -56,11 +60,34 @@ internal static class AuthEndpoints
             .RequireRateLimiting(RatePolicies.Login);
 
         // Deleting the cookie also deletes the server-side session (DatabaseTicketStore.RemoveAsync).
-        auth.MapPost("/logout", async (HttpContext context) =>
+        auth.MapPost("/logout", async (HttpContext context, AuditLog audit, CancellationToken ct) =>
         {
+            if (context.User.Identity?.IsAuthenticated == true
+                && Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                Guid? tenantId = Guid.TryParse(context.User.FindFirstValue(TenantClaims.TenantId), out var t) ? t : null;
+                await audit.WriteAsync(AuditActions.Logout, userId, tenantId, ct);
+            }
+
             await context.SignOutAsync(IdentityConstants.ApplicationScheme);
             return Results.NoContent();
         });
+
+        auth.MapPost("/forgot-password", async (ForgotPasswordRequest request, ForgotPasswordHandler handler, CancellationToken ct) =>
+            {
+                await handler.HandleAsync(request, ct);
+                return Results.Accepted();
+            })
+            .AddEndpointFilter<ValidationFilter<ForgotPasswordRequest>>()
+            .RequireRateLimiting(RatePolicies.Email);
+
+        auth.MapPost("/reset-password", async (ResetPasswordRequest request, ResetPasswordHandler handler, CancellationToken ct) =>
+            {
+                var result = await handler.HandleAsync(request, ct);
+                return result.IsSuccess ? Results.NoContent() : result.Error.ToProblem();
+            })
+            .AddEndpointFilter<ValidationFilter<ResetPasswordRequest>>()
+            .RequireRateLimiting(RatePolicies.Email);
 
         endpoints.MapGet("/api/v1/me", async (ClaimsPrincipal user, MeHandler handler, CancellationToken ct) =>
             {
