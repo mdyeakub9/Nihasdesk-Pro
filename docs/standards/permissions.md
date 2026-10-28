@@ -13,7 +13,8 @@ The API checks every permission on the server, reading the member's **current** 
 | `team.remove_member` — remove a Member | ✅ | ✅ | ❌ |
 | `team.remove_admin` — remove an Admin | ✅ | ❌ | ❌ |
 | Inbox work (read, reply, take over / return to AI, notes, status, assign, edit contacts; later order approvals) | ✅ | ✅ | ✅ |
-| Settings, channels, AI, catalog, policies _(with those modules)_ | ✅ | ✅ | ❌ |
+| `channels.manage` — connect and disconnect channels (Facebook Pages) | ✅ | ✅ | ❌ |
+| Settings, AI, catalog, policies _(with those modules)_ | ✅ | ✅ | ❌ |
 | Billing, workspace deletion, ownership transfer _(later)_ | ✅ | ❌ | ❌ |
 
 ## Rules

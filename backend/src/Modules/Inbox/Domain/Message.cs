@@ -10,12 +10,23 @@ internal enum MessageAuthor
     Agent,
 }
 
+/// <summary>Sending a team reply to the customer's channel (ADR 0017). Stored as lower-case text.</summary>
+internal enum DeliveryStatus
+{
+    /// <summary>Nothing to send: customer messages, notes, the website widget.</summary>
+    None,
+    Pending,
+    Sent,
+    Failed,
+}
+
 /// <summary>One message or internal note in a conversation (ADR 0016).</summary>
 internal sealed class Message : TenantEntity
 {
     public const int TextMaxLength = 4000;
     public const int AuthorNameMaxLength = 100;
     public const int ExternalIdMaxLength = 200;
+    public const int DeliveryErrorMaxLength = 100;
 
     private Message(Guid tenantId, Guid conversationId, MessageAuthor author, string text, DateTimeOffset sentAt)
         : base(tenantId)
@@ -46,6 +57,15 @@ internal sealed class Message : TenantEntity
 
     public DateTimeOffset SentAt { get; private set; }
 
+    public DeliveryStatus Delivery { get; private set; }
+
+    public int DeliveryAttempts { get; private set; }
+
+    public DateTimeOffset? NextDeliveryAt { get; private set; }
+
+    /// <summary>Short error code from the channel, never message content.</summary>
+    public string? DeliveryError { get; private set; }
+
     public static Message FromCustomer(Guid tenantId, Guid conversationId, string text, string? externalId, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Customer, CheckText(text), sentAt) { ExternalId = externalId };
 
@@ -56,6 +76,37 @@ internal sealed class Message : TenantEntity
             AuthorName = authorName.Length <= AuthorNameMaxLength ? authorName : authorName[..AuthorNameMaxLength],
             Internal = isInternal,
         };
+
+    public void QueueDelivery(DateTimeOffset now)
+    {
+        if (Author != MessageAuthor.Agent || Internal)
+        {
+            throw new InvalidOperationException("Only team replies are delivered.");
+        }
+
+        Delivery = DeliveryStatus.Pending;
+        NextDeliveryAt = now;
+    }
+
+    public void Delivered(string externalId)
+    {
+        Delivery = DeliveryStatus.Sent;
+        ExternalId = externalId.Length <= ExternalIdMaxLength ? externalId : externalId[..ExternalIdMaxLength];
+        NextDeliveryAt = null;
+        DeliveryError = null;
+    }
+
+    /// <summary>Counts the attempt; retries at <paramref name="retryAt"/> or gives up when it is null.</summary>
+    public void DeliveryFailed(string error, DateTimeOffset? retryAt)
+    {
+        DeliveryAttempts++;
+        DeliveryError = error.Length <= DeliveryErrorMaxLength ? error : error[..DeliveryErrorMaxLength];
+        NextDeliveryAt = retryAt;
+        if (retryAt is null)
+        {
+            Delivery = DeliveryStatus.Failed;
+        }
+    }
 
     private static string CheckText(string text)
     {

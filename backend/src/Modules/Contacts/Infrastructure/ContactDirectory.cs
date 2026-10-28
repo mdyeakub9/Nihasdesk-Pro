@@ -51,6 +51,13 @@ internal sealed class ContactDirectory(ContactsDbContext db, ITenantContext tena
             .ToDictionaryAsync(c => c.Id, cancellationToken);
     }
 
+    public Task<string?> FindChannelIdAsync(Guid contactId, string channel, CancellationToken cancellationToken) =>
+        db.Identities
+            .Where(i => i.ContactId == contactId && i.Channel == channel)
+            .OrderBy(i => i.CreatedAt)
+            .Select(i => i.ExternalId)
+            .FirstOrDefaultAsync(cancellationToken);
+
     private Task<Guid?> FindAsync(string channel, string externalId, CancellationToken cancellationToken) =>
         db.Identities
             .Where(i => i.Channel == channel && i.ExternalId == externalId)

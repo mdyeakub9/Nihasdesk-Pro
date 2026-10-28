@@ -54,7 +54,9 @@ internal sealed record MessageResponse(
     string? AuthorName,
     string Text,
     bool Internal,
-    DateTimeOffset SentAt);
+    DateTimeOffset SentAt,
+    // none | pending | sent | failed (ADR 0017)
+    string Delivery);
 
 /// <summary>Oldest first; <see cref="Before"/> loads the next older page.</summary>
 internal sealed record MessagePageResponse(IReadOnlyList<MessageResponse> Items, string? Before);
@@ -170,6 +172,10 @@ internal static class InboxErrors
 {
     /// <summary>Also for other workspaces' IDs (SEC-06).</summary>
     public static readonly Error NotFound = Error.NotFound("conversation.not_found", "Conversation not found.");
+
+    public static readonly Error OutsideWindow = Error.Conflict(
+        "conversation.outside_window",
+        "The customer's last message is more than 24 hours old, so the channel doesn't allow a reply now.");
 
     public static readonly Error AssigneeNotMember =
         Error.Validation("conversation.assignee_not_member", "Conversations can be assigned to team members only.");

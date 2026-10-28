@@ -8,13 +8,15 @@ namespace Nihasdesk.Modules.Inbox.Contracts;
 /// <param name="ExternalContactId">The sender's ID on that channel (PSID, phone, widget visitor ID).</param>
 /// <param name="ContactName">Profile name from the channel, if any.</param>
 /// <param name="ExternalMessageId">The channel's message ID; repeats are ignored.</param>
+/// <param name="ConnectionId">The channel connection (e.g. Facebook Page) that received it; replies go out through it.</param>
 public sealed record InboundMessage(
     string Channel,
     string ExternalContactId,
     string? ContactName,
     string Text,
     string? ExternalMessageId,
-    DateTimeOffset SentAt);
+    DateTimeOffset SentAt,
+    Guid? ConnectionId = null);
 
 public sealed record InboundResult(Guid ConversationId, Guid MessageId, bool Duplicate);
 
