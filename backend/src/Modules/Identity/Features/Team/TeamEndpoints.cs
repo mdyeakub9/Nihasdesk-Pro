@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Security;
 using Nihasdesk.Modules.Identity.Domain;
+using Nihasdesk.Modules.Identity.Features.Account;
 
 namespace Nihasdesk.Modules.Identity.Features.Team;
 
@@ -54,6 +55,7 @@ internal static class TeamEndpoints
                 return result.IsSuccess ? Results.NoContent() : result.Error.ToProblem();
             })
             .AddEndpointFilter(new RequirePermission(Permission.TeamChangeRole))
+            .AddEndpointFilter<RequireRecentAuth>()
             .AddEndpointFilter<ValidationFilter<ChangeRoleRequest>>();
 
         // The role-specific rule (Admins may remove Members only) is checked in the handler.
@@ -62,7 +64,8 @@ internal static class TeamEndpoints
                 var result = await handler.RemoveAsync(userId, ct);
                 return result.IsSuccess ? Results.NoContent() : result.Error.ToProblem();
             })
-            .AddEndpointFilter(new RequirePermission(Permission.TeamRemoveMember));
+            .AddEndpointFilter(new RequirePermission(Permission.TeamRemoveMember))
+            .AddEndpointFilter<RequireRecentAuth>();
 
         var invitations = endpoints.MapGroup("/api/v1/invitations").AllowAnonymous().RequireRateLimiting(RatePolicies.Email);
 

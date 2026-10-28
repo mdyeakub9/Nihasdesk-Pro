@@ -33,6 +33,8 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
 
     public DbSet<UserSession> Sessions => Set<UserSession>();
 
+    public DbSet<RecoveryCode> RecoveryCodes => Set<RecoveryCode>();
+
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
 
     /// <summary>ASP.NET Core Data Protection key ring (cookies, tokens), shared by all API instances.</summary>
@@ -109,6 +111,13 @@ internal sealed class IdentityModuleDbContext(DbContextOptions<IdentityModuleDbC
         });
 
         builder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
+
+        builder.Entity<RecoveryCode>(code =>
+        {
+            code.ToTable("recovery_codes");
+            code.HasOne<User>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+            code.HasIndex(c => c.UserId);
+        });
 
         builder.Entity<AuditEvent>(audit =>
         {

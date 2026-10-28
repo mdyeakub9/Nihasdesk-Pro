@@ -54,7 +54,12 @@ internal static class AuthEndpoints
         auth.MapPost("/login", async (LoginRequest request, LoginHandler handler, CancellationToken ct) =>
             {
                 var result = await handler.HandleAsync(request, ct);
-                return result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToProblem();
+                if (result.IsFailure)
+                {
+                    return result.Error.ToProblem();
+                }
+
+                return result.Value.MfaRequired ? Results.Ok(new { mfaRequired = true }) : Results.Ok(result.Value.Me);
             })
             .AddEndpointFilter<ValidationFilter<LoginRequest>>()
             .RequireRateLimiting(RatePolicies.Login);

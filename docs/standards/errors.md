@@ -25,3 +25,8 @@ _Status: draft._
 | `team.owner_is_fixed` | 400 | The Owner can't be removed or have their role changed |
 | `team.invitation_invalid` | 404 | Invitation link unknown, used, revoked or expired |
 | `team.email_has_account` | 409 | The invited email already has an account (one workspace per person in Phase 1, ADR 0014) |
+| `auth.invalid_mfa_code` | 401 | Wrong authenticator or recovery code (counts toward lockout) |
+| `auth.mfa_challenge_expired` | 401 | No or expired (5 min) MFA step after the password — sign in again |
+| `auth.reauth_required` | 403 | Enter the password again (`POST /api/v1/account/reauth`); valid 10 minutes (ADR 0015) |
+| `auth.mfa_already_enabled` / `auth.mfa_not_enabled` | 409 | MFA state doesn't allow this action |
+| `auth.session_not_found` | 404 | Session not found among the user's own sessions |

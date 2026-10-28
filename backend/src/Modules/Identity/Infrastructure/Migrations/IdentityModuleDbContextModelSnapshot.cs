@@ -170,6 +170,39 @@ namespace Nihasdesk.Modules.Identity.Infrastructure.Migrations
                     b.ToTable("email_outbox", "identity");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.Identity.Accounts.RecoveryCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<byte[]>("CodeHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_recovery_codes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_recovery_codes_user_id");
+
+                    b.ToTable("recovery_codes", "identity");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.Identity.Accounts.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -290,6 +323,10 @@ namespace Nihasdesk.Modules.Identity.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("LastSeenAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_seen_at");
+
+                    b.Property<DateTimeOffset?>("ReauthenticatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reauthenticated_at");
 
                     b.Property<bool>("Remember")
                         .HasColumnType("boolean")
@@ -574,6 +611,16 @@ namespace Nihasdesk.Modules.Identity.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.Identity.Accounts.RecoveryCode", b =>
+                {
+                    b.HasOne("Nihasdesk.Modules.Identity.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_recovery_codes_users_user_id");
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.Identity.Accounts.UserSession", b =>

@@ -17,6 +17,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Dashboard auth: login, signup, check-email, verify-email, forgot/reset password pages (React Hook Form + Zod, it/en errors), real session from `/api/v1/me` with route guards and logout, CSRF-aware API client, Vite dev proxy for same-origin cookies. Mock session removed.
 - Team (PR 3a backend): permission matrix (`docs/standards/permissions.md`), invitations (48 h, hashed single-use tokens, ADR 0014), team list, role changes, member removal with session revocation, audit events; public preview/accept creates the account. Re-auth and MFA follow in 3b.
 - Team UI: Settings → Team (invite with role, pending invitations with resend/revoke, role change, remove with confirmation; actions shown per role) and the public accept-invitation page.
+- Security (PR 3b backend, ADR 0015): optional TOTP MFA (encrypted secret, hashed one-time recovery codes, MFA step at login with lockout), password re-auth for 10 minutes before role changes, removals and MFA changes, own session list and sign-out of other devices, password change. MFA stays optional for Owners during the beta.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

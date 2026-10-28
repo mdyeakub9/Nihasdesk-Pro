@@ -11,6 +11,7 @@ using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Identity.Accounts;
 using Nihasdesk.Modules.Identity.Features;
+using Nihasdesk.Modules.Identity.Features.Account;
 using Nihasdesk.Modules.Identity.Features.ForgotPassword;
 using Nihasdesk.Modules.Identity.Features.Login;
 using Nihasdesk.Modules.Identity.Features.Me;
@@ -21,6 +22,7 @@ using Nihasdesk.Modules.Identity.Features.Team;
 using Nihasdesk.Modules.Identity.Features.VerifyEmail;
 using Nihasdesk.Modules.Identity.Infrastructure;
 using Nihasdesk.Modules.Identity.Infrastructure.Audit;
+using Nihasdesk.Modules.Identity.Infrastructure.Mfa;
 using Nihasdesk.Modules.Identity.Infrastructure.Passwords;
 using Nihasdesk.Modules.Identity.Infrastructure.Sessions;
 
@@ -59,6 +61,8 @@ public sealed class IdentityModule : IModule
             .AddSignInManager()
             .AddDefaultTokenProviders()
             .AddPasswordValidator<BreachedPasswordValidator>();
+        // Encrypted authenticator secret and hashed recovery codes (ADR 0015).
+        services.AddScoped<IUserStore<User>, ProtectedUserStore>();
 
         // ADR 0009: HIBP range API, short timeout, fail-open.
         services.AddOptions<BreachedPasswordOptions>().Bind(configuration.GetSection(BreachedPasswordOptions.SectionName));
@@ -113,6 +117,13 @@ public sealed class IdentityModule : IModule
         services.AddScoped<MeHandler>();
         services.AddScoped<ForgotPasswordHandler>();
         services.AddScoped<CurrentMember>();
+        services.AddScoped<CurrentSession>();
+        services.AddSingleton<MfaChallenge>();
+        services.AddScoped<AccountHandler>();
+        services.AddScoped<IValidator<MfaLoginRequest>, MfaLoginValidator>();
+        services.AddScoped<IValidator<MfaCodeRequest>, MfaCodeValidator>();
+        services.AddScoped<IValidator<ReauthRequest>, ReauthValidator>();
+        services.AddScoped<IValidator<ChangePasswordRequest>, ChangePasswordValidator>();
         services.AddScoped<TeamHandler>();
         services.AddScoped<AcceptInvitationHandler>();
         services.AddScoped<IValidator<InviteRequest>, InviteValidator>();
@@ -131,6 +142,7 @@ public sealed class IdentityModule : IModule
     {
         AuthEndpoints.Map(endpoints);
         TeamEndpoints.Map(endpoints);
+        AccountEndpoints.Map(endpoints);
     }
 
     /// <summary>Workers: delivers the Identity email outbox (ADR 0013). No auth or HTTP services.</summary>

@@ -41,6 +41,12 @@ internal sealed class DatabaseTicketStore(
             IdleExpiresAt = now + SessionLifetime.Idle(remember),
             AbsoluteExpiresAt = now + SessionLifetime.Absolute(remember),
         };
+        // The stored ticket carries its own session id (for re-auth and "this device").
+        if (ticket.Principal.Identity is ClaimsIdentity identity)
+        {
+            identity.AddClaim(new Claim(SessionClaims.SessionId, session.Id.ToString()));
+        }
+
         session.Ticket = Protect(ticket);
 
         await using var scope = scopeFactory.CreateAsyncScope();
