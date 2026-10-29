@@ -41,7 +41,14 @@ internal sealed record TestChatResponse(
     string? Blocked,
     // Why the provider failed, e.g. http_401 (key rejected), http_429, output_limit.
     string? Failed,
-    IReadOnlyList<string> Tools);
+    IReadOnlyList<string> Tools,
+    IReadOnlyList<TestSource> Sources);
+
+/// <summary>
+/// What an answer was based on (PRD 4.7): <c>shipping</c> (the zones), <c>policy</c> with the
+/// topic as label, or <c>answer</c> with the answer's question as label.
+/// </summary>
+internal sealed record TestSource(string Kind, string? Label);
 
 internal sealed class AiSettingsValidator : AbstractValidator<AiSettingsRequest>
 {
@@ -142,8 +149,9 @@ internal static class AiSettingsEndpoints
 
                 db.Runs.Add(AiRun.Finish(
                     tenant.TenantId, Guid.Empty, options.Value.ReplyModel, thought.InputTokens, thought.OutputTokens, thought.Tools,
-                    thought.Reply is not null ? RunOutcome.Replied : RunOutcome.HandedOff, TestChatDetail, watch.Elapsed));
+                    thought.Reply is not null ? RunOutcome.Replied : RunOutcome.HandedOff, TestChatDetail, watch.Elapsed, thought.Sources));
                 await db.SaveChangesAsync(ct);
+                var sources = await SourcesAsync(thought.Sources, db, ct);
 
                 var first = history.All(m => m.Author == "customer");
                 return Results.Ok(new TestChatResponse(
@@ -153,11 +161,32 @@ internal static class AiSettingsEndpoints
                     thought.Question,
                     thought.Blocked,
                     thought.Failed,
-                    thought.Tools));
+                    thought.Tools,
+                    sources));
             })
             .AddEndpointFilter(manage)
             .AddEndpointFilter<ValidationFilter<TestChatRequest>>()
             .RequireRateLimiting(RatePolicies.Messages);
+    }
+
+    private static async Task<List<TestSource>> SourcesAsync(IReadOnlyList<string> codes, AiDbContext db, CancellationToken ct)
+    {
+        var answerIds = codes
+            .Where(c => c.StartsWith(KnowledgeSources.AnswerPrefix, StringComparison.Ordinal))
+            .Select(c => Guid.TryParse(c[KnowledgeSources.AnswerPrefix.Length..], out var id) ? id : Guid.Empty)
+            .ToList();
+        var questions = await db.Answers.AsNoTracking()
+            .Where(a => answerIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, a => a.Question, ct);
+
+        return codes.Select(code => code switch
+            {
+                KnowledgeSources.Shipping => new TestSource("shipping", null),
+                _ when code.StartsWith(KnowledgeSources.PolicyPrefix, StringComparison.Ordinal) =>
+                    new TestSource("policy", code[KnowledgeSources.PolicyPrefix.Length..]),
+                _ => new TestSource("answer", Guid.TryParse(code[KnowledgeSources.AnswerPrefix.Length..], out var id) ? questions.GetValueOrDefault(id) : null),
+            })
+            .ToList();
     }
 
     private static AiSettingsResponse ToResponse(AiSettings s, string shop, bool configured) => new(

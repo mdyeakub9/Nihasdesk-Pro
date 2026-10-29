@@ -13,7 +13,8 @@ namespace Nihasdesk.Modules.AiAgent.Features.Knowledge;
 
 internal sealed record QuestionResponse(Guid Id, Guid ConversationId, string Question, string Status, Guid? AnswerId, DateTimeOffset CreatedAt);
 
-internal sealed record AnswerResponse(Guid Id, string Question, string Answer, bool Active, DateTimeOffset UpdatedAt);
+/// <summary><see cref="Source"/>: <c>taught</c> (from a question the AI couldn't answer) or <c>added</c> (written as an FAQ).</summary>
+internal sealed record AnswerResponse(Guid Id, string Question, string Answer, bool Active, DateTimeOffset UpdatedAt, string Source);
 
 /// <summary>Teach the AI: the answer, and optionally a cleaner wording of the question.</summary>
 internal sealed record TeachRequest(string? Question, string? Answer);
@@ -52,6 +53,9 @@ internal static class KnowledgeErrors
 /// </summary>
 internal static class KnowledgeEndpoints
 {
+    private const string Taught = "taught";
+    private const string Added = "added";
+
     public static void Map(IEndpointRouteBuilder endpoints)
     {
         var ai = endpoints.MapGroup("/api/v1/ai").RequireAuthorization().AddEndpointFilter<RequireTeamMember>();
@@ -98,7 +102,7 @@ internal static class KnowledgeEndpoints
                 db.Answers.Add(answer);
                 gap.Answered(answer.Id, me.UserId);
                 await db.SaveChangesAsync(ct);
-                return Results.Ok(ToResponse(answer));
+                return Results.Ok(ToResponse(answer, Taught));
             })
             .AddEndpointFilter(manage)
             .AddEndpointFilter<ValidationFilter<TeachRequest>>();
@@ -126,7 +130,9 @@ internal static class KnowledgeEndpoints
             Results.Ok(await db.Answers.AsNoTracking()
                 .OrderByDescending(a => a.UpdatedAt)
                 .Take(500)
-                .Select(a => new AnswerResponse(a.Id, a.Question, a.Answer, a.Active, a.UpdatedAt))
+                .Select(a => new AnswerResponse(
+                    a.Id, a.Question, a.Answer, a.Active, a.UpdatedAt,
+                    db.Gaps.Any(g => g.AnswerId == a.Id) ? Taught : Added))
                 .ToListAsync(ct)));
 
         ai.MapPost("/answers", async (AnswerRequest request, AiDbContext db, ITeamDirectory team, ITenantContext tenant, CancellationToken ct) =>
@@ -134,7 +140,7 @@ internal static class KnowledgeEndpoints
                 var answer = TaughtAnswer.Create(tenant.TenantId, request.Question!, request.Answer!, (await team.CurrentAsync(ct))!.UserId);
                 db.Answers.Add(answer);
                 await db.SaveChangesAsync(ct);
-                return Results.Created($"/api/v1/ai/answers/{answer.Id}", ToResponse(answer));
+                return Results.Created($"/api/v1/ai/answers/{answer.Id}", ToResponse(answer, Added));
             })
             .AddEndpointFilter(manage)
             .AddEndpointFilter<ValidationFilter<AnswerRequest>>();
@@ -149,11 +155,11 @@ internal static class KnowledgeEndpoints
 
                 answer.Update(request.Question!, request.Answer!, request.Active ?? answer.Active, (await team.CurrentAsync(ct))!.UserId);
                 await db.SaveChangesAsync(ct);
-                return Results.Ok(ToResponse(answer));
+                return Results.Ok(ToResponse(answer, await db.Gaps.AnyAsync(g => g.AnswerId == id, ct) ? Taught : Added));
             })
             .AddEndpointFilter(manage)
             .AddEndpointFilter<ValidationFilter<AnswerRequest>>();
     }
 
-    private static AnswerResponse ToResponse(TaughtAnswer a) => new(a.Id, a.Question, a.Answer, a.Active, a.UpdatedAt);
+    private static AnswerResponse ToResponse(TaughtAnswer a, string source) => new(a.Id, a.Question, a.Answer, a.Active, a.UpdatedAt, source);
 }

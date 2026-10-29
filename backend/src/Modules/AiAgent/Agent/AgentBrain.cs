@@ -21,7 +21,9 @@ internal sealed record Thought(
     string? Failed,
     int InputTokens,
     int OutputTokens,
-    IReadOnlyList<string> Tools);
+    IReadOnlyList<string> Tools,
+    // What the answer was based on, see KnowledgeSources.
+    IReadOnlyList<string> Sources);
 
 /// <summary>
 /// The thinking part of a turn (ADR 0019): prompt, model, tools, reply check. Shared by real
@@ -38,7 +40,7 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
         var usedTools = new List<string>();
         int input = 0, output = 0;
         Thought Done(string? reply = null, string? handoff = null, string? question = null, string? blocked = null, string? failed = null) =>
-            new(reply, handoff, question, blocked, failed, input, output, usedTools);
+            new(reply, handoff, question, blocked, failed, input, output, usedTools, [.. tools.Sources]);
 
         for (var round = 0; round <= Options.MaxToolRounds; round++)
         {

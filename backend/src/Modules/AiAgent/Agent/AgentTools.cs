@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Commerce.Contracts;
+using Nihasdesk.Modules.Shipping.Contracts;
 
 namespace Nihasdesk.Modules.AiAgent.Agent;
 
@@ -21,19 +22,46 @@ internal static class HandoffReasons
 /// <summary>The result of one tool call: JSON for the model, or a handoff that ends the turn.</summary>
 internal sealed record ToolOutcome(string Json, string? HandoffReason = null, string? Question = null);
 
-/// <summary>
-/// The AI's tools (ADR 0019, SEC-36). Arguments are the model's JSON: parsed and checked here.
-/// The workspace comes from the scope, never from the model. One instance per AI turn: it also
-/// remembers which prices tools returned, for the reply check (SEC-38).
-/// </summary>
-internal sealed class AgentTools(ICatalog catalog, AiDbContext db)
+/// <summary>Topics of the shop's written policies (ADR 0020).</summary>
+internal static class KnowledgeTopics
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    public const string Shipping = "shipping";
+    public const string Returns = "returns";
+    public const string Payment = "payment";
+    public const string Contact = "contact";
+    public const string Other = "other";
+}
+
+/// <summary>What an answer was based on, as stored in <c>ai.runs.sources</c> (no customer text).</summary>
+internal static class KnowledgeSources
+{
+    public const string Shipping = "shipping";
+    public const string PolicyPrefix = "policy:";
+    public const string AnswerPrefix = "answer:";
+}
+
+/// <summary>
+/// The AI's tools (ADR 0019, 0020, SEC-36). Arguments are the model's JSON: parsed and checked
+/// here. The workspace comes from the scope, never from the model. One instance per AI turn: it
+/// also remembers which prices tools returned, for the reply check (SEC-38), and which knowledge
+/// the answer used.
+/// </summary>
+internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDbContext db)
+{
+    // Tool results go to the model, never into HTML: keep "+39…" and "€" readable instead of +.
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
 
     private readonly HashSet<long> _prices = [];
+    private readonly List<string> _sources = [];
 
     /// <summary>Prices (in cents) that tools returned in this turn; the only ones a reply may mention.</summary>
     public IReadOnlySet<long> AllowedPrices => _prices;
+
+    /// <summary>Knowledge returned in this turn, see <see cref="KnowledgeSources"/>.</summary>
+    public IReadOnlyList<string> Sources => _sources;
 
     public static readonly IReadOnlyList<LlmTool> Definitions =
     [
@@ -43,9 +71,12 @@ internal sealed class AgentTools(ICatalog catalog, AiDbContext db)
         Tool("get_product_options",
             "The variants of one product that can be ordered now (size, colour…), with prices. Use before offering options.",
             """{"type":"object","properties":{"product_id":{"type":"string","description":"The id from search_products"}},"required":["product_id"],"additionalProperties":false}"""),
+        Tool("get_shipping_options",
+            "Where the shop delivers, the shipping cost per zone, free-shipping thresholds and delivery times. Use it for any question about shipping costs or delivery times.",
+            """{"type":"object","properties":{},"additionalProperties":false}"""),
         Tool("search_knowledge",
-            "Answers the shop's team has written for customer questions (shipping, returns, opening hours, payment…). Use it for any question that is not about a product.",
-            """{"type":"object","properties":{"query":{"type":"string","description":"The customer's question in a few words"}},"required":["query"],"additionalProperties":false}"""),
+            "The shop's own rules and answers: returns, payment, contact details and opening hours, and answers the team wrote for customer questions. Use it for any question that is not about a product or shipping cost.",
+            """{"type":"object","properties":{"query":{"type":"string","description":"The customer's question in a few words"},"topic":{"type":"string","enum":["shipping","returns","payment","contact","other"],"description":"What the question is about"}},"required":["query","topic"],"additionalProperties":false}"""),
         Tool("handoff_to_human",
             "Give the conversation to the shop's team. Use when you don't know the answer, the customer wants a person, wants to order, complains or asks for a refund, or you are unsure. Don't tell the customer you are 'handing off'; the team will answer.",
             """{"type":"object","properties":{"reason":{"type":"string","enum":["unknown_answer","customer_asked_for_human","complaint","refund","order","special_request","low_confidence","other"]},"question":{"type":"string","description":"For unknown_answer: the customer's question, short, in their words"},"summary":{"type":"string","description":"One sentence for the team"}},"required":["reason"],"additionalProperties":false}"""),
@@ -74,6 +105,7 @@ internal sealed class AgentTools(ICatalog catalog, AiDbContext db)
         {
             "search_products" => await SearchProductsAsync(args, ct),
             "get_product_options" => await ProductOptionsAsync(args, ct),
+            "get_shipping_options" => await ShippingOptionsAsync(ct),
             "search_knowledge" => await SearchKnowledgeAsync(args, ct),
             "handoff_to_human" => Handoff(args),
             _ => Error("Unknown tool."),
@@ -135,39 +167,127 @@ internal sealed class AgentTools(ICatalog catalog, AiDbContext db)
             return Error("query is required (max 300 characters).");
         }
 
-        // Letters and digits only, so nothing in a word acts as an ILIKE wildcard (SEC-01).
-        var words = System.Text.RegularExpressions.Regex.Matches(query, @"[\p{L}\p{N}]{3,}")
-            .Select(m => m.Value.ToLowerInvariant())
-            .Distinct()
-            .Take(8)
-            .ToList();
-        if (words.Count == 0)
-        {
-            return Result(new { answers = Array.Empty<object>() });
-        }
+        var topic = Text(args, "topic", 20) ?? KnowledgeTopics.Other;
+        var policy = await PolicyAsync(topic, ct);
 
-        // Keyword scoring in memory for now (ADR 0019): a shop has at most a few hundred taught answers.
-        // Embeddings come with the knowledge base.
-        var candidates = await db.Answers
-            .AsNoTracking()
-            .Where(a => a.Active)
-            .OrderByDescending(a => a.UpdatedAt)
-            .Take(1000)
-            .ToListAsync(ct);
+        // Keyword scoring in memory (ADR 0020): a shop has at most a few hundred answers.
+        // Embeddings come with document import.
+        var stems = Stems(query);
+        var candidates = stems.Count == 0
+            ? []
+            : await db.Answers
+                .AsNoTracking()
+                .Where(a => a.Active)
+                .OrderByDescending(a => a.UpdatedAt)
+                .Take(1000)
+                .ToListAsync(ct);
         var best = candidates
-            .Select(a => (Answer: a, Score: words.Count(w => a.Question.Contains(w, StringComparison.OrdinalIgnoreCase)) * 2
-                + words.Count(w => a.Answer.Contains(w, StringComparison.OrdinalIgnoreCase))))
+            .Select(a => (Answer: a, Score: stems.Count(s => a.Question.Contains(s, StringComparison.OrdinalIgnoreCase)) * 2
+                + stems.Count(s => a.Answer.Contains(s, StringComparison.OrdinalIgnoreCase))))
             .Where(x => x.Score > 0)
             .OrderByDescending(x => x.Score)
             .Take(3)
-            .Select(x => new { question = x.Answer.Question, answer = x.Answer.Answer })
+            .Select(x => x.Answer)
             .ToList();
+        foreach (var answer in best)
+        {
+            Used(KnowledgeSources.AnswerPrefix + answer.Id, answer.Answer);
+        }
 
         return Result(new
         {
-            answers = best,
-            note = best.Count == 0 ? "The team hasn't answered this yet. Hand off with reason unknown_answer." : null,
+            policy,
+            answers = best.Select(a => new { question = a.Question, answer = a.Answer }).ToList(),
+            note = policy is null && best.Count == 0 ? "The shop hasn't written this down. Hand off with reason unknown_answer." : null,
         });
+    }
+
+    /// <summary>The written policy for a topic, or null when the shop left it empty.</summary>
+    private async Task<object?> PolicyAsync(string topic, CancellationToken ct)
+    {
+        var p = await db.Policies.AsNoTracking().SingleOrDefaultAsync(ct);
+        switch (topic)
+        {
+            case KnowledgeTopics.Returns when p is not null && (p.ReturnDays is not null || p.ReturnPolicy is not null):
+                Used(KnowledgeSources.PolicyPrefix + topic, p.ReturnPolicy);
+                return new { returnWithinDaysOfDelivery = p.ReturnDays, rules = p.ReturnPolicy };
+            case KnowledgeTopics.Payment:
+                // Cash on delivery is the only method in Phase 1 (ADR 0004), whether or not the shop wrote notes.
+                Used(KnowledgeSources.PolicyPrefix + topic, p?.PaymentNotes);
+                return new { methods = new[] { "cash on delivery" }, notes = p?.PaymentNotes };
+            case KnowledgeTopics.Contact when p is not null && (p.ContactPhone ?? p.ContactEmail ?? p.ContactAddress ?? p.OpeningHours) is not null:
+                Used(KnowledgeSources.PolicyPrefix + topic, null);
+                return new { phone = p.ContactPhone, email = p.ContactEmail, address = p.ContactAddress, openingHours = p.OpeningHours };
+            case KnowledgeTopics.Shipping when p?.ShippingNotes is not null:
+                Used(KnowledgeSources.PolicyPrefix + topic, p.ShippingNotes);
+                return new { notes = p.ShippingNotes, costs = "Use get_shipping_options for costs and delivery times." };
+            default:
+                return null;
+        }
+    }
+
+    private async Task<ToolOutcome> ShippingOptionsAsync(CancellationToken ct)
+    {
+        var zones = await shipping.ListAsync(ct);
+        if (zones.Count == 0)
+        {
+            return Result(new { zones = Array.Empty<object>(), note = "The shop hasn't set shipping costs. Hand off with reason unknown_answer." });
+        }
+
+        Used(KnowledgeSources.Shipping, null);
+        return Result(new
+        {
+            zones = zones.Select(z => new
+            {
+                zone = z.Name,
+                areas = z.Areas,
+                cost = z.Price == 0 ? "free" : Allowed(z.Price, z.Currency),
+                freeShippingFromOrderValue = z.FreeOver is { } free ? Allowed(free, z.Currency) : null,
+                deliveryDays = Days(z.MinDays, z.MaxDays),
+            }).ToList(),
+        });
+    }
+
+    /// <summary>
+    /// Records a source; amounts in the shop's own text (e.g. "return shipping €5") may then be
+    /// quoted, because the owner wrote them, not the model.
+    /// </summary>
+    private void Used(string source, string? text)
+    {
+        if (!_sources.Contains(source))
+        {
+            _sources.Add(source);
+        }
+
+        foreach (var cents in Guardrails.Amounts(text))
+        {
+            _prices.Add(cents);
+        }
+    }
+
+    /// <summary>
+    /// Word starts of 3+ letters/digits ("spedizione", "spedite" → "spedi"), so close forms match.
+    /// Letters and digits only (SEC-01).
+    /// </summary>
+    internal static List<string> Stems(string query) =>
+        System.Text.RegularExpressions.Regex.Matches(query, @"[\p{L}\p{N}]{3,}")
+            .Select(m => m.Value.ToLowerInvariant())
+            .Select(w => w.Length > 5 ? w[..5] : w)
+            .Distinct()
+            .Take(8)
+            .ToList();
+
+    private static string? Days(int? min, int? max) => (min, max) switch
+    {
+        (null, null) => null,
+        ({ } a, { } b) when a != b => $"{a}-{b} days",
+        _ => $"{min ?? max} days",
+    };
+
+    private string Allowed(long cents, string currency)
+    {
+        _prices.Add(cents);
+        return Money(cents, currency);
     }
 
     private static ToolOutcome Handoff(JsonElement args)

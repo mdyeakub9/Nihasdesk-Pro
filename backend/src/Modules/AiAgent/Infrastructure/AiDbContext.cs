@@ -24,6 +24,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 
     public DbSet<AiSettings> Settings => Set<AiSettings>();
 
+    public DbSet<ShopPolicies> Policies => Set<ShopPolicies>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -67,6 +69,22 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             LowerCaseText(settings.Property(s => s.Tone));
             // One row per workspace.
             settings.HasIndex(s => s.TenantId).IsUnique();
+        });
+
+        modelBuilder.Entity<ShopPolicies>(policies =>
+        {
+            policies.ToTable("shop_policies", table =>
+                table.HasCheckConstraint("ck_shop_policies_return_days", $"return_days IS NULL OR return_days BETWEEN 0 AND {ShopPolicies.MaxReturnDays}"));
+            policies.Property(p => p.Id).ValueGeneratedNever();
+            policies.Property(p => p.ShippingNotes).HasMaxLength(ShopPolicies.ShippingNotesMaxLength);
+            policies.Property(p => p.ReturnPolicy).HasMaxLength(ShopPolicies.ReturnPolicyMaxLength);
+            policies.Property(p => p.PaymentNotes).HasMaxLength(ShopPolicies.PaymentNotesMaxLength);
+            policies.Property(p => p.ContactPhone).HasMaxLength(ShopPolicies.PhoneMaxLength);
+            policies.Property(p => p.ContactEmail).HasMaxLength(ShopPolicies.EmailMaxLength);
+            policies.Property(p => p.ContactAddress).HasMaxLength(ShopPolicies.AddressMaxLength);
+            policies.Property(p => p.OpeningHours).HasMaxLength(ShopPolicies.OpeningHoursMaxLength);
+            // One row per workspace.
+            policies.HasIndex(p => p.TenantId).IsUnique();
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);
