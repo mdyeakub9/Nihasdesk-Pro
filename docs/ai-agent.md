@@ -17,7 +17,7 @@ _Status: draft._
 
 ## Tool registry
 Each tool implements `IAgentTool { Name, Description, Parameters, ExecuteAsync(ctx, input) }`. Tools are enabled per workspace by connected integrations/features.
-- Phase 1: `search_products`, `get_product_options`, `search_knowledge`, `create_lead`, `create_order_request`, `handoff_to_human`
+- Phase 1: `search_products`, `get_product_options`, `get_shipping_options` (zones and costs, ADR 0020), `search_knowledge` (policies by topic + FAQ), `create_lead`, `create_order_request`, `handoff_to_human`
 - Later: `get_order_status`, `check_availability`, `book_appointment`, custom API tool.
 - There is deliberately **no** `create_order` tool: orders are created only by a human approving an order request (PRD Phase 1, section 4.9).
 

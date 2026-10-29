@@ -6,6 +6,7 @@ using Nihasdesk.Modules.Commerce.Infrastructure;
 using Nihasdesk.Modules.Contacts.Infrastructure;
 using Nihasdesk.Modules.Identity.Infrastructure;
 using Nihasdesk.Modules.Inbox.Infrastructure;
+using Nihasdesk.Modules.Shipping.Infrastructure;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -70,6 +71,11 @@ public sealed class PostgresDatabase : IAsyncDisposable
         await using (var ai = AiDbContextFactory.Create(owner))
         {
             await ai.Database.MigrateAsync();
+        }
+
+        await using (var shipping = ShippingDbContextFactory.Create(owner))
+        {
+            await shipping.Database.MigrateAsync();
         }
 
         database.AppConnectionString = new NpgsqlConnectionStringBuilder(owner)

@@ -320,7 +320,51 @@
     "team": "Team",
     "channels": "Channels",
     "security": "Security",
-    "ai": "AI"
+    "ai": "AI",
+    "knowledge": "Shop knowledge"
+  },
+  "policies": {
+    "title": "Shop policies",
+    "intro": "What the AI tells customers about returns, payment and how to reach you. Leave a field empty and the AI hands those questions to your team.",
+    "readOnly": "Only Owners and Admins can change the shop knowledge.",
+    "shipping": "Shipping",
+    "shippingNotes": "Shipping notes",
+    "shippingNotesHint": "e.g. courier, tracking, cut-off time. Costs and delivery times go in the zones above.",
+    "returns": "Returns",
+    "returnDays": "Return within (days after delivery)",
+    "returnDaysInvalid": "Enter a number of days from 0 to 365.",
+    "returnPolicy": "Return rules",
+    "returnPolicyPlaceholder": "e.g. Unused items in their original packaging. Return shipping €5.00, refund within 7 days.",
+    "payment": "Payment",
+    "paymentFixed": "the only payment method for now",
+    "paymentNotes": "Payment notes",
+    "methods": {
+      "cash_on_delivery": "Cash on delivery"
+    },
+    "contact": "Contact",
+    "contactIntro": "The AI shares these exactly as written, and nothing else.",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "openingHours": "Opening hours",
+    "openingHoursPlaceholder": "e.g. Mon–Sat 9:00–19:00",
+    "zones": {
+      "title": "Shipping zones",
+      "intro": "Where you deliver, what it costs and how long it takes. The AI quotes only these costs.",
+      "empty": "No zones yet. Until you add one, the AI hands shipping-cost questions to your team.",
+      "name": "Zone",
+      "namePlaceholder": "e.g. Italy",
+      "areas": "Covers",
+      "areasPlaceholder": "e.g. All of Italy except the islands",
+      "price": "Cost ({{currency}})",
+      "freeOver": "Free from ({{currency}})",
+      "minDays": "Min. days",
+      "maxDays": "Max. days",
+      "invalid": "Check this zone: it needs a name and a cost like 5.90; days are whole numbers and max isn’t below min.",
+      "add": "Add a zone",
+      "remove": "Remove",
+      "save": "Save zones"
+    }
   },
   "team": {
     "intro": "Invite the people who answer your customers. Owners and Admins manage the team; Members work in the inbox.",
@@ -580,6 +624,8 @@
     "save": "Save",
     "saved": "Saved.",
     "ownersOnly": "Only Owners and Admins can change the AI.",
+    "knowledgeHint": "What the AI knows — shipping costs, returns, payment, contact details and your FAQ — is under",
+    "knowledgeLink": "Shop knowledge",
     "questions": {
       "title": "Questions the AI couldn’t answer",
       "intro": "Write the answer once: the AI uses it the next time someone asks.",
@@ -592,16 +638,21 @@
       "notFound": "This question no longer exists."
     },
     "answers": {
-      "title_one": "What the AI learned ({{count}})",
-      "title_other": "What the AI learned ({{count}})",
-      "intro": "Answers your team taught. Switch one off if it’s out of date.",
-      "list": "Taught answers",
+      "title_one": "Questions and answers ({{count}})",
+      "title_other": "Questions and answers ({{count}})",
+      "intro": "Your FAQ: answers you wrote, and answers taught from questions the AI couldn’t answer. Switch one off if it’s out of date.",
+      "list": "Answers",
       "question": "Question",
       "answer": "Answer",
       "active": "In use",
+      "off": "Switched off: the AI doesn’t use it.",
       "edit": "Edit",
       "add": "Add an answer",
-      "save": "Add"
+      "save": "Add",
+      "sources": {
+        "taught": "Taught",
+        "added": "FAQ"
+      }
     }
   },
   "aiTest": {
@@ -614,6 +665,15 @@
     "reset": "Start over",
     "thinking": "The AI is thinking…",
     "tools": "Looked up: {{tools}}",
+    "usedSources": "Based on: {{sources}}",
+    "sources": {
+      "zones": "shipping zones",
+      "shipping": "shipping notes",
+      "returns": "return policy",
+      "payment": "payment",
+      "contact": "contact details",
+      "answer": "an answer"
+    },
     "handoff": "The AI would hand this to your team ({{reason}}).",
     "unknownHint": "In a real chat this question would appear under “Questions the AI couldn’t answer”.",
     "blocked": "The AI’s draft would be held back ({{reason}}) and your team asked to answer.",

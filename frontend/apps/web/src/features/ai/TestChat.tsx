@@ -69,6 +69,16 @@ export function TestChat({ providerConfigured }: { providerConfigured: boolean }
         }
         if (result.tools.length > 0)
           added.push({ kind: 'notice', text: t('aiTest.tools', { tools: result.tools.join(', ') }) });
+        if (result.sources.length > 0) {
+          const names = result.sources.map((source) =>
+            source.kind === 'answer'
+              ? `“${source.label ?? t('aiTest.sources.answer')}”`
+              : source.kind === 'policy'
+                ? t(`aiTest.sources.${source.label ?? 'other'}`, { defaultValue: source.label ?? '' })
+                : t('aiTest.sources.zones'),
+          );
+          added.push({ kind: 'notice', text: t('aiTest.usedSources', { sources: names.join(', ') }) });
+        }
         setLines((current) => [...current, ...added]);
       },
     });

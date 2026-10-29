@@ -132,6 +132,9 @@ internal sealed class AiRun : TenantEntity
 
     public List<string> Tools { get; private set; } = [];
 
+    /// <summary>What the answer was based on (PRD 4.7), as codes: <c>shipping</c>, <c>policy:returns</c>, <c>answer:{id}</c>.</summary>
+    public List<string> Sources { get; private set; } = [];
+
     public RunOutcome Outcome { get; private set; }
 
     /// <summary>Short reason code, e.g. <c>price_not_from_tool</c>; never customer text.</summary>
@@ -141,13 +144,14 @@ internal sealed class AiRun : TenantEntity
 
     public static AiRun Finish(
         Guid tenantId, Guid conversationId, string model, int inputTokens, int outputTokens,
-        IEnumerable<string> tools, RunOutcome outcome, string? detail, TimeSpan duration) =>
+        IEnumerable<string> tools, RunOutcome outcome, string? detail, TimeSpan duration, IEnumerable<string>? sources = null) =>
         new(tenantId, conversationId)
         {
             Model = model.Length <= ModelMaxLength ? model : model[..ModelMaxLength],
             InputTokens = inputTokens,
             OutputTokens = outputTokens,
             Tools = [.. tools],
+            Sources = [.. (sources ?? []).Distinct().Take(20)],
             Outcome = outcome,
             Detail = detail is null ? null : detail.Length <= DetailMaxLength ? detail : detail[..DetailMaxLength],
             DurationMs = (int)Math.Min(int.MaxValue, duration.TotalMilliseconds),

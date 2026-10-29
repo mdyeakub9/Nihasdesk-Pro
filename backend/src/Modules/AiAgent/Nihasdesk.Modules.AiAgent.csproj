@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Contacts\Nihasdesk.Modules.Contacts.csproj" />
     <ProjectReference Include="..\Inbox\Nihasdesk.Modules.Inbox.csproj" />
     <ProjectReference Include="..\Commerce\Nihasdesk.Modules.Commerce.csproj" />
+    <ProjectReference Include="..\Shipping\Nihasdesk.Modules.Shipping.csproj" />
   </ItemGroup>
 
   <ItemGroup>

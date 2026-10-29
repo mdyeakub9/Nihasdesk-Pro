@@ -16,6 +16,7 @@ import { ProductEditorPage } from './features/catalog/ProductEditorPage';
 import { ProductsPage } from './features/catalog/ProductsPage';
 import { ChannelsPage } from './features/channels/ChannelsPage';
 import { AiSettingsPage } from './features/ai/AiSettingsPage';
+import { PoliciesPage } from './features/policies/PoliciesPage';
 import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
 import { TeamPage } from './features/team/TeamPage';
 import { AppShell } from './layouts/AppShell';
@@ -78,6 +79,7 @@ export const routes: RouteObject[] = [
           { path: 'team', element: <TeamPage /> },
           { path: 'channels', element: <ChannelsPage /> },
           { path: 'ai', element: <AiSettingsPage /> },
+          { path: 'knowledge', element: <PoliciesPage /> },
           { path: 'security', element: <SecurityPage /> },
         ],
       },

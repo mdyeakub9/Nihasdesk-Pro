@@ -320,7 +320,51 @@
     "team": "Team",
     "channels": "Canali",
     "security": "Sicurezza",
-    "ai": "IA"
+    "ai": "IA",
+    "knowledge": "Info negozio"
+  },
+  "policies": {
+    "title": "Regole del negozio",
+    "intro": "Cosa dice l’IA ai clienti su resi, pagamento e come contattarti. Se lasci vuoto un campo, l’IA passa quelle domande al tuo team.",
+    "readOnly": "Solo Proprietari e Admin possono modificare le info del negozio.",
+    "shipping": "Spedizione",
+    "shippingNotes": "Note sulla spedizione",
+    "shippingNotesHint": "Es. corriere, tracking, orario limite. Costi e tempi di consegna vanno nelle zone qui sopra.",
+    "returns": "Resi",
+    "returnDays": "Reso entro (giorni dalla consegna)",
+    "returnDaysInvalid": "Inserisci un numero di giorni da 0 a 365.",
+    "returnPolicy": "Regole per il reso",
+    "returnPolicyPlaceholder": "Es. Articoli non usati nella confezione originale. Spedizione del reso €5,00, rimborso entro 7 giorni.",
+    "payment": "Pagamento",
+    "paymentFixed": "per ora l’unico metodo di pagamento",
+    "paymentNotes": "Note sul pagamento",
+    "methods": {
+      "cash_on_delivery": "Contrassegno"
+    },
+    "contact": "Contatti",
+    "contactIntro": "L’IA li condivide esattamente come scritti, e nient’altro.",
+    "phone": "Telefono",
+    "email": "Email",
+    "address": "Indirizzo",
+    "openingHours": "Orari di apertura",
+    "openingHoursPlaceholder": "Es. Lun–Sab 9:00–19:00",
+    "zones": {
+      "title": "Zone di spedizione",
+      "intro": "Dove consegni, quanto costa e quanto ci vuole. L’IA comunica solo questi costi.",
+      "empty": "Nessuna zona. Finché non ne aggiungi una, l’IA passa al team le domande sui costi di spedizione.",
+      "name": "Zona",
+      "namePlaceholder": "Es. Italia",
+      "areas": "Comprende",
+      "areasPlaceholder": "Es. Tutta Italia tranne le isole",
+      "price": "Costo ({{currency}})",
+      "freeOver": "Gratis da ({{currency}})",
+      "minDays": "Giorni min.",
+      "maxDays": "Giorni max.",
+      "invalid": "Controlla questa zona: servono un nome e un costo come 5,90; i giorni sono numeri interi e il massimo non è sotto il minimo.",
+      "add": "Aggiungi una zona",
+      "remove": "Rimuovi",
+      "save": "Salva le zone"
+    }
   },
   "team": {
     "intro": "Invita le persone che rispondono ai tuoi clienti. Titolari e Amministratori gestiscono il team; i Membri lavorano nell'inbox.",
@@ -580,6 +624,8 @@
     "save": "Salva",
     "saved": "Salvato.",
     "ownersOnly": "Solo Proprietari e Admin possono modificare l’IA.",
+    "knowledgeHint": "Cosa sa l’IA — costi di spedizione, resi, pagamento, contatti e le tue FAQ — è in",
+    "knowledgeLink": "Info negozio",
     "questions": {
       "title": "Domande a cui l’IA non ha saputo rispondere",
       "intro": "Scrivi la risposta una volta: l’IA la userà la prossima volta che qualcuno chiede.",
@@ -592,16 +638,21 @@
       "notFound": "Questa domanda non esiste più."
     },
     "answers": {
-      "title_one": "Cosa ha imparato l’IA ({{count}})",
-      "title_other": "Cosa ha imparato l’IA ({{count}})",
-      "intro": "Risposte insegnate dal team. Disattivane una se non è più valida.",
-      "list": "Risposte insegnate",
+      "title_one": "Domande e risposte ({{count}})",
+      "title_other": "Domande e risposte ({{count}})",
+      "intro": "Le tue FAQ: risposte scritte da te e risposte insegnate dalle domande a cui l’IA non sapeva rispondere. Disattivane una se non è più valida.",
+      "list": "Risposte",
       "question": "Domanda",
       "answer": "Risposta",
       "active": "In uso",
+      "off": "Disattivata: l’IA non la usa.",
       "edit": "Modifica",
       "add": "Aggiungi una risposta",
-      "save": "Aggiungi"
+      "save": "Aggiungi",
+      "sources": {
+        "taught": "Insegnata",
+        "added": "FAQ"
+      }
     }
   },
   "aiTest": {
@@ -614,6 +665,15 @@
     "reset": "Ricomincia",
     "thinking": "L’IA sta pensando…",
     "tools": "Ha consultato: {{tools}}",
+    "usedSources": "In base a: {{sources}}",
+    "sources": {
+      "zones": "zone di spedizione",
+      "shipping": "note sulla spedizione",
+      "returns": "regole per il reso",
+      "payment": "pagamento",
+      "contact": "contatti",
+      "answer": "una risposta"
+    },
     "handoff": "L’IA passerebbe questa conversazione al team ({{reason}}).",
     "unknownHint": "In una chat reale questa domanda comparirebbe tra le “Domande a cui l’IA non ha saputo rispondere”.",
     "blocked": "La bozza dell’IA verrebbe trattenuta ({{reason}}) e il team dovrebbe rispondere.",

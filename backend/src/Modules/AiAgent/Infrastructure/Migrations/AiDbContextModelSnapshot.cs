@@ -67,6 +67,11 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("output_tokens");
 
+                    b.PrimitiveCollection<List<string>>("Sources")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("sources");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -189,6 +194,76 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasDatabaseName("ix_knowledge_gaps_tenant_id_status_created_at");
 
                     b.ToTable("knowledge_gaps", "ai");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.ShopPolicies", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContactAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("contact_address");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("contact_email");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("contact_phone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("OpeningHours")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("opening_hours");
+
+                    b.Property<string>("PaymentNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("payment_notes");
+
+                    b.Property<int?>("ReturnDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("return_days");
+
+                    b.Property<string>("ReturnPolicy")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("return_policy");
+
+                    b.Property<string>("ShippingNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("shipping_notes");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_shop_policies");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_shop_policies_tenant_id");
+
+                    b.ToTable("shop_policies", "ai", t =>
+                        {
+                            t.HasCheckConstraint("ck_shop_policies_return_days", "return_days IS NULL OR return_days BETWEEN 0 AND 365");
+                        });
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.TaughtAnswer", b =>

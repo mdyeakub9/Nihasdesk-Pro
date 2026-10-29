@@ -29,6 +29,8 @@ export type TaughtAnswer = {
   answer: string;
   active: boolean;
   updatedAt: string;
+  /** taught: from a question the AI couldn't answer; added: written as an FAQ. */
+  source: 'taught' | 'added';
 };
 
 export type TestMessage = { author: 'customer' | 'ai'; text: string };
@@ -42,6 +44,8 @@ export type TestReply = {
   /** Why the AI provider failed, e.g. http_401 (key rejected). */
   failed: string | null;
   tools: string[];
+  /** What the answer was based on: shipping zones, a policy (label = topic) or an answer (label = its question). */
+  sources: { kind: 'shipping' | 'policy' | 'answer'; label: string | null }[];
 };
 
 const keys = {
