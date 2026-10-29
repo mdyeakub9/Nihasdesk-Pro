@@ -27,6 +27,7 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - Products page: list, editor (options, variants, prices in cents), CSV import with preview.
 - AI agent core (ADR 0019): OpenAI EU behind `ILlmProvider`, replies from the catalog with tools, natural tone, AI disclosure once, guardrails (no made-up prices or links), limits, handoff to the team with a note, unanswered questions the team can teach (taught answers used next time), runs metered per workspace.
 - Settings → AI: AI on/off, tone, the owner's guidance, first message (disclosure), questions the AI couldn't answer with “Teach the AI”, taught answers (edit, switch off, add), and a test chat that uses the same AI without storing anything.
+- Knowledge base (ADR 0020): shipping zones in the Shipping module (`IShippingRates`), shop policies (returns, payment = cash on delivery, contact, shipping notes), one FAQ list (taught + added), AI tools `get_shipping_options` and `search_knowledge` by topic, sources per answer in `ai.runs` and in the test chat; Settings → Shop knowledge. Document and website import come next.
 
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).

@@ -37,6 +37,7 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    dotnet ef database update --project src/Modules/Channels --startup-project src/Modules/Channels --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
    dotnet ef database update --project src/Modules/Commerce --startup-project src/Modules/Commerce --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
    dotnet ef database update --project src/Modules/AiAgent --startup-project src/Modules/AiAgent --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
+   dotnet ef database update --project src/Modules/Shipping --startup-project src/Modules/Shipping --connection "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk;Password=<POSTGRES_PASSWORD>"
    ```
    Each module has its own migrations; run all of them after pulling new ones.
 5. Run the API (HTTPS only: session and CSRF cookies are `Secure`). Trust the .NET development certificate once:
