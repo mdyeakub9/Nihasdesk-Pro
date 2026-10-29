@@ -9,6 +9,7 @@ const sections: { to: string; label: string; roles?: Role[] }[] = [
   { to: 'team', label: 'settings.team' },
   { to: 'channels', label: 'settings.channels', roles: ['owner', 'admin'] },
   { to: 'ai', label: 'settings.ai', roles: ['owner', 'admin'] },
+  { to: 'knowledge', label: 'settings.knowledge' },
   { to: 'security', label: 'settings.security' },
 ];
 

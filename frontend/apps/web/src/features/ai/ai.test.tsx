@@ -37,6 +37,7 @@ const reply = (over: Partial<TestReply> = {}): TestReply => ({
   blocked: null,
   failed: null,
   tools: [],
+  sources: [],
   ...over,
 });
 
@@ -121,47 +122,6 @@ describe('Settings → AI', () => {
     });
   });
 
-  it('switches taught answers off and adds new ones', async () => {
-    const fetchMock = aiApi('owner', {
-      routes: {
-        'GET /api/v1/ai/answers': () =>
-          json([
-            {
-              id: 'a-1',
-              question: 'Orari?',
-              answer: 'Lun–Sab 9–19',
-              active: true,
-              updatedAt: '2026-10-28T10:00:00Z',
-            },
-          ]),
-        'PUT /api/v1/ai/answers/a-1': () => json({}),
-      },
-      post: { '/api/v1/ai/answers': () => json({}, 201) },
-    });
-    await renderApp('/settings/ai');
-
-    const list = await screen.findByRole('list', { name: 'Taught answers' });
-    await userEvent.click(within(list).getByRole('switch', { name: 'In use' }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, '/api/v1/ai/answers/a-1')[0]?.body).toEqual({
-        question: 'Orari?',
-        answer: 'Lun–Sab 9–19',
-        active: false,
-      }),
-    );
-
-    const add = screen.getByRole('heading', { name: 'Add an answer' }).parentElement as HTMLElement;
-    await userEvent.type(within(add).getByLabelText('Question'), 'Pagamento?');
-    await userEvent.type(within(add).getByLabelText('Answer'), 'Contrassegno.');
-    await userEvent.click(within(add).getByRole('button', { name: 'Add' }));
-    await waitFor(() =>
-      expect(callsTo(fetchMock, '/api/v1/ai/answers').find((c) => c.body)?.body).toEqual({
-        question: 'Pagamento?',
-        answer: 'Contrassegno.',
-      }),
-    );
-  });
-
   it('runs a test chat with the disclosure first and the real history after', async () => {
     let turn = 0;
     const fetchMock = aiApi('owner', {
@@ -172,7 +132,11 @@ describe('Settings → AI', () => {
               ? reply({
                   disclosure: 'Ciao! Sono l’assistente virtuale.',
                   reply: 'Sì, costa €89.00!',
-                  tools: ['search_products'],
+                  tools: ['search_products', 'search_knowledge'],
+                  sources: [
+                    { kind: 'policy', label: 'returns' },
+                    { kind: 'answer', label: 'Posso cambiare taglia?' },
+                  ],
                 })
               : reply({
                   handoff: 'unknown_answer',
@@ -191,7 +155,8 @@ describe('Settings → AI', () => {
     const chat = screen.getByRole('list', { name: 'Test conversation' });
     expect(await within(chat).findByText('Sì, costa €89.00!')).toBeInTheDocument();
     expect(within(chat).getByText('Ciao! Sono l’assistente virtuale.')).toBeInTheDocument();
-    expect(within(chat).getByText('Looked up: search_products')).toBeInTheDocument();
+    expect(within(chat).getByText('Looked up: search_products, search_knowledge')).toBeInTheDocument();
+    expect(within(chat).getByText('Based on: return policy, “Posso cambiare taglia?”')).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Test message'), 'Spedite in Sardegna?{Enter}');
     expect(
@@ -224,6 +189,8 @@ describe('Settings → AI', () => {
 
     expect(await screen.findByRole('note')).toHaveTextContent('Only Owners and Admins');
     expect(screen.queryByRole('link', { name: 'AI' })).not.toBeInTheDocument();
+    // Members still see what the AI knows.
+    expect(screen.getByRole('link', { name: 'Shop knowledge' })).toBeInTheDocument();
     expect(callsTo(fetchMock, '/api/v1/ai/questions')).toHaveLength(0);
   });
 });
