@@ -28,6 +28,8 @@ Weekly, 3–5 lines: done, blocked, decisions.
 - AI agent core (ADR 0019): OpenAI EU behind `ILlmProvider`, replies from the catalog with tools, natural tone, AI disclosure once, guardrails (no made-up prices or links), limits, handoff to the team with a note, unanswered questions the team can teach (taught answers used next time), runs metered per workspace.
 - Settings → AI: AI on/off, tone, the owner's guidance, first message (disclosure), questions the AI couldn't answer with “Teach the AI”, taught answers (edit, switch off, add), and a test chat that uses the same AI without storing anything.
 
+- Requirements (PRD v0.6): what the AI knows is split into three layers — structured business facts used by code (shipping zones, costs, times, payment, returns), short owner instructions, and searchable knowledge (documents, FAQ, PDF/DOCX, web page, taught answers) — with draft → test → publish, versions and rollback. Inspired by a competitor review; differs by computing totals in code.
+
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
 - Decided: e-commerce first; flexible core with vertical packs (ADR 0003); Shopify/Woo moved to Phase 2, Phase 1 uses manual + CSV catalog.

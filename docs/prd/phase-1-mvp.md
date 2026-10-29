@@ -1,6 +1,6 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.5 · 2026-10-27 · Owner: Yeakub_
+_Status: draft v0.6 · 2026-10-29 · Owner: Yeakub_
 _Related: `docs/project-brief.md`, ADR 0003._
 
 ## 1. Problem
@@ -49,19 +49,44 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - **CSV import** with a downloadable template, preview, validation errors per row, and update-by-SKU.
 - Catalog is the only source of prices and stock for the AI.
 
-### 4.7 Knowledge base
-- Shop policies as structured fields: shipping (zones, costs, times), returns, payment methods, contact info.
-- Free-text FAQ entries; upload PDF/DOCX; add a website URL to import text (single pages).
-- Owner can see which sources were used in an AI answer.
+### 4.7 What the AI knows — three layers
+The AI is never "trained"; it is given the right information per message. Information lives in three layers, each with a clear job (details: `docs/ai-agent.md` → Knowledge layers).
+
+**Layer 1 — Business facts (structured, computed by code).** Typed fields, not free text:
+- Shop name, address, opening hours, contact channels.
+- **Shipping zones** (country/region/postal-code ranges) with **cost** and **delivery time** per zone, free-shipping threshold, dispatch cut-off time.
+- Payment methods allowed (Phase 1: cash on delivery, with optional COD surcharge).
+- Return window (days) and whether returns are free.
+These values are used by **code**: order totals, shipping cost and delivery estimates are always computed from them, never written or calculated by the model (rule 5, SEC-41). The AI receives the relevant values through tools.
+
+**Layer 2 — Instructions (short, always sent).** Small blocks the owner writes: about the shop, tone, do's and don'ts, current offer. Each block can be switched on/off. A size budget is shown (characters) because every block is sent with every message. Seeded from templates of the shop's vertical pack (ADR 0003).
+
+**Layer 3 — Knowledge (long, looked up when needed).**
+- Sources: text pasted with a title, FAQ entries, PDF/DOCX upload, single website page import (through the SSRF-safe client, SEC-05), and the answers the team teaches via "Teach the AI".
+- Each source is split into sections (headings/paragraphs), indexed with **hybrid search** (meaning + keywords, multilingual) per workspace, and searched by the `search_knowledge` tool only when a question needs it.
+- A **"test a question"** box shows which passages the AI would find for a question.
+- Each answer shows the owner which sources/passages were used.
+
+**Draft → test → publish (Layers 1–3)**
+- Changes are saved as a **draft**. The test chat uses the draft; customers keep getting the **published** version.
+- **Publish** makes the draft live; every publish is a **version** with who/when and a short diff; **one-click rollback** to an earlier version.
+- Exception: turning the AI off, or switching off a single instruction block, applies immediately (safety switch).
+
+**Teach the AI (existing, extended)**
+- Questions the AI could not answer are listed for the team; a taught answer becomes a Layer 3 source.
+- When a team member edits an AI draft or takes over and answers, the dashboard offers "Save as knowledge" for that answer.
+
+**Later (not Phase 1):** "Tell the AI what to change" — the owner writes a change in plain language; an assistant shows the current text and the proposed change, applies it to the draft after confirmation and runs the test chat.
 
 ### 4.8 AI agent
-- Replies in the customer's language; tone setting (formal/friendly); custom instructions in plain language.
+- Replies in the customer's language; tone setting (formal/friendly); owner instructions as Layer 2 blocks (4.7).
+- Knows the shop only through the three layers in 4.7; shipping cost, totals and delivery times always come from Layer 1 via tools.
 - Tools: `search_products`, `get_product_options`, `search_knowledge`, `create_lead`, `create_order_request`, `handoff_to_human`.
 - Never invents prices, stock or policies; if unsure → asks a clarifying question or hands off.
 - Handoff: reason recorded (complaint, refund, special request, low confidence, customer asked for a human); team notified; optional timer after which the conversation returns to AI.
 - AI on/off per channel and per conversation; business-hours mode (AI only outside hours, or always).
 - AI disclosure message (EU AI Act), editable text.
-- **Test chat** inside the dashboard before going live.
+- **Test chat** inside the dashboard, using the draft (4.7), optionally continuing the same test conversation.
 - Understands images (match to catalog when possible) and voice notes (transcribe).
 
 ### 4.9 Order requests (AI takes the order, a human approves it)
