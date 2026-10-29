@@ -39,6 +39,8 @@ export type TestReply = {
   handoff: string | null;
   question: string | null;
   blocked: string | null;
+  /** Why the AI provider failed, e.g. http_401 (key rejected). */
+  failed: string | null;
   tools: string[];
 };
 

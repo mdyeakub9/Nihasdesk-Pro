@@ -41,7 +41,16 @@ export function TestChat({ providerConfigured }: { providerConfigured: boolean }
         const added: Line[] = [];
         if (result.disclosure) added.push({ kind: 'ai', text: result.disclosure, disclosure: true });
         if (result.reply) added.push({ kind: 'ai', text: result.reply });
-        if (result.handoff) {
+        if (result.failed) {
+          added.push({
+            kind: 'notice',
+            text: t('aiTest.failed', {
+              reason: t(`aiTest.failedReasons.${result.failed}`, {
+                defaultValue: t('aiTest.failedReasons.other', { code: result.failed }),
+              }),
+            }),
+          });
+        } else if (result.handoff) {
           added.push({
             kind: 'notice',
             text:
