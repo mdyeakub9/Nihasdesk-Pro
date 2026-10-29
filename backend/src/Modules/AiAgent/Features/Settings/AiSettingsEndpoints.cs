@@ -39,6 +39,8 @@ internal sealed record TestChatResponse(
     string? Handoff,
     string? Question,
     string? Blocked,
+    // Why the provider failed, e.g. http_401 (key rejected), http_429, output_limit.
+    string? Failed,
     IReadOnlyList<string> Tools);
 
 internal sealed class AiSettingsValidator : AbstractValidator<AiSettingsRequest>
@@ -150,6 +152,7 @@ internal static class AiSettingsEndpoints
                     thought.HandoffReason ?? (thought.Failed is null ? null : "ai_unavailable"),
                     thought.Question,
                     thought.Blocked,
+                    thought.Failed,
                     thought.Tools));
             })
             .AddEndpointFilter(manage)

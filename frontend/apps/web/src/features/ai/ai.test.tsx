@@ -35,6 +35,7 @@ const reply = (over: Partial<TestReply> = {}): TestReply => ({
   handoff: null,
   question: null,
   blocked: null,
+  failed: null,
   tools: [],
   ...over,
 });
@@ -203,6 +204,18 @@ describe('Settings → AI', () => {
         { author: 'customer', text: 'Spedite in Sardegna?' },
       ],
     });
+  });
+
+  it('explains why the AI provider failed', async () => {
+    aiApi('owner', {
+      post: { '/api/v1/ai/test': () => json(reply({ handoff: 'ai_unavailable', failed: 'http_401' })) },
+    });
+    await renderApp('/settings/ai');
+
+    const input = await screen.findByLabelText('Test message');
+    await waitFor(() => expect(input).toBeEnabled());
+    await userEvent.type(input, 'Ciao{Enter}');
+    expect(await screen.findByText(/didn’t accept the API key \(401\)/)).toBeInTheDocument();
   });
 
   it('is only for Owners and Admins', async () => {
