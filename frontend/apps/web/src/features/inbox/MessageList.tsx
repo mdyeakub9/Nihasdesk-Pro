@@ -1,5 +1,15 @@
 import { Avatar, Badge, Button, cn } from '@nihasdesk/ui';
-import { AlertCircle, CheckCheck, Clock, ExternalLink, Lock, Pin, ShoppingBag, Sparkles } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCheck,
+  CircleCheck,
+  Clock,
+  ExternalLink,
+  Lock,
+  Pin,
+  ShoppingBag,
+  Sparkles,
+} from 'lucide-react';
 import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format';
@@ -60,7 +70,10 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
         <div
           role="note"
           aria-label={t('message.internalNote')}
-          className="max-w-125 rounded-lg border border-dashed bg-warning px-3 py-2"
+          className={cn(
+            'max-w-125 rounded-lg border border-dashed bg-warning px-3 py-2',
+            message.resolvedAt && 'opacity-60',
+          )}
         >
           <p className="flex items-center gap-1 text-xs font-medium text-warning-foreground">
             <Lock className="size-3.5" aria-hidden="true" />
@@ -70,6 +83,13 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
                 {' '}
                 · <Pin className="size-3.5" aria-hidden="true" />
                 {t('message.pinned')}
+              </>
+            )}
+            {message.resolvedAt && (
+              <>
+                {' '}
+                · <CircleCheck className="size-3.5" aria-hidden="true" />
+                {t('message.resolved')}
               </>
             )}
           </p>

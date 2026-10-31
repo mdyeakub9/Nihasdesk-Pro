@@ -52,6 +52,8 @@ type ApiMessage = {
   delivery: 'none' | 'pending' | 'sent' | 'failed';
   pinnedAt: string | null;
   mentionedUserIds: string[];
+  resolvedAt: string | null;
+  resolvedByUserId: string | null;
 };
 
 type ConversationPage = { items: ApiConversationSummary[]; nextCursor: string | null };
@@ -89,6 +91,8 @@ function toMessage(m: ApiMessage): Message {
     ...(m.internal ? { internal: true } : {}),
     ...(m.pinnedAt ? { pinned: true } : {}),
     ...(m.mentionedUserIds?.length ? { mentionedUserIds: m.mentionedUserIds } : {}),
+    ...(m.resolvedAt ? { resolvedAt: m.resolvedAt } : {}),
+    ...(m.resolvedByUserId ? { resolvedByUserId: m.resolvedByUserId } : {}),
     ...(m.delivery !== 'none' ? { delivery: m.delivery } : {}),
   };
 }
@@ -228,13 +232,13 @@ export function useSendMessage(id: string) {
   });
 }
 
-/** Pinned and recent team notes for the side panel (PRD 4.4). */
+/** Team notes (PRD 4.4): the side panel's list and the notes pinned above the composer. */
 export function useNotes(id: string) {
   return useQuery({
     queryKey: inboxKeys.notes(id),
     queryFn: async (): Promise<TeamNotes> => {
-      const notes = await apiGet<{ pinned: ApiMessage[]; recent: ApiMessage[] }>(`${path(id)}/notes`);
-      return { pinned: notes.pinned.map(toMessage), recent: notes.recent.map(toMessage) };
+      const notes = await apiGet<{ items: ApiMessage[]; pinned: ApiMessage[] }>(`${path(id)}/notes`);
+      return { items: notes.items.map(toMessage), pinned: notes.pinned.map(toMessage) };
     },
   });
 }
@@ -253,6 +257,18 @@ export function usePinNote(id: string) {
     mutationFn: ({ noteId, pinned }: { noteId: string; pinned: boolean }) => {
       const pin = `${path(id)}/notes/${encodeURIComponent(noteId)}/pin`;
       return pinned ? apiPut(pin, {}) : apiDelete(pin);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
+  });
+}
+
+/** Resolving also unpins the note (the server does it). */
+export function useResolveNote(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ noteId, resolved }: { noteId: string; resolved: boolean }) => {
+      const resolve = `${path(id)}/notes/${encodeURIComponent(noteId)}/resolve`;
+      return resolved ? apiPut(resolve, {}) : apiDelete(resolve);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });

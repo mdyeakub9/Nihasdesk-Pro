@@ -192,6 +192,14 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("pinned_by_user_id");
 
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
                     b.Property<DateTimeOffset>("SentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("sent_at");

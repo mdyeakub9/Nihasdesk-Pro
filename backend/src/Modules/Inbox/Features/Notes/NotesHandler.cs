@@ -27,17 +27,40 @@ internal sealed class NotesHandler(
         }
 
         var notes = db.Messages.AsNoTracking().Where(m => m.ConversationId == conversationId && m.Internal);
-        var pinned = await notes.Where(m => m.PinnedAt != null).OrderByDescending(m => m.PinnedAt).ToListAsync(ct);
-        var recent = await notes
-            .Where(m => m.PinnedAt == null)
+        // The side panel keeps notes in time order, pinned or not; pinned notes also sit above the composer.
+        var items = await notes
             .OrderByDescending(m => m.SentAt)
             .ThenByDescending(m => m.Id)
-            .Take(NoteValues.RecentCount)
+            .Take(NoteValues.ListCount)
             .ToListAsync(ct);
+        var pinned = await notes.Where(m => m.PinnedAt != null).OrderBy(m => m.PinnedAt).ToListAsync(ct);
 
         return new NotesResponse(
-            pinned.Select(ConversationsHandler.ToResponse).ToList(),
-            recent.Select(ConversationsHandler.ToResponse).ToList());
+            items.Select(ConversationsHandler.ToResponse).ToList(),
+            pinned.Select(ConversationsHandler.ToResponse).ToList());
+    }
+
+    public async Task<Result<MessageResponse>> SetResolvedAsync(Guid conversationId, Guid noteId, bool resolved, CancellationToken ct)
+    {
+        var note = await db.Messages.SingleOrDefaultAsync(m => m.Id == noteId && m.ConversationId == conversationId && m.Internal, ct);
+        if (note is null)
+        {
+            return NoteErrors.NotFound;
+        }
+
+        if (resolved)
+        {
+            var me = await team.CurrentAsync(ct) ?? throw new InvalidOperationException("Inbox endpoints require a team member.");
+            note.Resolve(me.UserId, time.GetUtcNow());
+        }
+        else
+        {
+            note.Reopen();
+        }
+
+        await db.SaveChangesAsync(ct);
+        await notifier.ConversationChangedAsync(tenant.TenantId, conversationId, ct);
+        return Result.Success(ConversationsHandler.ToResponse(note));
     }
 
     public async Task<Result<MessageResponse>> AddAsync(Guid conversationId, AddNoteRequest request, CancellationToken ct)
@@ -77,6 +100,11 @@ internal sealed class NotesHandler(
         if (note is null)
         {
             return NoteErrors.NotFound;
+        }
+
+        if (pinned && note.ResolvedAt is not null)
+        {
+            return NoteErrors.Resolved;
         }
 
         if (pinned && note.PinnedAt is null)

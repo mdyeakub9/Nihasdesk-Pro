@@ -105,12 +105,10 @@
     "aiOffHint": "AI assistance is turned off for this conversation.",
     "assign": "Assign",
     "close": "Close conversation",
-    "responder": {
-      "ai": "AI",
-      "team": "Team",
-      "aiAction": "AI is answering. Take over",
-      "personAction": "{{name}} is answering. Return to AI"
-    }
+    "aiAnswering": "AI answering",
+    "teamAnswering": "Team answering",
+    "takeOver": "Take over",
+    "returnToAi": "Return to AI"
   },
   "message": {
     "history": "Messages",
@@ -131,7 +129,8 @@
     },
     "loadOlder": "Load older messages",
     "teamOnly": "Only your team sees this",
-    "pinned": "Pinned"
+    "pinned": "Pinned",
+    "resolved": "Resolved"
   },
   "composer": {
     "reply": "Reply",
@@ -710,12 +709,18 @@
     "teamOnly": "Only your team sees notes",
     "save": "Add note",
     "pinned": "Pinned notes",
-    "recent": "Recent notes",
     "pin": "Pin note",
     "unpin": "Unpin note",
     "pinLimit": "At most 5 notes can be pinned. Unpin one first.",
     "mentionedYou": "You were mentioned in a team note.",
     "openConversation": "Open",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "list": "Notes",
+    "resolve": "Resolve note",
+    "reopen": "Reopen note",
+    "resolvedBy": "Resolved by {{name}}",
+    "resolvedCount_one": "Resolved ({{count}})",
+    "resolvedCount_other": "Resolved ({{count}})",
+    "resolvedList": "Resolved notes"
   }
 }

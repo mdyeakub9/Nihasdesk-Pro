@@ -82,23 +82,20 @@ describe('Inbox', () => {
     expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/read')).toHaveLength(0);
   });
 
-  it('shows the channel in the header and takes over or returns to the AI from the responder chip', async () => {
+  it('takes over and returns the conversation to the AI, without the old text under the composer', async () => {
     const { fetchMock } = fakeInboxApi();
     await renderApp('/inbox/c-giulia');
 
-    expect(await screen.findByRole('heading', { name: 'Giulia Rossi', level: 2 })).toBeInTheDocument();
-    expect(screen.getAllByText('Messenger').length).toBeGreaterThan(0);
+    expect(await screen.findByText(/AI answering/)).toBeInTheDocument();
     expect(screen.queryByText(/AI is answering this customer\. Sending/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send & take over' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'AI is answering. Take over' }));
-    // Giulia's conversation is assigned to Md Yeakub, so the chip shows that name.
-    const chip = await screen.findByRole('button', { name: 'Md Yeakub is answering. Return to AI' });
-    expect(chip).toHaveTextContent('Md Yeakub');
+    await userEvent.click(screen.getByRole('button', { name: 'Take over' }));
+    expect(await screen.findByText(/Team answering/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
 
-    await userEvent.click(chip);
-    expect(await screen.findByRole('button', { name: 'AI is answering. Take over' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Return to AI' }));
+    expect(await screen.findByText(/AI answering/)).toBeInTheDocument();
     expect(
       callsTo(fetchMock, '/api/v1/conversations/c-giulia')
         .map((c) => c.body)
@@ -112,9 +109,8 @@ describe('Inbox', () => {
 
     await userEvent.click(await screen.findByRole('switch', { name: 'AI assistance' }));
 
-    expect(
-      await screen.findByRole('button', { name: 'Md Yeakub is answering. Return to AI' }),
-    ).toBeDisabled();
+    expect(await screen.findByText(/Team answering/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Return to AI' })).toBeDisabled();
     expect(
       callsTo(fetchMock, '/api/v1/conversations/c-giulia')
         .map((c) => c.body)

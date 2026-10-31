@@ -1,5 +1,5 @@
 import { Avatar, Button } from '@nihasdesk/ui';
-import { ArrowLeft, Check, RotateCcw, UserPlus, X } from 'lucide-react';
+import { ArrowLeft, Check, RotateCcw, Sparkles, UserCheck, UserPlus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ChannelIcon } from '../../components/ChannelIcon';
@@ -7,7 +7,7 @@ import { useConversation, useUpdateConversation } from './api';
 import { Composer } from './Composer';
 import { CustomerPanel } from './CustomerPanel';
 import { MessageList } from './MessageList';
-import { ResponderChip } from './ResponderChip';
+import { PinnedNotes } from './PinnedNotes';
 
 export function ConversationView({ id }: { id: string }) {
   const { t } = useTranslation();
@@ -30,6 +30,7 @@ export function ConversationView({ id }: { id: string }) {
   }
 
   const done = conversation.status === 'done';
+  const aiAnswering = conversation.responder === 'ai';
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -44,14 +45,14 @@ export function ConversationView({ id }: { id: string }) {
           <h2 className="truncate text-base font-semibold">{conversation.contactName}</h2>
           <p className="flex items-center gap-1.5 text-xs text-secondary-foreground">
             <ChannelIcon channel={conversation.channel} />
-            {t(`channels.${conversation.channel}`)}
+            {t(`channels.${conversation.channel}`)} ·{' '}
+            {t(aiAnswering ? 'conversation.aiAnswering' : 'conversation.teamAnswering')}
             {conversation.handoffCount > 0 && (
               <> · {t('conversation.handoffs', { count: conversation.handoffCount })}</>
             )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ResponderChip conversation={conversation} />
           <Button
             size="sm"
             variant={done ? 'outline' : 'default'}
@@ -61,6 +62,28 @@ export function ConversationView({ id }: { id: string }) {
             {done ? <RotateCcw aria-hidden="true" /> : <Check aria-hidden="true" />}
             {t(done ? 'conversation.reopen' : 'conversation.done')}
           </Button>
+          {aiAnswering ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={update.isPending}
+              onClick={() => update.mutate({ responder: 'human' })}
+            >
+              <UserCheck aria-hidden="true" />
+              {t('conversation.takeOver')}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={update.isPending || !conversation.aiEnabled}
+              title={conversation.aiEnabled ? undefined : t('conversation.aiOffHint')}
+              onClick={() => update.mutate({ responder: 'ai' })}
+            >
+              <Sparkles aria-hidden="true" />
+              {t('conversation.returnToAi')}
+            </Button>
+          )}
           <Button size="sm" variant="outline" disabled title={t('comingSoon.short')}>
             <UserPlus aria-hidden="true" />
             {t('conversation.assign')}
@@ -75,6 +98,7 @@ export function ConversationView({ id }: { id: string }) {
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col bg-surface">
           <MessageList conversation={conversation} />
+          <PinnedNotes conversationId={conversation.id} />
           <Composer conversation={conversation} />
         </div>
         <aside
