@@ -28,7 +28,6 @@ type ApiMessage = {
   internal: boolean;
   sentAt: string;
   delivery: 'none' | 'pending' | 'sent' | 'failed';
-  pinnedAt?: string | null;
   mentionedUserIds?: string[];
   resolvedAt?: string | null;
   resolvedByUserId?: string | null;
@@ -202,8 +201,8 @@ export function fakeInboxApi({
       return new Response(null, { status: 204 });
     });
     routes[`GET ${base}/notes`] = withConversation((c) => {
-      const notes = c.messages.filter((m) => m.internal).reverse();
-      return json({ items: notes, pinned: notes.filter((m) => m.pinnedAt) });
+      // Team notes only; the AI's handoff notes stay in the conversation (ADR 0021).
+      return json({ items: c.messages.filter((m) => m.internal && m.author === 'agent').reverse() });
     });
     routes[`POST ${base}/notes`] = withConversation(
       (c, body: { text: string; mentionedUserIds?: string[] }) => {
@@ -212,8 +211,8 @@ export function fakeInboxApi({
         return json(note, 201);
       },
     );
-    // Pin and resolve routes for the notes a test seeded (fakeApi matches exact paths).
-    for (const note of find(id)?.messages.filter((m) => m.internal) ?? []) {
+    // Resolve and delete routes for the notes a test seeded (fakeApi matches exact paths).
+    for (const note of find(id)?.messages.filter((m) => m.internal && m.author === 'agent') ?? []) {
       const change = (apply: (m: ApiMessage) => void) =>
         withConversation((c) => {
           const found = c.messages.find((m) => m.id === note.id);
@@ -221,13 +220,13 @@ export function fakeInboxApi({
           apply(found);
           return json(found);
         });
-      const now = () => new Date().toISOString();
-      routes[`PUT ${base}/notes/${note.id}/pin`] = change((m) => (m.pinnedAt = now()));
-      routes[`DELETE ${base}/notes/${note.id}/pin`] = change((m) => (m.pinnedAt = null));
+      routes[`DELETE ${base}/notes/${note.id}`] = withConversation((c) => {
+        c.messages = c.messages.filter((m) => m.id !== note.id);
+        return new Response(null, { status: 204 });
+      });
       routes[`PUT ${base}/notes/${note.id}/resolve`] = change((m) => {
-        m.resolvedAt = now();
+        m.resolvedAt = new Date().toISOString();
         m.resolvedByUserId = 'u-1';
-        m.pinnedAt = null;
       });
       routes[`DELETE ${base}/notes/${note.id}/resolve`] = change((m) => {
         m.resolvedAt = null;

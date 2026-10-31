@@ -128,9 +128,7 @@
       "failed": "Not delivered"
     },
     "loadOlder": "Load older messages",
-    "teamOnly": "Only your team sees this",
-    "pinned": "Pinned",
-    "resolved": "Resolved"
+    "teamOnly": "Only your team sees this"
   },
   "composer": {
     "reply": "Reply",
@@ -708,10 +706,6 @@
     "mention": "Mention a team member",
     "teamOnly": "Only your team sees notes",
     "save": "Add note",
-    "pinned": "Pinned notes",
-    "pin": "Pin note",
-    "unpin": "Unpin note",
-    "pinLimit": "At most 5 notes can be pinned. Unpin one first.",
     "mentionedYou": "You were mentioned in a team note.",
     "openConversation": "Open",
     "dismiss": "Dismiss",
@@ -721,6 +715,12 @@
     "resolvedBy": "Resolved by {{name}}",
     "resolvedCount_one": "Resolved ({{count}})",
     "resolvedCount_other": "Resolved ({{count}})",
-    "resolvedList": "Resolved notes"
+    "resolvedList": "Resolved notes",
+    "deleteNote": "Delete note",
+    "deleteConfirm": "Delete this note?",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes"
   }
 }

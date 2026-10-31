@@ -9,8 +9,9 @@ using Nihasdesk.SharedKernel;
 namespace Nihasdesk.Modules.Inbox.Features.Notes;
 
 /// <summary>
-/// Team notes (PRD 4.4): written from the side panel, shown in the timeline, pinned, with
-/// <c>@mentions</c>. Notes are internal messages, so the channel sender and the AI never see them.
+/// Team notes (PRD 4.4, ADR 0021): written, resolved and deleted in the side panel's Notes section,
+/// with <c>@mentions</c>. They are internal messages, so the channel sender and the AI never see
+/// them. The AI's own handoff notes stay in the conversation and are not team notes.
 /// </summary>
 internal sealed class NotesHandler(
     InboxDbContext db,
@@ -26,41 +27,14 @@ internal sealed class NotesHandler(
             return null;
         }
 
-        var notes = db.Messages.AsNoTracking().Where(m => m.ConversationId == conversationId && m.Internal);
-        // The side panel keeps notes in time order, pinned or not; pinned notes also sit above the composer.
-        var items = await notes
+        var items = await TeamNotes(conversationId)
+            .AsNoTracking()
             .OrderByDescending(m => m.SentAt)
             .ThenByDescending(m => m.Id)
             .Take(NoteValues.ListCount)
             .ToListAsync(ct);
-        var pinned = await notes.Where(m => m.PinnedAt != null).OrderBy(m => m.PinnedAt).ToListAsync(ct);
 
-        return new NotesResponse(
-            items.Select(ConversationsHandler.ToResponse).ToList(),
-            pinned.Select(ConversationsHandler.ToResponse).ToList());
-    }
-
-    public async Task<Result<MessageResponse>> SetResolvedAsync(Guid conversationId, Guid noteId, bool resolved, CancellationToken ct)
-    {
-        var note = await db.Messages.SingleOrDefaultAsync(m => m.Id == noteId && m.ConversationId == conversationId && m.Internal, ct);
-        if (note is null)
-        {
-            return NoteErrors.NotFound;
-        }
-
-        if (resolved)
-        {
-            var me = await team.CurrentAsync(ct) ?? throw new InvalidOperationException("Inbox endpoints require a team member.");
-            note.Resolve(me.UserId, time.GetUtcNow());
-        }
-        else
-        {
-            note.Reopen();
-        }
-
-        await db.SaveChangesAsync(ct);
-        await notifier.ConversationChangedAsync(tenant.TenantId, conversationId, ct);
-        return Result.Success(ConversationsHandler.ToResponse(note));
+        return new NotesResponse(items.Select(ConversationsHandler.ToResponse).ToList());
     }
 
     public async Task<Result<MessageResponse>> AddAsync(Guid conversationId, AddNoteRequest request, CancellationToken ct)
@@ -70,7 +44,7 @@ internal sealed class NotesHandler(
             return InboxErrors.NotFound;
         }
 
-        var me = await team.CurrentAsync(ct) ?? throw new InvalidOperationException("Inbox endpoints require a team member.");
+        var me = await MeAsync(ct);
         var mentions = (request.MentionedUserIds ?? []).Distinct().ToList();
         foreach (var userId in mentions)
         {
@@ -94,37 +68,53 @@ internal sealed class NotesHandler(
         return Result.Success(ConversationsHandler.ToResponse(note));
     }
 
-    public async Task<Result<MessageResponse>> SetPinnedAsync(Guid conversationId, Guid noteId, bool pinned, CancellationToken ct)
+    public async Task<Result<MessageResponse>> SetResolvedAsync(Guid conversationId, Guid noteId, bool resolved, CancellationToken ct)
     {
-        var note = await db.Messages.SingleOrDefaultAsync(m => m.Id == noteId && m.ConversationId == conversationId && m.Internal, ct);
+        var note = await TeamNotes(conversationId).SingleOrDefaultAsync(m => m.Id == noteId, ct);
         if (note is null)
         {
             return NoteErrors.NotFound;
         }
 
-        if (pinned && note.ResolvedAt is not null)
+        if (resolved)
         {
-            return NoteErrors.Resolved;
+            note.Resolve((await MeAsync(ct)).UserId, time.GetUtcNow());
         }
-
-        if (pinned && note.PinnedAt is null)
+        else
         {
-            var count = await db.Messages.CountAsync(m => m.ConversationId == conversationId && m.PinnedAt != null, ct);
-            if (count >= NoteValues.MaxPinned)
-            {
-                return NoteErrors.PinLimit;
-            }
-
-            var me = await team.CurrentAsync(ct) ?? throw new InvalidOperationException("Inbox endpoints require a team member.");
-            note.Pin(me.UserId, time.GetUtcNow());
-        }
-        else if (!pinned)
-        {
-            note.Unpin();
+            note.Reopen();
         }
 
         await db.SaveChangesAsync(ct);
         await notifier.ConversationChangedAsync(tenant.TenantId, conversationId, ct);
         return Result.Success(ConversationsHandler.ToResponse(note));
     }
+
+    /// <summary>The note's author, or an Owner or Admin (docs/standards/permissions.md), deletes it for good.</summary>
+    public async Task<Result> DeleteAsync(Guid conversationId, Guid noteId, CancellationToken ct)
+    {
+        var note = await TeamNotes(conversationId).SingleOrDefaultAsync(m => m.Id == noteId, ct);
+        if (note is null)
+        {
+            return Result.Failure(NoteErrors.NotFound);
+        }
+
+        var me = await MeAsync(ct);
+        if (note.AuthorUserId != me.UserId && me.Role is not ("owner" or "admin"))
+        {
+            return Result.Failure(NoteErrors.NotAuthor);
+        }
+
+        db.Messages.Remove(note);
+        await db.SaveChangesAsync(ct);
+        await notifier.ConversationChangedAsync(tenant.TenantId, conversationId, ct);
+        return Result.Success();
+    }
+
+    /// <summary>Notes a team member wrote in this conversation; not the AI's handoff notes (SEC-06: tenant-scoped).</summary>
+    private IQueryable<Message> TeamNotes(Guid conversationId) =>
+        db.Messages.Where(m => m.ConversationId == conversationId && m.Internal && m.Author == MessageAuthor.Agent);
+
+    private async Task<TeamMemberInfo> MeAsync(CancellationToken ct) =>
+        await team.CurrentAsync(ct) ?? throw new InvalidOperationException("Inbox endpoints require a team member.");
 }

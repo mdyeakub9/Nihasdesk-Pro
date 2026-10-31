@@ -30,11 +30,11 @@ internal static class NoteEndpoints
             .AddEndpointFilter<ValidationFilter<AddNoteRequest>>()
             .RequireRateLimiting(RatePolicies.Messages);
 
-        notes.MapPut("/{noteId:guid}/pin", (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
-            PinAsync(id, noteId, pinned: true, handler, ct));
-
-        notes.MapDelete("/{noteId:guid}/pin", (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
-            PinAsync(id, noteId, pinned: false, handler, ct));
+        notes.MapDelete("/{noteId:guid}", async (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
+        {
+            var result = await handler.DeleteAsync(id, noteId, ct);
+            return result.IsSuccess ? Results.NoContent() : result.Error.ToProblem();
+        });
 
         notes.MapPut("/{noteId:guid}/resolve", (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
             ResolveAsync(id, noteId, resolved: true, handler, ct));
@@ -46,12 +46,6 @@ internal static class NoteEndpoints
     private static async Task<IResult> ResolveAsync(Guid id, Guid noteId, bool resolved, NotesHandler handler, CancellationToken ct)
     {
         var result = await handler.SetResolvedAsync(id, noteId, resolved, ct);
-        return result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToProblem();
-    }
-
-    private static async Task<IResult> PinAsync(Guid id, Guid noteId, bool pinned, NotesHandler handler, CancellationToken ct)
-    {
-        var result = await handler.SetPinnedAsync(id, noteId, pinned, ct);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToProblem();
     }
 }

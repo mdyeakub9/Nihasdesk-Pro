@@ -25,12 +25,12 @@ export type Message = {
   author: 'customer' | 'ai' | 'agent';
   /** Team member name for agent messages and notes. */
   authorName?: string;
+  /** Who wrote an agent message or note; decides who may delete a note. */
+  authorUserId?: string;
   text: string;
   sentAt: string;
   /** Internal notes are visible to the team only: never sent to the channel or the AI (PRD 4.4). */
   internal?: boolean;
-  /** Notes pinned to the top of the side panel. */
-  pinned?: boolean;
   /** Team members @mentioned in a note. */
   mentionedUserIds?: string[];
   /** Resolved notes are dimmed and grouped under "Resolved". */
@@ -81,7 +81,7 @@ export type Conversation = ConversationSummary & {
   olderCursor?: string;
 };
 
-/** Team notes (PRD 4.4): `items` newest first for the side panel, `pinned` for above the composer. */
-export type TeamNotes = { items: Message[]; pinned: Message[] };
+/** Team notes (PRD 4.4, ADR 0021): only in the side panel's Notes section, newest first. */
+export type TeamNotes = { items: Message[] };
 
 export type ConversationPatch = Partial<Pick<Conversation, 'status' | 'responder' | 'aiEnabled'>>;

@@ -58,7 +58,6 @@ internal sealed record MessageResponse(
     // none | pending | sent | failed (ADR 0017)
     string Delivery,
     // Notes only (PRD 4.4).
-    DateTimeOffset? PinnedAt,
     IReadOnlyList<Guid> MentionedUserIds,
     DateTimeOffset? ResolvedAt,
     Guid? ResolvedByUserId);

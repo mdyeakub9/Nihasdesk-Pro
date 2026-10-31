@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { ChannelIcon } from '../../components/ChannelIcon';
 import { formatAge } from '../../lib/format';
 import { useUpdateConversation } from './api';
-import { TeamNotes } from './TeamNotes';
+import { NoteCount, TeamNotes } from './TeamNotes';
 import type { Conversation, LeadStatus } from './types';
 
 const leadTone: Record<LeadStatus, 'ai' | 'success' | 'info' | 'neutral' | 'warning'> = {
@@ -107,7 +107,11 @@ export function CustomerPanel({ conversation }: { conversation: Conversation }) 
         )}
       </div>
 
-      <Section icon={<StickyNote className={iconClass} aria-hidden="true" />} title={t('customer.teamNote')}>
+      <Section
+        icon={<StickyNote className={iconClass} aria-hidden="true" />}
+        title={t('customer.teamNote')}
+        aside={<NoteCount conversationId={conversation.id} />}
+      >
         <TeamNotes conversationId={conversation.id} />
       </Section>
 

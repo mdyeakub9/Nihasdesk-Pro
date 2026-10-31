@@ -69,12 +69,15 @@ internal sealed class Message : TenantEntity
     public static Message FromCustomer(Guid tenantId, Guid conversationId, string text, string? externalId, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Customer, CheckText(text), sentAt) { ExternalId = externalId };
 
-    /// <summary>When a team member pinned this note to the side panel (PRD 4.4); notes only.</summary>
+    /// <summary>
+    /// No longer used: pinning was removed (ADR 0021 update). The columns stay until a later
+    /// expand → contract cleanup drops them (docs/standards/database.md).
+    /// </summary>
     public DateTimeOffset? PinnedAt { get; private set; }
 
     public Guid? PinnedByUserId { get; private set; }
 
-    /// <summary>When a team member marked this note as resolved (dimmed in the panel and timeline).</summary>
+    /// <summary>When a team member marked this note as resolved (dimmed in the Notes section).</summary>
     public DateTimeOffset? ResolvedAt { get; private set; }
 
     public Guid? ResolvedByUserId { get; private set; }
@@ -106,24 +109,7 @@ internal sealed class Message : TenantEntity
     public static Message AiNote(Guid tenantId, Guid conversationId, string text, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Ai, CheckText(text), sentAt) { Internal = true };
 
-    public void Pin(Guid userId, DateTimeOffset now)
-    {
-        if (!Internal)
-        {
-            throw new InvalidOperationException("Only notes can be pinned.");
-        }
-
-        PinnedAt ??= now;
-        PinnedByUserId ??= userId;
-    }
-
-    public void Unpin()
-    {
-        PinnedAt = null;
-        PinnedByUserId = null;
-    }
-
-    /// <summary>Marks the note as done; a resolved note is no longer pinned above the composer.</summary>
+    /// <summary>Marks the note as done; it is dimmed and grouped under "Resolved".</summary>
     public void Resolve(Guid userId, DateTimeOffset now)
     {
         if (!Internal)
@@ -133,7 +119,6 @@ internal sealed class Message : TenantEntity
 
         ResolvedAt ??= now;
         ResolvedByUserId ??= userId;
-        Unpin();
     }
 
     public void Reopen()
