@@ -37,6 +37,7 @@ internal sealed class InboxHub(TenantContext tenant, ITeamDirectory team) : Hub
             }
 
             await Groups.AddToGroupAsync(Context.ConnectionId, InboxNotifier.Group(tenantId), Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(Context.ConnectionId, InboxNotifier.MemberGroup(tenantId, userId), Context.ConnectionAborted);
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
         {
@@ -53,8 +54,18 @@ internal sealed class InboxNotifier(IHubContext<InboxHub> hub)
 {
     public const string ConversationChanged = "conversationChanged";
 
+    /// <summary>Someone <c>@mentioned</c> this member in a team note (PRD 4.4).</summary>
+    public const string Mentioned = "mentioned";
+
     public static string Group(Guid tenantId) => $"tenant:{tenantId:N}";
+
+    /// <summary>One member's connections in one workspace (the same person may belong to several).</summary>
+    public static string MemberGroup(Guid tenantId, Guid userId) => $"tenant:{tenantId:N}:user:{userId:N}";
 
     public Task ConversationChangedAsync(Guid tenantId, Guid conversationId, CancellationToken cancellationToken) =>
         hub.Clients.Group(Group(tenantId)).SendAsync(ConversationChanged, new { conversationId }, cancellationToken);
+
+    public Task MentionedAsync(Guid tenantId, IReadOnlyList<Guid> userIds, Guid conversationId, Guid noteId, CancellationToken cancellationToken) =>
+        hub.Clients.Groups(userIds.Select(id => MemberGroup(tenantId, id)).ToList())
+            .SendAsync(Mentioned, new { conversationId, noteId }, cancellationToken);
 }

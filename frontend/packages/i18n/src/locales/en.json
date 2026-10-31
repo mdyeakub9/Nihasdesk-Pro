@@ -98,17 +98,19 @@
   "conversation": {
     "notFound": "Conversation not found",
     "backToInbox": "Back to conversations",
-    "aiAnswering": "AI answering",
-    "teamAnswering": "Team answering",
     "handoffs_one": "{{count}} handoff",
     "handoffs_other": "{{count}} handoffs",
     "done": "Done",
     "reopen": "Reopen",
-    "takeOver": "Take over",
-    "returnToAi": "Return to AI",
     "aiOffHint": "AI assistance is turned off for this conversation.",
     "assign": "Assign",
-    "close": "Close conversation"
+    "close": "Close conversation",
+    "responder": {
+      "ai": "AI",
+      "team": "Team",
+      "aiAction": "AI is answering. Take over",
+      "personAction": "{{name}} is answering. Return to AI"
+    }
   },
   "message": {
     "history": "Messages",
@@ -127,26 +129,23 @@
       "pending": "Sending…",
       "failed": "Not delivered"
     },
-    "loadOlder": "Load older messages"
+    "loadOlder": "Load older messages",
+    "teamOnly": "Only your team sees this",
+    "pinned": "Pinned"
   },
   "composer": {
-    "mode": "Message type",
     "reply": "Reply",
-    "note": "Internal note",
     "replyPlaceholder": "Write a reply…",
-    "notePlaceholder": "Write a note for your team. The customer won't see it.",
-    "aiPreparing": "AI is answering this customer. Sending a reply takes the conversation over.",
     "enterToSend": "Enter to send",
     "send": "Send",
-    "saveNote": "Add note",
-    "outsideWindow": "The customer's last message is more than 24 hours old, so the channel doesn't allow a reply now. Add an internal note, or answer when they write again."
+    "outsideWindow": "The customer's last message is more than 24 hours old, so the channel doesn't allow a reply now. Add a team note in the side panel, or answer when they write again.",
+    "sendAndTakeOver": "Send & take over"
   },
   "customer": {
     "title": "Customer details",
     "seen": "First seen {{firstSeen}} ago · Active {{active}} ago",
     "labels": "Labels",
-    "teamNote": "Team note",
-    "noNote": "No note yet.",
+    "teamNote": "Team notes",
     "assistant": "Assistant",
     "noSummary": "The AI summary appears after a few messages.",
     "lead": "Lead",
@@ -703,5 +702,20 @@
       "output_limit": "it ran out of room for the answer (output limit)",
       "other": "the AI provider failed ({{code}})"
     }
+  },
+  "notes": {
+    "add": "Add a team note",
+    "placeholder": "Write a note for your team. Type @ to mention someone.",
+    "mention": "Mention a team member",
+    "teamOnly": "Only your team sees notes",
+    "save": "Add note",
+    "pinned": "Pinned notes",
+    "recent": "Recent notes",
+    "pin": "Pin note",
+    "unpin": "Unpin note",
+    "pinLimit": "At most 5 notes can be pinned. Unpin one first.",
+    "mentionedYou": "You were mentioned in a team note.",
+    "openConversation": "Open",
+    "dismiss": "Dismiss"
   }
 }

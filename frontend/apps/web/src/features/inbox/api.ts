@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ApiError, apiGet, apiPatch, apiPost } from '../../lib/api';
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../../lib/api';
 import { useSession } from '../session/useSession';
 import type {
   Channel,
@@ -9,6 +9,7 @@ import type {
   ConversationSummary,
   LeadStatus,
   Message,
+  TeamNotes,
 } from './types';
 
 /*
@@ -49,6 +50,8 @@ type ApiMessage = {
   internal: boolean;
   sentAt: string;
   delivery: 'none' | 'pending' | 'sent' | 'failed';
+  pinnedAt: string | null;
+  mentionedUserIds: string[];
 };
 
 type ConversationPage = { items: ApiConversationSummary[]; nextCursor: string | null };
@@ -84,6 +87,8 @@ function toMessage(m: ApiMessage): Message {
     sentAt: m.sentAt,
     ...(m.authorName ? { authorName: m.authorName } : {}),
     ...(m.internal ? { internal: true } : {}),
+    ...(m.pinnedAt ? { pinned: true } : {}),
+    ...(m.mentionedUserIds?.length ? { mentionedUserIds: m.mentionedUserIds } : {}),
     ...(m.delivery !== 'none' ? { delivery: m.delivery } : {}),
   };
 }
@@ -135,6 +140,7 @@ export const inboxKeys = {
   all: ['inbox'] as const,
   list: () => [...inboxKeys.all, 'list'] as const,
   detail: (id: string) => [...inboxKeys.all, 'detail', id] as const,
+  notes: (id: string) => [...inboxKeys.all, 'notes', id] as const,
 };
 
 /** Display name for people without one yet (the channel didn't share it). */
@@ -213,11 +219,41 @@ export function useUpdateConversation(id: string) {
   });
 }
 
+/** A reply to the customer. Team notes are added from the side panel (useAddNote). */
 export function useSendMessage(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ text, internal }: { text: string; internal: boolean }) =>
-      apiPost(`${path(id)}/${internal ? 'notes' : 'messages'}`, { text }),
+    mutationFn: (text: string) => apiPost(`${path(id)}/messages`, { text }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
+  });
+}
+
+/** Pinned and recent team notes for the side panel (PRD 4.4). */
+export function useNotes(id: string) {
+  return useQuery({
+    queryKey: inboxKeys.notes(id),
+    queryFn: async (): Promise<TeamNotes> => {
+      const notes = await apiGet<{ pinned: ApiMessage[]; recent: ApiMessage[] }>(`${path(id)}/notes`);
+      return { pinned: notes.pinned.map(toMessage), recent: notes.recent.map(toMessage) };
+    },
+  });
+}
+
+export function useAddNote(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (note: { text: string; mentionedUserIds: string[] }) => apiPost(`${path(id)}/notes`, note),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
+  });
+}
+
+export function usePinNote(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ noteId, pinned }: { noteId: string; pinned: boolean }) => {
+      const pin = `${path(id)}/notes/${encodeURIComponent(noteId)}/pin`;
+      return pinned ? apiPut(pin, {}) : apiDelete(pin);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });
 }

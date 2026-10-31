@@ -82,15 +82,23 @@ describe('Inbox', () => {
     expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/read')).toHaveLength(0);
   });
 
-  it('takes over and returns the conversation to the AI', async () => {
+  it('shows the channel in the header and takes over or returns to the AI from the responder chip', async () => {
     const { fetchMock } = fakeInboxApi();
     await renderApp('/inbox/c-giulia');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Take over' }));
-    expect(await screen.findByText(/Team answering/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Giulia Rossi', level: 2 })).toBeInTheDocument();
+    expect(screen.getAllByText('Messenger').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/AI is answering this customer\. Sending/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send & take over' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Return to AI' }));
-    expect(await screen.findByText(/AI answering/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'AI is answering. Take over' }));
+    // Giulia's conversation is assigned to Md Yeakub, so the chip shows that name.
+    const chip = await screen.findByRole('button', { name: 'Md Yeakub is answering. Return to AI' });
+    expect(chip).toHaveTextContent('Md Yeakub');
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+
+    await userEvent.click(chip);
+    expect(await screen.findByRole('button', { name: 'AI is answering. Take over' })).toBeInTheDocument();
     expect(
       callsTo(fetchMock, '/api/v1/conversations/c-giulia')
         .map((c) => c.body)
@@ -104,8 +112,9 @@ describe('Inbox', () => {
 
     await userEvent.click(await screen.findByRole('switch', { name: 'AI assistance' }));
 
-    expect(await screen.findByText(/Team answering/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Return to AI' })).toBeDisabled();
+    expect(
+      await screen.findByRole('button', { name: 'Md Yeakub is answering. Return to AI' }),
+    ).toBeDisabled();
     expect(
       callsTo(fetchMock, '/api/v1/conversations/c-giulia')
         .map((c) => c.body)
@@ -113,7 +122,7 @@ describe('Inbox', () => {
     ).toEqual([{ aiEnabled: false, responder: 'human' }]);
   });
 
-  it('sends a reply to the channel and adds an internal note', async () => {
+  it('sends a reply to the channel from a composer without a note mode', async () => {
     const { fetchMock } = fakeInboxApi();
     await renderApp('/inbox/c-giulia');
 
@@ -123,15 +132,7 @@ describe('Inbox', () => {
     expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/messages').at(-1)?.body).toEqual({
       text: 'Sì, ce l’abbiamo.',
     });
-
-    await userEvent.click(screen.getByRole('tab', { name: 'Internal note' }));
-    await userEvent.type(screen.getByRole('textbox', { name: 'Internal note' }), 'Gift wrap requested');
-    await userEvent.click(screen.getByRole('button', { name: 'Add note' }));
-
-    expect(await within(await messages()).findByText('Gift wrap requested')).toBeInTheDocument();
-    expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/notes')[0]?.body).toEqual({
-      text: 'Gift wrap requested',
-    });
+    expect(screen.queryByRole('tab', { name: 'Internal note' })).not.toBeInTheDocument();
   });
 
   it('explains the 24-hour window and shows replies that were not delivered', async () => {

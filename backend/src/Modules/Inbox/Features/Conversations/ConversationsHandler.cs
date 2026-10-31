@@ -118,8 +118,8 @@ internal sealed class ConversationsHandler(
         return new MessagePageResponse(items.Select(ToResponse).ToList(), older);
     }
 
-    /// <summary>A reply to the customer (<paramref name="isInternal"/> false) or a team-only note.</summary>
-    public async Task<Result<MessageResponse>> WriteAsync(Guid conversationId, SendMessageRequest request, bool isInternal, CancellationToken ct)
+    /// <summary>A reply to the customer. Team notes have their own endpoints (Features/Notes).</summary>
+    public async Task<Result<MessageResponse>> ReplyAsync(Guid conversationId, SendMessageRequest request, CancellationToken ct)
     {
         var conversation = await db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, ct);
         if (conversation is null)
@@ -128,22 +128,19 @@ internal sealed class ConversationsHandler(
         }
 
         var now = time.GetUtcNow();
-        if (!isInternal && !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
+        if (!CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
         {
             return InboxErrors.OutsideWindow;
         }
 
         var me = await MeAsync(ct);
-        var message = Message.FromTeam(tenant.TenantId, conversation.Id, me.UserId, me.DisplayName, request.Text, isInternal, now);
+        var message = Message.FromTeam(tenant.TenantId, conversation.Id, me.UserId, me.DisplayName, request.Text, isInternal: false, now);
         db.Messages.Add(message);
-        if (!isInternal)
+        conversation.RepliedByTeam(message);
+        if (conversation.ChannelConnectionId is not null)
         {
-            conversation.RepliedByTeam(message);
-            if (conversation.ChannelConnectionId is not null)
-            {
-                // Sent by the channel's background sender (ADR 0017).
-                message.QueueDelivery(now);
-            }
+            // Sent by the channel's background sender (ADR 0017).
+            message.QueueDelivery(now);
         }
 
         await db.SaveChangesAsync(ct);
@@ -278,8 +275,18 @@ internal sealed class ConversationsHandler(
             c.LastMessageAt);
     }
 
-    private static MessageResponse ToResponse(Message m) =>
-        new(m.Id, InboxValues.Text(m.Author), m.AuthorUserId, m.AuthorName, m.Text, m.Internal, m.SentAt, InboxValues.Text(m.Delivery));
+    internal static MessageResponse ToResponse(Message m) =>
+        new(
+            m.Id,
+            InboxValues.Text(m.Author),
+            m.AuthorUserId,
+            m.AuthorName,
+            m.Text,
+            m.Internal,
+            m.SentAt,
+            InboxValues.Text(m.Delivery),
+            m.PinnedAt,
+            m.MentionedUserIds);
 
     private sealed class ConversationRow
     {

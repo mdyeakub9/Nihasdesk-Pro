@@ -1,13 +1,5 @@
 import { Avatar, Badge, Button, cn } from '@nihasdesk/ui';
-import {
-  AlertCircle,
-  CheckCheck,
-  Clock,
-  ExternalLink,
-  ShoppingBag,
-  Sparkles,
-  StickyNote,
-} from 'lucide-react';
+import { AlertCircle, CheckCheck, Clock, ExternalLink, Lock, Pin, ShoppingBag, Sparkles } from 'lucide-react';
 import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format';
@@ -61,22 +53,41 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
 
   const sender = message.author === 'ai' ? t('message.aiName') : (message.authorName ?? t('message.team'));
 
+  if (message.internal) {
+    // Team-only note (PRD 4.4): a distinct bubble, never sent to the customer or the AI.
+    return (
+      <li className="flex flex-col items-end gap-1">
+        <div
+          role="note"
+          aria-label={t('message.internalNote')}
+          className="max-w-125 rounded-lg border border-dashed bg-warning px-3 py-2"
+        >
+          <p className="flex items-center gap-1 text-xs font-medium text-warning-foreground">
+            <Lock className="size-3.5" aria-hidden="true" />
+            {t('message.teamOnly')}
+            {message.pinned && (
+              <>
+                {' '}
+                · <Pin className="size-3.5" aria-hidden="true" />
+                {t('message.pinned')}
+              </>
+            )}
+          </p>
+          <p className="whitespace-pre-wrap break-words text-sm">{message.text}</p>
+        </div>
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          {message.author === 'ai' && <Sparkles className="size-3.5" aria-hidden="true" />}
+          {sender} · <time dateTime={message.sentAt}>{time}</time>
+        </p>
+      </li>
+    );
+  }
+
   return (
     <li className="flex flex-col items-end gap-1">
       {message.product && <ProductMessage product={message.product} />}
       {message.text && (
-        <div
-          className={cn(
-            'max-w-125 rounded-lg px-3 py-2',
-            message.internal ? 'border border-dashed bg-warning' : 'bg-selected',
-          )}
-        >
-          {message.internal && (
-            <p className="flex items-center gap-1 text-xs font-medium text-warning-foreground">
-              <StickyNote className="size-3.5" aria-hidden="true" />
-              {t('message.internalNote')}
-            </p>
-          )}
+        <div className="max-w-125 rounded-lg bg-selected px-3 py-2">
           <p className="text-sm">{message.text}</p>
         </div>
       )}

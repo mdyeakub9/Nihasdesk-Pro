@@ -7,6 +7,7 @@ using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.Modules.Inbox.Features.Conversations;
+using Nihasdesk.Modules.Inbox.Features.Notes;
 using Nihasdesk.Modules.Inbox.Infrastructure;
 using Nihasdesk.Modules.Inbox.Realtime;
 
@@ -30,11 +31,14 @@ public sealed class InboxModule : IModule
         services.AddScoped<IValidator<ListMessagesQuery>, ListMessagesValidator>();
         services.AddScoped<IValidator<SendMessageRequest>, SendMessageValidator>();
         services.AddScoped<IValidator<UpdateConversationRequest>, UpdateConversationValidator>();
+        services.AddScoped<NotesHandler>();
+        services.AddScoped<IValidator<AddNoteRequest>, AddNoteValidator>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         ConversationEndpoints.Map(endpoints);
+        NoteEndpoints.Map(endpoints);
         endpoints.MapHub<InboxHub>(InboxHub.Path);
     }
 }
