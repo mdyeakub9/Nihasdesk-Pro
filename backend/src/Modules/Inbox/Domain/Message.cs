@@ -74,6 +74,11 @@ internal sealed class Message : TenantEntity
 
     public Guid? PinnedByUserId { get; private set; }
 
+    /// <summary>When a team member marked this note as resolved (dimmed in the panel and timeline).</summary>
+    public DateTimeOffset? ResolvedAt { get; private set; }
+
+    public Guid? ResolvedByUserId { get; private set; }
+
     /// <summary>Team members <c>@mentioned</c> in a note; checked against the workspace's members.</summary>
     public List<Guid> MentionedUserIds { get; private set; } = [];
 
@@ -116,6 +121,25 @@ internal sealed class Message : TenantEntity
     {
         PinnedAt = null;
         PinnedByUserId = null;
+    }
+
+    /// <summary>Marks the note as done; a resolved note is no longer pinned above the composer.</summary>
+    public void Resolve(Guid userId, DateTimeOffset now)
+    {
+        if (!Internal)
+        {
+            throw new InvalidOperationException("Only notes can be resolved.");
+        }
+
+        ResolvedAt ??= now;
+        ResolvedByUserId ??= userId;
+        Unpin();
+    }
+
+    public void Reopen()
+    {
+        ResolvedAt = null;
+        ResolvedByUserId = null;
     }
 
     public void QueueDelivery(DateTimeOffset now)

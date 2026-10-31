@@ -35,6 +35,18 @@ internal static class NoteEndpoints
 
         notes.MapDelete("/{noteId:guid}/pin", (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
             PinAsync(id, noteId, pinned: false, handler, ct));
+
+        notes.MapPut("/{noteId:guid}/resolve", (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
+            ResolveAsync(id, noteId, resolved: true, handler, ct));
+
+        notes.MapDelete("/{noteId:guid}/resolve", (Guid id, Guid noteId, NotesHandler handler, CancellationToken ct) =>
+            ResolveAsync(id, noteId, resolved: false, handler, ct));
+    }
+
+    private static async Task<IResult> ResolveAsync(Guid id, Guid noteId, bool resolved, NotesHandler handler, CancellationToken ct)
+    {
+        var result = await handler.SetResolvedAsync(id, noteId, resolved, ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToProblem();
     }
 
     private static async Task<IResult> PinAsync(Guid id, Guid noteId, bool pinned, NotesHandler handler, CancellationToken ct)

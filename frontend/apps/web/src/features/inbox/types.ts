@@ -33,6 +33,9 @@ export type Message = {
   pinned?: boolean;
   /** Team members @mentioned in a note. */
   mentionedUserIds?: string[];
+  /** Resolved notes are dimmed and grouped under "Resolved". */
+  resolvedAt?: string;
+  resolvedByUserId?: string;
   /** Catalog product shown to the customer (prices and stock come from the catalog, never the model). */
   product?: ProductCard;
   /** Team replies to a channel (ADR 0017): queued, sent, or given up. */
@@ -78,7 +81,7 @@ export type Conversation = ConversationSummary & {
   olderCursor?: string;
 };
 
-/** The side panel's team notes: pinned first, then the newest (PRD 4.4). */
-export type TeamNotes = { pinned: Message[]; recent: Message[] };
+/** Team notes (PRD 4.4): `items` newest first for the side panel, `pinned` for above the composer. */
+export type TeamNotes = { items: Message[]; pinned: Message[] };
 
 export type ConversationPatch = Partial<Pick<Conversation, 'status' | 'responder' | 'aiEnabled'>>;

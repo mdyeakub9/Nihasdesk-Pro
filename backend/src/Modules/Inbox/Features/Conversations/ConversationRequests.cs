@@ -59,7 +59,9 @@ internal sealed record MessageResponse(
     string Delivery,
     // Notes only (PRD 4.4).
     DateTimeOffset? PinnedAt,
-    IReadOnlyList<Guid> MentionedUserIds);
+    IReadOnlyList<Guid> MentionedUserIds,
+    DateTimeOffset? ResolvedAt,
+    Guid? ResolvedByUserId);
 
 /// <summary>Oldest first; <see cref="Before"/> loads the next older page.</summary>
 internal sealed record MessagePageResponse(IReadOnlyList<MessageResponse> Items, string? Before);

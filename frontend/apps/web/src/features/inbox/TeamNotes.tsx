@@ -1,18 +1,19 @@
 import { Button, FieldError, Textarea, cn } from '@nihasdesk/ui';
-import { Lock, Pin, PinOff } from 'lucide-react';
+import { CircleCheck, Lock, Pin, PinOff, RotateCcw } from 'lucide-react';
 import { useId, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatTime } from '../../lib/format';
 import { authErrorMessage, isErrorCode } from '../auth/errors';
 import { useMembers, type Member } from '../team/api';
-import { useAddNote, useNotes, usePinNote } from './api';
+import { useAddNote, useNotes, usePinNote, useResolveNote } from './api';
 import type { Message } from './types';
 
 /** "@giu" right before the caret: the start of a mention. */
 const mentionQuery = /(?:^|\s)@([^\s@]{0,30})$/u;
 
 /**
- * Team notes in the side panel (PRD 4.4): add a note with @mentions, pin the important ones.
+ * Team notes in the side panel (PRD 4.4): add a note with @mentions, pin one above the composer,
+ * resolve it when done.
  * Notes are team-only: the API never sends them to the channel or the AI. Text is rendered as
  * plain text (SEC-02).
  */
@@ -81,16 +82,13 @@ export function TeamNotes({ conversationId }: { conversationId: string }) {
     );
   }
 
+  // Time order, newest first; pinning doesn't move a note (pinned ones also sit above the composer).
+  const openNotes = notes?.items.filter((n) => !n.resolvedAt) ?? [];
+  const resolved = notes?.items.filter((n) => n.resolvedAt) ?? [];
+  const nameOf = (userId?: string) => members.find((m) => m.userId === userId)?.name ?? t('message.team');
+
   return (
     <div className="flex flex-col gap-3">
-      {notes && notes.pinned.length > 0 && (
-        <ul aria-label={t('notes.pinned')} className="flex flex-col gap-2">
-          {notes.pinned.map((note) => (
-            <NoteItem key={note.id} note={note} conversationId={conversationId} />
-          ))}
-        </ul>
-      )}
-
       <form onSubmit={submit} className="relative flex flex-col gap-2">
         <Textarea
           aria-label={t('notes.add')}
@@ -141,47 +139,107 @@ export function TeamNotes({ conversationId }: { conversationId: string }) {
         </div>
       </form>
 
-      {notes && notes.recent.length > 0 && (
-        <ul aria-label={t('notes.recent')} className="flex flex-col gap-2">
-          {notes.recent.map((note) => (
+      {openNotes.length > 0 && (
+        <ul aria-label={t('notes.list')} className="flex flex-col gap-2">
+          {openNotes.map((note) => (
             <NoteItem key={note.id} note={note} conversationId={conversationId} />
           ))}
         </ul>
+      )}
+
+      {resolved.length > 0 && (
+        <details className="group">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+            {t('notes.resolvedCount', { count: resolved.length })}
+          </summary>
+          <ul aria-label={t('notes.resolvedList')} className="mt-2 flex flex-col gap-2">
+            {resolved.map((note) => (
+              <NoteItem
+                key={note.id}
+                note={note}
+                conversationId={conversationId}
+                resolvedBy={nameOf(note.resolvedByUserId)}
+              />
+            ))}
+          </ul>
+        </details>
       )}
     </div>
   );
 }
 
-function NoteItem({ note, conversationId }: { note: Message; conversationId: string }) {
+/** One note: pin it above the composer, or mark it resolved (dimmed, moved to "Resolved"). */
+export function NoteItem({
+  note,
+  conversationId,
+  resolvedBy,
+  compact = false,
+}: {
+  note: Message;
+  conversationId: string;
+  resolvedBy?: string;
+  compact?: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const pin = usePinNote(conversationId);
+  const resolve = useResolveNote(conversationId);
   const author = note.author === 'ai' ? t('message.aiName') : (note.authorName ?? t('message.team'));
+  const isResolved = !!note.resolvedAt;
+  const error = pin.error ?? resolve.error;
 
   return (
-    <li className="flex items-start gap-2 rounded-md border border-dashed bg-warning px-3 py-2">
+    <li
+      className={cn(
+        'flex items-start gap-2 rounded-md border border-dashed bg-warning',
+        compact ? 'px-2 py-1.5' : 'px-3 py-2',
+        isResolved && 'opacity-60',
+      )}
+    >
       <div className="min-w-0 flex-1">
-        <p className="whitespace-pre-wrap break-words text-[13px] text-foreground">{note.text}</p>
+        <p
+          className={cn(
+            'whitespace-pre-wrap break-words text-[13px] text-foreground',
+            compact && 'line-clamp-2',
+          )}
+        >
+          {note.text}
+        </p>
         <p className="mt-1 text-xs text-muted-foreground">
           {author} ·{' '}
           <time dateTime={note.sentAt}>{formatTime(note.sentAt, i18n.resolvedLanguage ?? 'en')}</time>
+          {isResolved && resolvedBy && <> · {t('notes.resolvedBy', { name: resolvedBy })}</>}
         </p>
-        {pin.error && (
+        {error && (
           <FieldError>
-            {isErrorCode(pin.error, 'note.pin_limit') ? t('notes.pinLimit') : authErrorMessage(pin.error, t)}
+            {isErrorCode(error, 'note.pin_limit') ? t('notes.pinLimit') : authErrorMessage(error, t)}
           </FieldError>
         )}
       </div>
+      {!isResolved && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0"
+          aria-label={t(note.pinned ? 'notes.unpin' : 'notes.pin')}
+          aria-pressed={!!note.pinned}
+          disabled={pin.isPending}
+          onClick={() => pin.mutate({ noteId: note.id, pinned: !note.pinned })}
+        >
+          {note.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />}
+        </Button>
+      )}
       <Button
         type="button"
         variant="ghost"
         size="icon"
         className="size-7 shrink-0"
-        aria-label={t(note.pinned ? 'notes.unpin' : 'notes.pin')}
-        aria-pressed={!!note.pinned}
-        disabled={pin.isPending}
-        onClick={() => pin.mutate({ noteId: note.id, pinned: !note.pinned })}
+        aria-label={t(isResolved ? 'notes.reopen' : 'notes.resolve')}
+        aria-pressed={isResolved}
+        disabled={resolve.isPending}
+        onClick={() => resolve.mutate({ noteId: note.id, resolved: !isResolved })}
       >
-        {note.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />}
+        {isResolved ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
       </Button>
     </li>
   );

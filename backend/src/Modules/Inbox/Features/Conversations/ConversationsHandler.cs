@@ -286,7 +286,9 @@ internal sealed class ConversationsHandler(
             m.SentAt,
             InboxValues.Text(m.Delivery),
             m.PinnedAt,
-            m.MentionedUserIds);
+            m.MentionedUserIds,
+            m.ResolvedAt,
+            m.ResolvedByUserId);
 
     private sealed class ConversationRow
     {

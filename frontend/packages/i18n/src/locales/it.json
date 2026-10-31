@@ -105,12 +105,10 @@
     "aiOffHint": "L'assistenza IA è disattivata per questa conversazione.",
     "assign": "Assegna",
     "close": "Chiudi conversazione",
-    "responder": {
-      "ai": "IA",
-      "team": "Team",
-      "aiAction": "Risponde l'IA. Subentra",
-      "personAction": "Risponde {{name}}. Ridai all'IA"
-    }
+    "aiAnswering": "Risponde l'IA",
+    "teamAnswering": "Risponde il team",
+    "takeOver": "Subentra",
+    "returnToAi": "Ridai all'IA"
   },
   "message": {
     "history": "Messaggi",
@@ -131,7 +129,8 @@
     },
     "loadOlder": "Carica messaggi precedenti",
     "teamOnly": "Lo vede solo il tuo team",
-    "pinned": "Fissata"
+    "pinned": "Fissata",
+    "resolved": "Risolta"
   },
   "composer": {
     "reply": "Rispondi",
@@ -710,12 +709,18 @@
     "teamOnly": "Le note le vede solo il tuo team",
     "save": "Aggiungi nota",
     "pinned": "Note fissate",
-    "recent": "Note recenti",
     "pin": "Fissa nota",
     "unpin": "Togli dalle note fissate",
     "pinLimit": "Puoi fissare al massimo 5 note. Togline una prima.",
     "mentionedYou": "Qualcuno ti ha menzionato in una nota del team.",
     "openConversation": "Apri",
-    "dismiss": "Chiudi"
+    "dismiss": "Chiudi",
+    "list": "Note",
+    "resolve": "Segna come risolta",
+    "reopen": "Riapri nota",
+    "resolvedBy": "Risolta da {{name}}",
+    "resolvedCount_one": "Risolte ({{count}})",
+    "resolvedCount_other": "Risolte ({{count}})",
+    "resolvedList": "Note risolte"
   }
 }

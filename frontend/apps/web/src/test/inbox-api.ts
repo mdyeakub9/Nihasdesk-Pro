@@ -30,6 +30,8 @@ type ApiMessage = {
   delivery: 'none' | 'pending' | 'sent' | 'failed';
   pinnedAt?: string | null;
   mentionedUserIds?: string[];
+  resolvedAt?: string | null;
+  resolvedByUserId?: string | null;
 };
 
 export type FakeConversation = Summary & {
@@ -201,7 +203,7 @@ export function fakeInboxApi({
     });
     routes[`GET ${base}/notes`] = withConversation((c) => {
       const notes = c.messages.filter((m) => m.internal).reverse();
-      return json({ pinned: notes.filter((m) => m.pinnedAt), recent: notes.filter((m) => !m.pinnedAt) });
+      return json({ items: notes, pinned: notes.filter((m) => m.pinnedAt) });
     });
     routes[`POST ${base}/notes`] = withConversation(
       (c, body: { text: string; mentionedUserIds?: string[] }) => {
@@ -210,17 +212,27 @@ export function fakeInboxApi({
         return json(note, 201);
       },
     );
-    // Pin routes for the notes a test seeded (fakeApi matches exact paths).
+    // Pin and resolve routes for the notes a test seeded (fakeApi matches exact paths).
     for (const note of find(id)?.messages.filter((m) => m.internal) ?? []) {
-      const pin = (pinned: boolean) =>
+      const change = (apply: (m: ApiMessage) => void) =>
         withConversation((c) => {
           const found = c.messages.find((m) => m.id === note.id);
           if (!found) return problem(404, 'note.not_found');
-          found.pinnedAt = pinned ? new Date().toISOString() : null;
+          apply(found);
           return json(found);
         });
-      routes[`PUT ${base}/notes/${note.id}/pin`] = pin(true);
-      routes[`DELETE ${base}/notes/${note.id}/pin`] = pin(false);
+      const now = () => new Date().toISOString();
+      routes[`PUT ${base}/notes/${note.id}/pin`] = change((m) => (m.pinnedAt = now()));
+      routes[`DELETE ${base}/notes/${note.id}/pin`] = change((m) => (m.pinnedAt = null));
+      routes[`PUT ${base}/notes/${note.id}/resolve`] = change((m) => {
+        m.resolvedAt = now();
+        m.resolvedByUserId = 'u-1';
+        m.pinnedAt = null;
+      });
+      routes[`DELETE ${base}/notes/${note.id}/resolve`] = change((m) => {
+        m.resolvedAt = null;
+        m.resolvedByUserId = null;
+      });
     }
     routes[`POST ${base}/messages`] = withConversation((c, body: { text: string }) => {
       const custom = reply?.(c, body.text);

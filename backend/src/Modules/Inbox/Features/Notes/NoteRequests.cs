@@ -8,14 +8,17 @@ namespace Nihasdesk.Modules.Inbox.Features.Notes;
 /// <summary>A team note (PRD 4.4). <see cref="MentionedUserIds"/> must be members of this workspace.</summary>
 internal sealed record AddNoteRequest(string Text, IReadOnlyList<Guid>? MentionedUserIds);
 
-/// <summary>The side panel: pinned notes first, then the newest notes.</summary>
-internal sealed record NotesResponse(IReadOnlyList<MessageResponse> Pinned, IReadOnlyList<MessageResponse> Recent);
+/// <summary>
+/// <see cref="Items"/>: the side panel's notes, newest first, pinned or not (resolved ones included).
+/// <see cref="Pinned"/>: the notes shown above the composer, oldest pin first.
+/// </summary>
+internal sealed record NotesResponse(IReadOnlyList<MessageResponse> Items, IReadOnlyList<MessageResponse> Pinned);
 
 internal static class NoteValues
 {
     public const int MaxMentions = 10;
     public const int MaxPinned = 5;
-    public const int RecentCount = 20;
+    public const int ListCount = 50;
 }
 
 internal sealed class AddNoteValidator : AbstractValidator<AddNoteRequest>
@@ -36,6 +39,9 @@ internal static class NoteErrors
 
     public static readonly Error MentionNotMember =
         Error.Validation("note.mention_not_member", "Only team members of this workspace can be mentioned.");
+
+    public static readonly Error Resolved =
+        Error.Conflict("note.resolved", "This note is resolved. Reopen it before pinning it.");
 
     public static readonly Error PinLimit =
         Error.Conflict("note.pin_limit", $"At most {NoteValues.MaxPinned} notes can be pinned. Unpin one first.");
