@@ -68,6 +68,38 @@ public sealed class InboxRealtimeTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Typing_reaches_the_own_workspace_only_and_carries_ids_only()
+    {
+        var inbox = new InboxTests(fixture);
+        var emailA = AuthFixture.NewEmail();
+        var emailB = AuthFixture.NewEmail();
+        var ownerA = Api.CreateApiClient();
+        var me = await (await ownerA.SignupAndVerifyAsync(Api.Emails, emailA, "Almanaam")).Content.ReadFromJsonAsync<JsonElement>();
+        var workspaceA = me.GetProperty("workspace").GetProperty("id").GetString()!;
+        var userId = me.GetProperty("user").GetProperty("id").GetString();
+        await SignupAsync(emailB, "Bottega Blu");
+        var id = (await inbox.ReceiveAsync(workspaceA, "visitor-typing", "Ciao")).ConversationId;
+
+        await using var dashboardA = await ConnectAsync(emailA);
+        await using var dashboardB = await ConnectAsync(emailB);
+        var heardA = Listen(dashboardA, "typing");
+        var heardB = Listen(dashboardB, "typing");
+
+        Assert.Equal(System.Net.HttpStatusCode.NoContent, (await ownerA.PostAsync($"/api/v1/conversations/{id}/typing")).StatusCode);
+
+        var payload = await heardA.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(id.ToString(), payload.GetProperty("conversationId").GetString());
+        Assert.Equal(userId, payload.GetProperty("userId").GetString());
+        Assert.Equal(2, payload.EnumerateObject().Count());
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        Assert.False(heardB.Task.IsCompleted, "Another workspace heard about the typing.");
+
+        using var other = Api.CreateApiClient();
+        await other.SignupAndVerifyAsync(Api.Emails, AuthFixture.NewEmail(), "Terza Bottega");
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, (await other.PostAsync($"/api/v1/conversations/{id}/typing")).StatusCode);
+    }
+
+    [Fact]
     public async Task Hub_needs_a_session()
     {
         await using var connection = Build(cookies: string.Empty, csrfToken: string.Empty);

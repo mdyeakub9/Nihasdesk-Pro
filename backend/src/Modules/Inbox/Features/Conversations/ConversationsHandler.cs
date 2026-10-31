@@ -204,6 +204,19 @@ internal sealed class ConversationsHandler(
         return await SaveAndLoadAsync(conversation, ct);
     }
 
+    /// <summary>Tells the workspace's dashboards that this member is writing here; nothing is stored.</summary>
+    public async Task<Result> TypingAsync(Guid id, CancellationToken ct)
+    {
+        if (!await db.Conversations.AnyAsync(c => c.Id == id, ct))
+        {
+            return Result.Failure(InboxErrors.NotFound);
+        }
+
+        var me = await MeAsync(ct);
+        await notifier.TypingAsync(tenant.TenantId, id, me.UserId, ct);
+        return Result.Success();
+    }
+
     public async Task<Result> MarkReadAsync(Guid id, CancellationToken ct)
     {
         if (!await db.Conversations.AnyAsync(c => c.Id == id, ct))

@@ -22,6 +22,8 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
 
     public DbSet<ReadMarker> ReadMarkers => Set<ReadMarker>();
 
+    public DbSet<SavedReply> SavedReplies => Set<SavedReply>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -70,6 +72,17 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             marker.ToTable("read_markers");
             marker.HasOne<Conversation>().WithMany().HasForeignKey(r => r.ConversationId).OnDelete(DeleteBehavior.Cascade);
             marker.HasIndex(r => new { r.ConversationId, r.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<SavedReply>(reply =>
+        {
+            reply.ToTable("saved_replies");
+            reply.Property(r => r.Shortcut).HasMaxLength(SavedReply.ShortcutMaxLength);
+            reply.Property(r => r.Title).HasMaxLength(SavedReply.TitleMaxLength);
+            reply.Property(r => r.TextEn).HasMaxLength(SavedReply.TextMaxLength);
+            reply.Property(r => r.TextIt).HasMaxLength(SavedReply.TextMaxLength);
+            // One "/ship" per workspace (ADR 0022).
+            reply.HasIndex(r => new { r.TenantId, r.Shortcut }).IsUnique();
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);

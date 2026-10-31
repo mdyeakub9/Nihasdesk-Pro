@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { useDraftStore } from '../features/inbox/drafts';
+import { useTypingStore } from '../features/inbox/typing';
 import { resetCsrfToken } from '../lib/api';
 import { resetMockNotifications } from '../mocks/notifications';
 import { hub } from './signalr-mock';
@@ -22,6 +24,9 @@ beforeEach(() => {
   resetCsrfToken();
   hub.reset();
   resetMockNotifications();
+  // Client-only inbox state lives in module stores: start each test empty.
+  useDraftStore.setState({ drafts: {} });
+  useTypingStore.setState({ typing: {} });
 });
 
 afterEach(() => {

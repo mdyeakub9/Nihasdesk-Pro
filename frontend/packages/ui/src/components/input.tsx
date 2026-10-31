@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { ComponentProps, InputHTMLAttributes, SelectHTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
 
 const fieldClasses =
@@ -8,7 +8,8 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return <input className={cn(fieldClasses, 'h-9', className)} {...props} />;
 }
 
-export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+/** `ref` is a normal prop in React 19, e.g. to put the caret back after inserting text. */
+export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return <textarea className={cn(fieldClasses, 'min-h-16 resize-none py-2', className)} {...props} />;
 }
 
