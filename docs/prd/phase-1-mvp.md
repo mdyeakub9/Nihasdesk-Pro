@@ -1,6 +1,6 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.6 · 2026-10-29 · Owner: Yeakub_
+_Status: draft v0.7 · 2026-10-31 · Owner: Yeakub_
 _Related: `docs/project-brief.md`, ADR 0003._
 
 ## 1. Problem
@@ -36,6 +36,42 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - Conversation view with full history, contact panel, internal notes.
 - Real-time updates; unread counts; "who is viewing" indicator.
 - A team member can **take over** from AI with one click and **return to AI**.
+
+**Conversation header**
+- Customer name, **channel icon and name** (moved here from the composer), status, assignee.
+- **Responder chip**: "AI" or the team member's name; click to take over or return to AI. Replaces the "AI is answering this customer" banner.
+
+**Team notes**
+- Written from the side panel ("Team note → add"); the composer has no note mode.
+- Each note also appears **in the conversation timeline** as a distinct internal bubble (different colour, lock icon, "Only your team sees this", author and time).
+- A note can be **pinned** to the top of the side panel (e.g. "VIP, call after 6 pm").
+- `@name` mentions notify that team member.
+- Notes are **never** sent to the customer's channel and **never** sent to the AI provider (rule 7).
+
+**Composer**
+- One text box and **one Send button** for everything the team sends. While the AI is the responder the button reads **"Send & take over"**.
+- When the 24-hour window is closed the composer is disabled with the reason (existing behaviour).
+- Draft text is kept per conversation when switching chats. "X is typing…" shows when another team member writes in the same chat.
+- Shortcuts: `Ctrl+Enter` send, `/` saved replies, `Esc` closes menus.
+
+**Saved replies (`/`)**
+- Typing `/` opens the list above the composer; typing filters it (e.g. `/ship`); ↑↓ and Enter insert.
+- Variables: `{first_name}`, `{shop_name}`; per-language versions (Italian/English) — the customer's language is chosen automatically.
+- Inserting puts the text in the composer for editing; it is never sent directly.
+- Owner/Admin create and edit saved replies; Members use them.
+
+**AI assistant (team helper)**
+- The ✨ button switches the side panel from **Customer** to **AI assistant** (two tabs, one click back).
+- Shows a 2–3 line **summary** of the conversation and a **suggested next reply** written from the whole history, the catalog and the knowledge layers, with the **sources used** (products, knowledge passages).
+- Actions: **Insert into reply** (puts it in the composer to edit and send with the normal Send button), **Shorter**, **Friendlier**, **Regenerate**. No separate send button in the panel.
+- Suggestions follow the same rules as the AI agent (prices and stock only from tools, rule 5). After sending an edited suggestion the team can **Save as knowledge** (4.7).
+
+**+ Actions menu**
+- **Send products**: search the catalog, send a card or carousel with in-stock variants.
+- **Create order**: opens an order **modal** with name and phone pre-filled from the chat; the full field set is defined with the Orders module (4.9). An order created by a team member is a confirmed order (a human created it). The AI agent still only creates **order requests** that a human approves (rule 5).
+- **Send image or file**.
+- **Saved reply** (same list as `/`).
+- Later: send checkout link, send payment link.
 
 ### 4.5 Contacts & leads
 - One contact per person; auto-created on first message.
