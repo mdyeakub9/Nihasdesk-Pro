@@ -7,7 +7,6 @@ import { useConversation, useUpdateConversation } from './api';
 import { Composer } from './Composer';
 import { CustomerPanel } from './CustomerPanel';
 import { MessageList } from './MessageList';
-import { PinnedNotes } from './PinnedNotes';
 
 export function ConversationView({ id }: { id: string }) {
   const { t } = useTranslation();
@@ -98,7 +97,6 @@ export function ConversationView({ id }: { id: string }) {
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col bg-surface">
           <MessageList conversation={conversation} />
-          <PinnedNotes conversationId={conversation.id} />
           <Composer conversation={conversation} />
         </div>
         <aside

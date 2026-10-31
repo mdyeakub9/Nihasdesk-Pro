@@ -3,19 +3,22 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Nihasdesk.Api.Tests.Auth;
+using Nihasdesk.Infrastructure.Tenancy;
+using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.TestSupport;
 
 namespace Nihasdesk.Api.Tests.Inbox;
 
-/// <summary>Team notes (PRD 4.4): pinned, @mentions, team-only (SEC-06, SEC-10, SEC-21, SEC-37).</summary>
+/// <summary>Team notes (PRD 4.4, ADR 0021): Notes section only, @mentions, resolve, delete, team-only (SEC-06, SEC-10, SEC-21, SEC-37).</summary>
 [Collection(AuthTests.Name)]
 public sealed partial class InboxNotesTests(AuthFixture fixture)
 {
     private NihasdeskApiFactory Api => fixture.Api;
 
     [Fact]
-    public async Task Notes_stay_in_time_order_when_pinned_and_pinned_ones_are_listed_for_the_composer()
+    public async Task Notes_are_listed_newest_first_and_leave_the_conversation_unchanged()
     {
         var inbox = new InboxTests(fixture);
         var (owner, workspace) = await inbox.OwnerAsync();
@@ -25,61 +28,67 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
         Api.Clock.Advance(TimeSpan.FromSeconds(1));
         await AddNoteAsync(owner, id, "Asked about express shipping");
         Assert.True(first.GetProperty("internal").GetBoolean());
-        Assert.Equal(JsonValueKind.Null, first.GetProperty("pinnedAt").ValueKind);
         Assert.Equal("none", first.GetProperty("delivery").GetString());
-
-        var pinned = await PinAsync(owner, id, first.GetProperty("id").GetString()!);
-        Assert.Equal(HttpStatusCode.OK, pinned.StatusCode);
-        Assert.NotEqual(JsonValueKind.Null, (await pinned.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("pinnedAt").ValueKind);
+        Assert.False(first.TryGetProperty("pinnedAt", out _));
 
         var notes = await NotesAsync(owner, id);
-        Assert.Equal(["VIP, call after 6 pm"], Texts(notes.GetProperty("pinned")));
-        // Pinning doesn't move a note in the side panel's list.
         Assert.Equal(["Asked about express shipping", "VIP, call after 6 pm"], Texts(notes.GetProperty("items")));
+        Assert.False(notes.TryGetProperty("pinned", out _));
 
-        // Notes stay in the timeline too, and don't change the conversation.
-        var timeline = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}/messages")).GetProperty("items");
-        Assert.Equal(3, timeline.GetArrayLength());
         var conversation = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}")).GetProperty("conversation");
         Assert.Equal("Ciao", conversation.GetProperty("preview").GetString());
         Assert.Equal("ai", conversation.GetProperty("responder").GetString());
-
-        await owner.RefreshCsrfAsync();
-        Assert.Equal(HttpStatusCode.OK, (await owner.Http.DeleteAsync($"/api/v1/conversations/{id}/notes/{first.GetProperty("id").GetString()}/pin")).StatusCode);
-        notes = await NotesAsync(owner, id);
-        Assert.Empty(notes.GetProperty("pinned").EnumerateArray());
-        Assert.Equal(["Asked about express shipping", "VIP, call after 6 pm"], Texts(notes.GetProperty("items")));
     }
 
     [Fact]
-    public async Task Resolving_a_note_dims_it_unpins_it_and_can_be_undone()
+    public async Task Pinning_is_gone()
+    {
+        var inbox = new InboxTests(fixture);
+        var (owner, workspace) = await inbox.OwnerAsync();
+        var id = (await inbox.ReceiveAsync(workspace, "visitor-n2", "Hello")).ConversationId;
+        var note = (await AddNoteAsync(owner, id, "Note")).GetProperty("id").GetString();
+
+        await owner.RefreshCsrfAsync();
+        var pin = await owner.Http.PutAsync($"/api/v1/conversations/{id}/notes/{note}/pin", null);
+        Assert.True(pin.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed, $"pin → {pin.StatusCode}");
+    }
+
+    [Fact]
+    public async Task Ai_handoff_notes_stay_in_the_conversation_and_are_not_team_notes()
+    {
+        var inbox = new InboxTests(fixture);
+        var (owner, workspace) = await inbox.OwnerAsync();
+        var id = (await inbox.ReceiveAsync(workspace, "visitor-n8", "Voglio un rimborso")).ConversationId;
+        await HandOffAsync(workspace, id, "The customer asked for a refund. Please answer this customer.");
+        var aiNote = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}/messages"))
+            .GetProperty("items").EnumerateArray().Single(m => m.GetProperty("author").GetString() == "ai");
+        Assert.True(aiNote.GetProperty("internal").GetBoolean());
+        var aiNoteId = aiNote.GetProperty("id").GetString()!;
+
+        Assert.Empty((await NotesAsync(owner, id)).GetProperty("items").EnumerateArray());
+        await AssertNotFound(ResolveAsync(owner, id, aiNoteId), "note.not_found");
+        await AssertNotFound(DeleteAsync(owner, id, aiNoteId), "note.not_found");
+    }
+
+    [Fact]
+    public async Task Resolving_a_note_dims_it_and_can_be_undone()
     {
         var inbox = new InboxTests(fixture);
         var (owner, workspace) = await inbox.OwnerAsync();
         var id = (await inbox.ReceiveAsync(workspace, "visitor-n7", "Ciao")).ConversationId;
         var noteId = (await AddNoteAsync(owner, id, "Call her back")).GetProperty("id").GetString()!;
-        await PinAsync(owner, id, noteId);
 
         var resolved = await ResolveAsync(owner, id, noteId);
         Assert.Equal(HttpStatusCode.OK, resolved.StatusCode);
         var body = await resolved.Content.ReadFromJsonAsync<JsonElement>();
         Assert.NotEqual(JsonValueKind.Null, body.GetProperty("resolvedAt").ValueKind);
         Assert.Equal(await UserIdAsync(owner), body.GetProperty("resolvedByUserId").GetString());
-        Assert.Equal(JsonValueKind.Null, body.GetProperty("pinnedAt").ValueKind);
-
-        var notes = await NotesAsync(owner, id);
-        Assert.Empty(notes.GetProperty("pinned").EnumerateArray());
-        Assert.NotEqual(JsonValueKind.Null, Assert.Single(notes.GetProperty("items").EnumerateArray()).GetProperty("resolvedAt").ValueKind);
-
-        var pinResolved = await PinAsync(owner, id, noteId);
-        Assert.Equal(HttpStatusCode.Conflict, pinResolved.StatusCode);
-        Assert.Equal("note.resolved", await AuthFlowTests.CodeOf(pinResolved));
+        Assert.NotEqual(JsonValueKind.Null, Assert.Single((await NotesAsync(owner, id)).GetProperty("items").EnumerateArray()).GetProperty("resolvedAt").ValueKind);
 
         await owner.RefreshCsrfAsync();
         var reopened = await owner.Http.DeleteAsync($"/api/v1/conversations/{id}/notes/{noteId}/resolve");
         Assert.Equal(HttpStatusCode.OK, reopened.StatusCode);
         Assert.Equal(JsonValueKind.Null, (await reopened.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("resolvedAt").ValueKind);
-        Assert.Equal(HttpStatusCode.OK, (await PinAsync(owner, id, noteId)).StatusCode);
 
         var customerMessage = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}/messages"))
             .GetProperty("items")[0].GetProperty("id").GetString()!;
@@ -87,28 +96,30 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
     }
 
     [Fact]
-    public async Task Only_notes_can_be_pinned_and_at_most_five()
+    public async Task The_author_an_owner_or_an_admin_can_delete_a_note_and_other_members_cannot()
     {
         var inbox = new InboxTests(fixture);
         var (owner, workspace) = await inbox.OwnerAsync();
-        var id = (await inbox.ReceiveAsync(workspace, "visitor-n2", "Hello")).ConversationId;
-        var customerMessage = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}/messages"))
-            .GetProperty("items")[0].GetProperty("id").GetString()!;
+        var (member, _) = await MemberOfAsync(owner);
+        var (otherMember, _) = await MemberOfAsync(owner);
+        var (admin, _) = await MemberOfAsync(owner, "admin");
+        var id = (await inbox.ReceiveAsync(workspace, "visitor-n9", "Ciao")).ConversationId;
 
-        var notNote = await PinAsync(owner, id, customerMessage);
-        Assert.Equal(HttpStatusCode.NotFound, notNote.StatusCode);
-        Assert.Equal("note.not_found", await AuthFlowTests.CodeOf(notNote));
+        var byMember = (await AddNoteAsync(member, id, "Member's note")).GetProperty("id").GetString()!;
+        var forbidden = await DeleteAsync(otherMember, id, byMember);
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        Assert.Equal("note.not_author", await AuthFlowTests.CodeOf(forbidden));
+        Assert.Equal(HttpStatusCode.NoContent, (await DeleteAsync(member, id, byMember)).StatusCode);
 
-        for (var i = 0; i < 5; i++)
-        {
-            var note = await AddNoteAsync(owner, id, $"Note {i}");
-            Assert.Equal(HttpStatusCode.OK, (await PinAsync(owner, id, note.GetProperty("id").GetString()!)).StatusCode);
-        }
+        var forAdmin = (await AddNoteAsync(member, id, "Admin removes this")).GetProperty("id").GetString()!;
+        Assert.Equal(HttpStatusCode.NoContent, (await DeleteAsync(admin, id, forAdmin)).StatusCode);
+        var forOwner = (await AddNoteAsync(member, id, "Owner removes this")).GetProperty("id").GetString()!;
+        Assert.Equal(HttpStatusCode.NoContent, (await DeleteAsync(owner, id, forOwner)).StatusCode);
 
-        var sixth = await AddNoteAsync(owner, id, "One too many");
-        var limit = await PinAsync(owner, id, sixth.GetProperty("id").GetString()!);
-        Assert.Equal(HttpStatusCode.Conflict, limit.StatusCode);
-        Assert.Equal("note.pin_limit", await AuthFlowTests.CodeOf(limit));
+        Assert.Empty((await NotesAsync(owner, id)).GetProperty("items").EnumerateArray());
+        await AssertNotFound(DeleteAsync(owner, id, forOwner), "note.not_found");
+        var timeline = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}/messages")).GetProperty("items");
+        Assert.DoesNotContain(timeline.EnumerateArray(), m => m.GetProperty("internal").GetBoolean());
     }
 
     [Fact]
@@ -137,19 +148,6 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
     }
 
     [Fact]
-    public async Task Members_can_write_and_pin_notes()
-    {
-        var inbox = new InboxTests(fixture);
-        var (owner, workspace) = await inbox.OwnerAsync();
-        var (member, _) = await MemberOfAsync(owner);
-        var id = (await inbox.ReceiveAsync(workspace, "visitor-n4", "Ciao")).ConversationId;
-
-        var note = await AddNoteAsync(member, id, "Member note");
-        Assert.Equal("Luca", note.GetProperty("authorName").GetString());
-        Assert.Equal(HttpStatusCode.OK, (await PinAsync(member, id, note.GetProperty("id").GetString()!)).StatusCode);
-    }
-
-    [Fact]
     public async Task Another_workspace_gets_not_found_for_notes()
     {
         var inbox = new InboxTests(fixture);
@@ -162,20 +160,15 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
 
         await AssertNotFound(ownerB.Http.GetAsync($"/api/v1/conversations/{id}/notes"), "conversation.not_found");
         await AssertNotFound(ownerB.PostAsync($"/api/v1/conversations/{id}/notes", new { text = "hi" }), "conversation.not_found");
-        await AssertNotFound(PinAsync(ownerB, id, note), "note.not_found");
-        await AssertNotFound(PinAsync(ownerB, idB, note), "note.not_found");
-        await ownerB.RefreshCsrfAsync();
-        await AssertNotFound(ownerB.Http.DeleteAsync($"/api/v1/conversations/{id}/notes/{note}/pin"), "note.not_found");
         await AssertNotFound(ResolveAsync(ownerB, id, note), "note.not_found");
         await AssertNotFound(ResolveAsync(ownerB, idB, note), "note.not_found");
         await ownerB.RefreshCsrfAsync();
         await AssertNotFound(ownerB.Http.DeleteAsync($"/api/v1/conversations/{id}/notes/{note}/resolve"), "note.not_found");
+        await AssertNotFound(DeleteAsync(ownerB, id, note), "note.not_found");
+        await AssertNotFound(DeleteAsync(ownerB, idB, note), "note.not_found");
 
-        var notesB = await NotesAsync(ownerB, idB);
-        Assert.Empty(notesB.GetProperty("items").EnumerateArray());
-        var notesA = await NotesAsync(ownerA, id);
-        var untouched = Assert.Single(notesA.GetProperty("items").EnumerateArray());
-        Assert.Equal(JsonValueKind.Null, untouched.GetProperty("pinnedAt").ValueKind);
+        Assert.Empty((await NotesAsync(ownerB, idB)).GetProperty("items").EnumerateArray());
+        var untouched = Assert.Single((await NotesAsync(ownerA, id)).GetProperty("items").EnumerateArray());
         Assert.Equal(JsonValueKind.Null, untouched.GetProperty("resolvedAt").ValueKind);
 
         using var anonymous = Api.CreateApiClient();
@@ -183,7 +176,7 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
     }
 
     [Fact]
-    public async Task Pinned_mentioned_and_resolved_notes_never_reach_the_ai()
+    public async Task Mentioned_and_resolved_notes_never_reach_the_ai()
     {
         var inbox = new InboxTests(fixture);
         var (owner, workspace) = await inbox.OwnerAsync();
@@ -192,8 +185,7 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
         Api.Ai.Respond = _ => FakeAiAnswer.Say("Certo!");
 
         var id = (await inbox.ReceiveAsync(workspace, "visitor-n6", $"Ciao {marker}")).ConversationId;
-        var note = await owner.PostAsync($"/api/v1/conversations/{id}/notes", new { text = "SECRET-PINNED-NOTE call her", mentionedUserIds = new[] { memberId } });
-        await PinAsync(owner, id, (await note.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString()!);
+        await owner.PostAsync($"/api/v1/conversations/{id}/notes", new { text = "SECRET-MENTION-NOTE call her", mentionedUserIds = new[] { memberId } });
         var resolved = await AddNoteAsync(owner, id, "SECRET-RESOLVED-NOTE refund done");
         await ResolveAsync(owner, id, resolved.GetProperty("id").GetString()!);
         Api.Clock.Advance(TimeSpan.FromSeconds(1));
@@ -206,19 +198,26 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
         }
 
         var call = Assert.Single(Api.Ai.Calls, Mine);
-        Assert.DoesNotContain("SECRET-PINNED-NOTE", call.System, StringComparison.Ordinal);
-        Assert.DoesNotContain(call.Messages, m => m.Text?.Contains("SECRET-PINNED-NOTE", StringComparison.Ordinal) == true);
-        Assert.DoesNotContain(call.Messages, m => m.Text?.Contains("SECRET-RESOLVED-NOTE", StringComparison.Ordinal) == true);
+        Assert.DoesNotContain("SECRET-", call.System, StringComparison.Ordinal);
+        Assert.DoesNotContain(call.Messages, m => m.Text?.Contains("SECRET-", StringComparison.Ordinal) == true);
     }
 
-    internal async Task<(ApiClient Client, string UserId)> MemberOfAsync(ApiClient owner)
+    internal async Task<(ApiClient Client, string UserId)> MemberOfAsync(ApiClient owner, string role = "member")
     {
         var email = AuthFixture.NewEmail();
-        await owner.PostAsync("/api/v1/team/invitations", new { email, role = "member" });
+        await owner.PostAsync("/api/v1/team/invitations", new { email, role });
         var token = HttpUtility.ParseQueryString(new Uri(InvitationLink().Match(Api.Emails.LastTo(email).TextBody).Value).Query)["token"];
         var member = Api.CreateApiClient();
         (await member.PostAsync("/api/v1/invitations/accept", new { token, name = "Luca", password = ApiClient.DefaultPassword })).EnsureSuccessStatusCode();
         return (member, await UserIdAsync(member));
+    }
+
+    /// <summary>The AI hands the conversation to the team with a note, as the agent does.</summary>
+    private async Task HandOffAsync(string workspace, Guid conversationId, string note)
+    {
+        await using var scope = Api.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TenantContext>().SetTenant(Guid.Parse(workspace));
+        await scope.ServiceProvider.GetRequiredService<IAiConversations>().HandOffAsync(conversationId, note, CancellationToken.None);
     }
 
     private static async Task<string> UserIdAsync(ApiClient client) =>
@@ -231,16 +230,16 @@ public sealed partial class InboxNotesTests(AuthFixture fixture)
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    private static async Task<HttpResponseMessage> PinAsync(ApiClient client, Guid id, string noteId)
-    {
-        await client.RefreshCsrfAsync();
-        return await client.Http.PutAsync($"/api/v1/conversations/{id}/notes/{noteId}/pin", null);
-    }
-
     private static async Task<HttpResponseMessage> ResolveAsync(ApiClient client, Guid id, string noteId)
     {
         await client.RefreshCsrfAsync();
         return await client.Http.PutAsync($"/api/v1/conversations/{id}/notes/{noteId}/resolve", null);
+    }
+
+    private static async Task<HttpResponseMessage> DeleteAsync(ApiClient client, Guid id, string noteId)
+    {
+        await client.RefreshCsrfAsync();
+        return await client.Http.DeleteAsync($"/api/v1/conversations/{id}/notes/{noteId}");
     }
 
     private static async Task<JsonElement> NotesAsync(ApiClient client, Guid id) =>

@@ -161,7 +161,7 @@ public sealed class MessengerTests(AuthFixture fixture)
     }
 
     [Fact]
-    public async Task Team_notes_never_reach_the_channel_even_when_pinned_or_mentioning()
+    public async Task Team_notes_never_reach_the_channel_even_when_resolved_or_mentioning()
     {
         var (owner, _, pageId) = await ConnectedOwnerAsync();
         var id = await ConversationAsync(owner, pageId);
@@ -173,7 +173,7 @@ public sealed class MessengerTests(AuthFixture fixture)
         var created = await note.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("none", created.GetProperty("delivery").GetString());
         await owner.RefreshCsrfAsync();
-        await owner.Http.PutAsync($"/api/v1/conversations/{id}/notes/{created.GetProperty("id").GetString()}/pin", null);
+        await owner.Http.PutAsync($"/api/v1/conversations/{id}/notes/{created.GetProperty("id").GetString()}/resolve", null);
 
         Assert.Equal(0, await Api.SendRepliesAsync());
         Assert.Equal(sendsBefore, Api.Meta.Sends.Count);

@@ -128,9 +128,7 @@
       "failed": "Non consegnato"
     },
     "loadOlder": "Carica messaggi precedenti",
-    "teamOnly": "Lo vede solo il tuo team",
-    "pinned": "Fissata",
-    "resolved": "Risolta"
+    "teamOnly": "Lo vede solo il tuo team"
   },
   "composer": {
     "reply": "Rispondi",
@@ -708,10 +706,6 @@
     "mention": "Menziona un membro del team",
     "teamOnly": "Le note le vede solo il tuo team",
     "save": "Aggiungi nota",
-    "pinned": "Note fissate",
-    "pin": "Fissa nota",
-    "unpin": "Togli dalle note fissate",
-    "pinLimit": "Puoi fissare al massimo 5 note. Togline una prima.",
     "mentionedYou": "Qualcuno ti ha menzionato in una nota del team.",
     "openConversation": "Apri",
     "dismiss": "Chiudi",
@@ -721,6 +715,12 @@
     "resolvedBy": "Risolta da {{name}}",
     "resolvedCount_one": "Risolte ({{count}})",
     "resolvedCount_other": "Risolte ({{count}})",
-    "resolvedList": "Note risolte"
+    "resolvedList": "Note risolte",
+    "deleteNote": "Elimina nota",
+    "deleteConfirm": "Eliminare questa nota?",
+    "delete": "Elimina",
+    "cancel": "Annulla",
+    "count_one": "{{count}} nota",
+    "count_other": "{{count}} note"
   }
 }

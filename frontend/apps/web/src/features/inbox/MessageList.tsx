@@ -1,15 +1,5 @@
 import { Avatar, Badge, Button, cn } from '@nihasdesk/ui';
-import {
-  AlertCircle,
-  CheckCheck,
-  CircleCheck,
-  Clock,
-  ExternalLink,
-  Lock,
-  Pin,
-  ShoppingBag,
-  Sparkles,
-} from 'lucide-react';
+import { AlertCircle, CheckCheck, Clock, ExternalLink, Lock, ShoppingBag, Sparkles } from 'lucide-react';
 import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format';
@@ -64,34 +54,18 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
   const sender = message.author === 'ai' ? t('message.aiName') : (message.authorName ?? t('message.team'));
 
   if (message.internal) {
-    // Team-only note (PRD 4.4): a distinct bubble, never sent to the customer or the AI.
+    // The AI's note to the team (e.g. why it handed over): team-only, never sent to the customer.
+    // Team notes are not shown here; they live in the side panel's Notes section (ADR 0021).
     return (
       <li className="flex flex-col items-end gap-1">
         <div
           role="note"
           aria-label={t('message.internalNote')}
-          className={cn(
-            'max-w-125 rounded-lg border border-dashed bg-warning px-3 py-2',
-            message.resolvedAt && 'opacity-60',
-          )}
+          className="max-w-125 rounded-lg border border-dashed bg-warning px-3 py-2"
         >
           <p className="flex items-center gap-1 text-xs font-medium text-warning-foreground">
             <Lock className="size-3.5" aria-hidden="true" />
             {t('message.teamOnly')}
-            {message.pinned && (
-              <>
-                {' '}
-                · <Pin className="size-3.5" aria-hidden="true" />
-                {t('message.pinned')}
-              </>
-            )}
-            {message.resolvedAt && (
-              <>
-                {' '}
-                · <CircleCheck className="size-3.5" aria-hidden="true" />
-                {t('message.resolved')}
-              </>
-            )}
           </p>
           <p className="whitespace-pre-wrap break-words text-sm">{message.text}</p>
         </div>
@@ -141,7 +115,9 @@ export function MessageList({ conversation }: { conversation: Conversation }) {
   const endRef = useRef<HTMLLIElement>(null);
   const today = new Date().toISOString();
   const older = useOlderMessages(conversation.id);
-  const lastId = conversation.messages.at(-1)?.id;
+  // Team notes live in the side panel's Notes section only (ADR 0021); the AI's handoff notes stay.
+  const messages = conversation.messages.filter((m) => !(m.internal && m.author === 'agent'));
+  const lastId = messages.at(-1)?.id;
 
   // Follow new messages at the bottom; loading older ones above doesn't jump.
   useEffect(() => {
@@ -162,8 +138,8 @@ export function MessageList({ conversation }: { conversation: Conversation }) {
           </Button>
         </li>
       )}
-      {conversation.messages.map((message, index) => {
-        const previous = conversation.messages[index - 1];
+      {messages.map((message, index) => {
+        const previous = messages[index - 1];
         const newDay = !previous || !isSameDay(previous.sentAt, message.sentAt);
         return (
           <Fragment key={message.id}>

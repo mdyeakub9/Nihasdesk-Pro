@@ -14,8 +14,15 @@ PRD 4.4 (v0.7), Issue #34 part 1: notes move from the composer to the side panel
 
 ## Update 2026-10-31 (owner feedback on PR #35)
 - **Header as before:** the "AI answering / Team answering" status and the Take over / Return to AI buttons are back; the responder chip is removed. Only the text under the composer stays removed (channel label, "AI is answering…" banner). "Send & take over" stays.
-- **Pinned notes sit above the composer** in the conversation view (max 5, oldest pin first), on every screen size. Pinning no longer moves a note in the side panel: `GET /notes` now returns `{ items, pinned }`, where `items` are the 50 newest notes in time order (pinned and resolved included) and `pinned` feeds the bar above the composer.
+- **Pinned notes sit above the composer** _(removed again, see the next update)_ in the conversation view (max 5, oldest pin first), on every screen size. Pinning no longer moves a note in the side panel: `GET /notes` now returns `{ items, pinned }`, where `items` are the 50 newest notes in time order (pinned and resolved included) and `pinned` feeds the bar above the composer.
 - **Resolve:** `PUT/DELETE /api/v1/conversations/{id}/notes/{noteId}/resolve`; additive migration `AddNoteResolve` (`resolved_at`, `resolved_by_user_id`). A resolved note is unpinned, can't be pinned until reopened (`409 note.resolved`), is dimmed with "Resolved by {name}" and grouped under a collapsed "Resolved (n)" in the side panel, and dimmed with "Resolved" in the timeline. Resolved notes are still internal: never sent to the channel or the AI.
+
+## Update 2026-11-01 (owner feedback, simpler notes)
+- **Team notes live only in the side panel's Notes section.** They are no longer shown in the conversation timeline. The AI's handoff notes (internal messages written by the AI) stay in the timeline and are **not** team notes: `GET /notes`, resolve and delete only see notes a team member wrote.
+- **Pinning is removed** (pin endpoints, pinned bar above the composer, pin buttons). The `pinned_at` / `pinned_by_user_id` columns and their index stay unused until a later expand → contract cleanup drops them, so no migration now. `GET /notes` returns `{ items }`.
+- **Delete:** `DELETE /api/v1/conversations/{id}/notes/{noteId}` removes a note for good, after a confirm in the dashboard. Allowed for the note's author, an Owner or an Admin; other members get `403 note.not_author`; other workspaces `404`.
+- **Count:** a warning-coloured badge next to the "Team notes" title shows the number of open (not resolved) notes, e.g. "3 notes". The dashboard counts them from the notes list; no new API field.
+- Resolve stays as before (dimmed, collapsed "Resolved (n)", reopen).
 
 ## Consequences
 - A mentioned member who is offline sees the note in the conversation but gets no alert until the Notifications API exists.
