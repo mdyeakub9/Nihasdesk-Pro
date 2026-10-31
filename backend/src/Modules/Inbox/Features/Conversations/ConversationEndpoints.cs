@@ -46,22 +46,14 @@ internal static class ConversationEndpoints
                 await handler.MessagesAsync(id, query, ct) is { } page ? Results.Ok(page) : InboxErrors.NotFound.ToProblem())
             .AddEndpointFilter<ValidationFilter<ListMessagesQuery>>();
 
-        conversations.MapPost("/{id:guid}/messages", (Guid id, SendMessageRequest request, ConversationsHandler handler, CancellationToken ct) =>
-                WriteAsync(id, request, isInternal: false, handler, ct))
+        conversations.MapPost("/{id:guid}/messages", async (Guid id, SendMessageRequest request, ConversationsHandler handler, CancellationToken ct) =>
+            {
+                var result = await handler.ReplyAsync(id, request, ct);
+                return result.IsSuccess
+                    ? Results.Created($"/api/v1/conversations/{id}/messages/{result.Value.Id}", result.Value)
+                    : result.Error.ToProblem();
+            })
             .AddEndpointFilter<ValidationFilter<SendMessageRequest>>()
             .RequireRateLimiting(RatePolicies.Messages);
-
-        conversations.MapPost("/{id:guid}/notes", (Guid id, SendMessageRequest request, ConversationsHandler handler, CancellationToken ct) =>
-                WriteAsync(id, request, isInternal: true, handler, ct))
-            .AddEndpointFilter<ValidationFilter<SendMessageRequest>>()
-            .RequireRateLimiting(RatePolicies.Messages);
-    }
-
-    private static async Task<IResult> WriteAsync(Guid id, SendMessageRequest request, bool isInternal, ConversationsHandler handler, CancellationToken ct)
-    {
-        var result = await handler.WriteAsync(id, request, isInternal, ct);
-        return result.IsSuccess
-            ? Results.Created($"/api/v1/conversations/{id}/messages/{result.Value.Id}", result.Value)
-            : result.Error.ToProblem();
     }
 }

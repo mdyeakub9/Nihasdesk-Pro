@@ -28,12 +28,31 @@ type ApiMessage = {
   internal: boolean;
   sentAt: string;
   delivery: 'none' | 'pending' | 'sent' | 'failed';
+  pinnedAt?: string | null;
+  mentionedUserIds?: string[];
 };
 
 export type FakeConversation = Summary & {
   contact: { phone: string | null; email: string | null; language: string | null };
   messages: ApiMessage[];
 };
+
+export const teamMembers = [
+  {
+    userId: 'u-1',
+    name: 'Md Yeakub',
+    email: 'owner@example.com',
+    role: 'owner',
+    joinedAt: '2026-10-01T09:00:00Z',
+  },
+  {
+    userId: 'u-2',
+    name: 'Luca Neri',
+    email: 'luca@example.com',
+    role: 'member',
+    joinedAt: '2026-10-02T09:00:00Z',
+  },
+];
 
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 
@@ -127,6 +146,8 @@ export function fakeInboxApi({
   const find = (id: string) => state.conversations.find((c) => c.id === id);
 
   const routes: Record<string, (body: unknown, url: URL) => Response> = {
+    // Names for the responder chip and @mentions.
+    'GET /api/v1/team/members': () => json(teamMembers),
     'GET /api/v1/conversations': () =>
       json({
         items: [...state.conversations]
@@ -178,9 +199,29 @@ export function fakeInboxApi({
       c.unread = false;
       return new Response(null, { status: 204 });
     });
-    routes[`POST ${base}/notes`] = withConversation((c, body: { text: string }) =>
-      json(addTeamMessage(c, body.text, true), 201),
+    routes[`GET ${base}/notes`] = withConversation((c) => {
+      const notes = c.messages.filter((m) => m.internal).reverse();
+      return json({ pinned: notes.filter((m) => m.pinnedAt), recent: notes.filter((m) => !m.pinnedAt) });
+    });
+    routes[`POST ${base}/notes`] = withConversation(
+      (c, body: { text: string; mentionedUserIds?: string[] }) => {
+        const note = addTeamMessage(c, body.text, true);
+        note.mentionedUserIds = body.mentionedUserIds ?? [];
+        return json(note, 201);
+      },
     );
+    // Pin routes for the notes a test seeded (fakeApi matches exact paths).
+    for (const note of find(id)?.messages.filter((m) => m.internal) ?? []) {
+      const pin = (pinned: boolean) =>
+        withConversation((c) => {
+          const found = c.messages.find((m) => m.id === note.id);
+          if (!found) return problem(404, 'note.not_found');
+          found.pinnedAt = pinned ? new Date().toISOString() : null;
+          return json(found);
+        });
+      routes[`PUT ${base}/notes/${note.id}/pin`] = pin(true);
+      routes[`DELETE ${base}/notes/${note.id}/pin`] = pin(false);
+    }
     routes[`POST ${base}/messages`] = withConversation((c, body: { text: string }) => {
       const custom = reply?.(c, body.text);
       if (custom) return custom;

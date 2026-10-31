@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { apiUrl, getCsrfToken } from '../../lib/api';
 import { useSession } from '../session/useSession';
 import { inboxKeys } from './api';
+import { useMentionStore } from './mentions';
 
 /**
  * Live inbox updates (ADR 0016): the hub only says which conversation changed — IDs, never text —
@@ -34,6 +35,12 @@ export function useInboxRealtime() {
         void queryClient.invalidateQueries({ queryKey: inboxKeys.list() });
         if (typeof event?.conversationId === 'string') {
           void queryClient.invalidateQueries({ queryKey: inboxKeys.detail(event.conversationId) });
+        }
+      });
+      // Someone @mentioned this member in a team note (PRD 4.4): IDs only, like every event.
+      connection.on('mentioned', (event: { conversationId?: unknown; noteId?: unknown }) => {
+        if (typeof event?.conversationId === 'string' && typeof event.noteId === 'string') {
+          useMentionStore.getState().received({ conversationId: event.conversationId, noteId: event.noteId });
         }
       });
       // Missed events while offline: reload everything once the connection is back.

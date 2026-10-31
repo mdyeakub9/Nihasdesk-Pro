@@ -98,17 +98,19 @@
   "conversation": {
     "notFound": "Conversazione non trovata",
     "backToInbox": "Torna alle conversazioni",
-    "aiAnswering": "Risponde l'IA",
-    "teamAnswering": "Risponde il team",
     "handoffs_one": "{{count}} passaggio al team",
     "handoffs_other": "{{count}} passaggi al team",
     "done": "Chiudi",
     "reopen": "Riapri",
-    "takeOver": "Subentra",
-    "returnToAi": "Ridai all'IA",
     "aiOffHint": "L'assistenza IA è disattivata per questa conversazione.",
     "assign": "Assegna",
-    "close": "Chiudi conversazione"
+    "close": "Chiudi conversazione",
+    "responder": {
+      "ai": "IA",
+      "team": "Team",
+      "aiAction": "Risponde l'IA. Subentra",
+      "personAction": "Risponde {{name}}. Ridai all'IA"
+    }
   },
   "message": {
     "history": "Messaggi",
@@ -127,26 +129,23 @@
       "pending": "Invio in corso…",
       "failed": "Non consegnato"
     },
-    "loadOlder": "Carica messaggi precedenti"
+    "loadOlder": "Carica messaggi precedenti",
+    "teamOnly": "Lo vede solo il tuo team",
+    "pinned": "Fissata"
   },
   "composer": {
-    "mode": "Tipo di messaggio",
     "reply": "Rispondi",
-    "note": "Nota interna",
     "replyPlaceholder": "Scrivi una risposta…",
-    "notePlaceholder": "Scrivi una nota per il team. Il cliente non la vedrà.",
-    "aiPreparing": "L'IA sta rispondendo a questo cliente. Inviando una risposta subentri tu.",
     "enterToSend": "Invio per inviare",
     "send": "Invia",
-    "saveNote": "Aggiungi nota",
-    "outsideWindow": "L'ultimo messaggio del cliente ha più di 24 ore, quindi il canale non permette di rispondere ora. Aggiungi una nota interna o rispondi quando scrive di nuovo."
+    "outsideWindow": "L'ultimo messaggio del cliente ha più di 24 ore, quindi il canale non permette di rispondere ora. Aggiungi una nota del team nel pannello laterale o rispondi quando scrive di nuovo.",
+    "sendAndTakeOver": "Invia e subentra"
   },
   "customer": {
     "title": "Dettagli cliente",
     "seen": "Primo contatto {{firstSeen}} fa · Attivo {{active}} fa",
     "labels": "Etichette",
-    "teamNote": "Nota del team",
-    "noNote": "Nessuna nota.",
+    "teamNote": "Note del team",
     "assistant": "Assistente",
     "noSummary": "Il riepilogo IA compare dopo qualche messaggio.",
     "lead": "Lead",
@@ -703,5 +702,20 @@
       "output_limit": "ha finito lo spazio per la risposta (limite di output)",
       "other": "il fornitore IA ha avuto un errore ({{code}})"
     }
+  },
+  "notes": {
+    "add": "Aggiungi una nota del team",
+    "placeholder": "Scrivi una nota per il team. Digita @ per menzionare qualcuno.",
+    "mention": "Menziona un membro del team",
+    "teamOnly": "Le note le vede solo il tuo team",
+    "save": "Aggiungi nota",
+    "pinned": "Note fissate",
+    "recent": "Note recenti",
+    "pin": "Fissa nota",
+    "unpin": "Togli dalle note fissate",
+    "pinLimit": "Puoi fissare al massimo 5 note. Togline una prima.",
+    "mentionedYou": "Qualcuno ti ha menzionato in una nota del team.",
+    "openConversation": "Apri",
+    "dismiss": "Chiudi"
   }
 }

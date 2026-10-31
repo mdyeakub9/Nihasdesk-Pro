@@ -27,8 +27,12 @@ export type Message = {
   authorName?: string;
   text: string;
   sentAt: string;
-  /** Internal notes are visible to the team only. */
+  /** Internal notes are visible to the team only: never sent to the channel or the AI (PRD 4.4). */
   internal?: boolean;
+  /** Notes pinned to the top of the side panel. */
+  pinned?: boolean;
+  /** Team members @mentioned in a note. */
+  mentionedUserIds?: string[];
   /** Catalog product shown to the customer (prices and stock come from the catalog, never the model). */
   product?: ProductCard;
   /** Team replies to a channel (ADR 0017): queued, sent, or given up. */
@@ -62,7 +66,8 @@ export type Conversation = ConversationSummary & {
   contact: ContactDetails;
   messages: Message[];
   labels: string[];
-  teamNote?: string;
+  /** Team member the conversation is assigned to; the responder chip shows their name. */
+  assigneeId: string | null;
   aiSummary?: string;
   leadStatus: LeadStatus;
   orderCount: number;
@@ -72,5 +77,8 @@ export type Conversation = ConversationSummary & {
   /** Loads the next older page of messages, when there is one. */
   olderCursor?: string;
 };
+
+/** The side panel's team notes: pinned first, then the newest (PRD 4.4). */
+export type TeamNotes = { pinned: Message[]; recent: Message[] };
 
 export type ConversationPatch = Partial<Pick<Conversation, 'status' | 'responder' | 'aiEnabled'>>;

@@ -39,6 +39,35 @@ public sealed class InboxRealtimeTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Mentions_reach_only_the_mentioned_member_and_carry_ids_only()
+    {
+        var inbox = new InboxTests(fixture);
+        var notes = new InboxNotesTests(fixture);
+        var ownerEmail = AuthFixture.NewEmail();
+        var owner = Api.CreateApiClient();
+        var me = await (await owner.SignupAndVerifyAsync(Api.Emails, ownerEmail, "Almanaam")).Content.ReadFromJsonAsync<JsonElement>();
+        var workspace = me.GetProperty("workspace").GetProperty("id").GetString()!;
+        var (member, memberId) = await notes.MemberOfAsync(owner);
+        var memberEmail = (await member.Http.GetFromJsonAsync<JsonElement>("/api/v1/me")).GetProperty("user").GetProperty("email").GetString()!;
+        var id = (await inbox.ReceiveAsync(workspace, "visitor-mention", "Ciao")).ConversationId;
+
+        await using var ownerDashboard = await ConnectAsync(ownerEmail);
+        await using var memberDashboard = await ConnectAsync(memberEmail);
+        var ownerHeard = Listen(ownerDashboard, "mentioned");
+        var memberHeard = Listen(memberDashboard, "mentioned");
+
+        var note = await owner.PostAsync($"/api/v1/conversations/{id}/notes", new { text = "@Luca please call her", mentionedUserIds = new[] { memberId } });
+        var noteId = (await note.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+
+        var payload = await memberHeard.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(id.ToString(), payload.GetProperty("conversationId").GetString());
+        Assert.Equal(noteId, payload.GetProperty("noteId").GetString());
+        Assert.Equal(2, payload.EnumerateObject().Count());
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        Assert.False(ownerHeard.Task.IsCompleted, "A member who wasn't mentioned heard the mention.");
+    }
+
+    [Fact]
     public async Task Hub_needs_a_session()
     {
         await using var connection = Build(cookies: string.Empty, csrfToken: string.Empty);
@@ -52,10 +81,10 @@ public sealed class InboxRealtimeTests(AuthFixture fixture)
         return me.GetProperty("workspace").GetProperty("id").GetString()!;
     }
 
-    private static TaskCompletionSource<JsonElement> Listen(HubConnection connection)
+    private static TaskCompletionSource<JsonElement> Listen(HubConnection connection, string method = "conversationChanged")
     {
         var heard = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
-        connection.On<JsonElement>("conversationChanged", payload => heard.TrySetResult(payload));
+        connection.On<JsonElement>(method, payload => heard.TrySetResult(payload));
         return heard;
     }
 

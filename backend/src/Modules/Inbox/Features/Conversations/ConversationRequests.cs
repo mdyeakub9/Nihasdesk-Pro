@@ -56,7 +56,10 @@ internal sealed record MessageResponse(
     bool Internal,
     DateTimeOffset SentAt,
     // none | pending | sent | failed (ADR 0017)
-    string Delivery);
+    string Delivery,
+    // Notes only (PRD 4.4).
+    DateTimeOffset? PinnedAt,
+    IReadOnlyList<Guid> MentionedUserIds);
 
 /// <summary>Oldest first; <see cref="Before"/> loads the next older page.</summary>
 internal sealed record MessagePageResponse(IReadOnlyList<MessageResponse> Items, string? Before);

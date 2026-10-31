@@ -69,6 +69,14 @@ internal sealed class Message : TenantEntity
     public static Message FromCustomer(Guid tenantId, Guid conversationId, string text, string? externalId, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Customer, CheckText(text), sentAt) { ExternalId = externalId };
 
+    /// <summary>When a team member pinned this note to the side panel (PRD 4.4); notes only.</summary>
+    public DateTimeOffset? PinnedAt { get; private set; }
+
+    public Guid? PinnedByUserId { get; private set; }
+
+    /// <summary>Team members <c>@mentioned</c> in a note; checked against the workspace's members.</summary>
+    public List<Guid> MentionedUserIds { get; private set; } = [];
+
     public static Message FromTeam(Guid tenantId, Guid conversationId, Guid userId, string authorName, string text, bool isInternal, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Agent, CheckText(text), sentAt)
         {
@@ -77,6 +85,14 @@ internal sealed class Message : TenantEntity
             Internal = isInternal,
         };
 
+    /// <summary>A team-only note (PRD 4.4). Never delivered to the channel or given to the AI.</summary>
+    public static Message TeamNote(Guid tenantId, Guid conversationId, Guid userId, string authorName, string text, IEnumerable<Guid> mentions, DateTimeOffset sentAt)
+    {
+        var note = FromTeam(tenantId, conversationId, userId, authorName, text, isInternal: true, sentAt);
+        note.MentionedUserIds = mentions.Distinct().ToList();
+        return note;
+    }
+
     /// <summary>An AI reply to the customer (ADR 0019).</summary>
     public static Message FromAi(Guid tenantId, Guid conversationId, string text, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Ai, CheckText(text), sentAt);
@@ -84,6 +100,23 @@ internal sealed class Message : TenantEntity
     /// <summary>A note from the AI to the team, e.g. why it handed over. Never sent to the customer.</summary>
     public static Message AiNote(Guid tenantId, Guid conversationId, string text, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Ai, CheckText(text), sentAt) { Internal = true };
+
+    public void Pin(Guid userId, DateTimeOffset now)
+    {
+        if (!Internal)
+        {
+            throw new InvalidOperationException("Only notes can be pinned.");
+        }
+
+        PinnedAt ??= now;
+        PinnedByUserId ??= userId;
+    }
+
+    public void Unpin()
+    {
+        PinnedAt = null;
+        PinnedByUserId = null;
+    }
 
     public void QueueDelivery(DateTimeOffset now)
     {

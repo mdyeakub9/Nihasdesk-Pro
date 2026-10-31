@@ -52,6 +52,9 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             message.Property(m => m.DeliveryError).HasMaxLength(Message.DeliveryErrorMaxLength);
             LowerCaseText(message.Property(m => m.Author));
             LowerCaseText(message.Property(m => m.Delivery));
+            message.Property(m => m.MentionedUserIds).HasDefaultValueSql("'{}'::uuid[]");
+            // Pinned notes on top of the side panel (PRD 4.4).
+            message.HasIndex(m => m.ConversationId).HasFilter("pinned_at IS NOT NULL").HasDatabaseName("ix_messages_pinned");
             message.HasOne<Conversation>().WithMany().HasForeignKey(m => m.ConversationId).OnDelete(DeleteBehavior.Cascade);
             message.HasIndex(m => new { m.ConversationId, m.SentAt, m.Id });
             // The background sender's queue (ADR 0017).

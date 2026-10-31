@@ -5,6 +5,7 @@ import { NotificationPermissionBanner } from '../components/NotificationPermissi
 import { useDocumentSettings } from '../components/useDocumentSettings';
 import { MfaReminder } from '../features/account/MfaReminder';
 import { ReauthDialog } from '../features/account/ReauthDialog';
+import { MentionAlert } from '../features/inbox/MentionAlert';
 import { useInboxRealtime } from '../features/inbox/realtime';
 import { useUiStore } from '../stores/ui-store';
 import { Sidebar } from './Sidebar';
@@ -45,6 +46,7 @@ export function AppShell() {
         </main>
       </div>
       <ReauthDialog />
+      <MentionAlert />
     </div>
   );
 }

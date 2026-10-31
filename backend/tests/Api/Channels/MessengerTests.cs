@@ -161,6 +161,26 @@ public sealed class MessengerTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Team_notes_never_reach_the_channel_even_when_pinned_or_mentioning()
+    {
+        var (owner, _, pageId) = await ConnectedOwnerAsync();
+        var id = await ConversationAsync(owner, pageId);
+        var me = (await owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/me")).GetProperty("user").GetProperty("id").GetString();
+        var sendsBefore = Api.Meta.Sends.Count;
+
+        var note = await owner.PostAsync($"/api/v1/conversations/{id}/notes", new { text = "SECRET-NOTE-FOR-TEAM", mentionedUserIds = new[] { me } });
+        Assert.Equal(HttpStatusCode.Created, note.StatusCode);
+        var created = await note.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("none", created.GetProperty("delivery").GetString());
+        await owner.RefreshCsrfAsync();
+        await owner.Http.PutAsync($"/api/v1/conversations/{id}/notes/{created.GetProperty("id").GetString()}/pin", null);
+
+        Assert.Equal(0, await Api.SendRepliesAsync());
+        Assert.Equal(sendsBefore, Api.Meta.Sends.Count);
+        Assert.DoesNotContain(Api.Meta.Sends, s => s.Body.Contains("SECRET-NOTE-FOR-TEAM", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task The_sender_checks_the_window_again_before_sending()
     {
         var (owner, _, pageId) = await ConnectedOwnerAsync();
