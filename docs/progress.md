@@ -31,6 +31,8 @@ Weekly, 3–5 lines: done, blocked, decisions.
 
 - Requirements (PRD v0.6): what the AI knows is split into three layers — structured business facts used by code (shipping zones, costs, times, payment, returns), short owner instructions, and searchable knowledge (documents, FAQ, PDF/DOCX, web page, taught answers) — with draft → test → publish, versions and rollback. Inspired by a competitor review; differs by computing totals in code.
 
+- Requirements (PRD v0.7, 4.4): inbox redesign — responder chip in the header instead of the AI banner, team notes in the side panel and as internal bubbles in the timeline (pinned, @mentions, never sent to customer or AI), one Send button ("Send & take over"), saved replies with `/`, AI assistant tab with summary and suggested reply (insert, not send), + menu with Send products and Create order modal (team-created orders are confirmed; AI still only creates order requests).
+
 ## 2026-W43
 - Repository created; folder structure and planning docs added (brief, architecture, AI agent, standards, ADRs).
 - Decided: e-commerce first; flexible core with vertical packs (ADR 0003); Shopify/Woo moved to Phase 2, Phase 1 uses manual + CSV catalog.
