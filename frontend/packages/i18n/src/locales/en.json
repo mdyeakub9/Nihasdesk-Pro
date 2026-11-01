@@ -144,8 +144,6 @@
     "seen": "First seen {{firstSeen}} ago · Active {{active}} ago",
     "labels": "Labels",
     "teamNote": "Team notes",
-    "assistant": "Assistant",
-    "noSummary": "The AI summary appears after a few messages.",
     "lead": "Lead",
     "leadHint": "Classified by the AI; your team can change it.",
     "orders": "Orders",
@@ -743,5 +741,40 @@
     "empty": "No saved replies yet.",
     "loading": "Loading…",
     "picker": "Saved replies"
+  },
+  "sidePanel": {
+    "tabs": "Side panel",
+    "customer": "Customer",
+    "assistant": "AI assistant"
+  },
+  "assistant": {
+    "intro": "A summary and a suggested reply from the AI. You edit and send it with the normal Send.",
+    "suggest": "Suggest a reply",
+    "thinking": "Thinking…",
+    "result": "AI suggestion",
+    "summary": "Summary",
+    "reply": "Suggested reply",
+    "blocked": "The AI couldn’t write a safe suggestion (e.g. a price that isn’t in the catalog). Try again or answer yourself.",
+    "failed": "The AI isn’t available right now. Try again in a moment.",
+    "sources": "Based on: {{sources}}",
+    "catalog": "product catalog",
+    "insert": "Insert into reply",
+    "shorter": "Shorter",
+    "friendlier": "Friendlier",
+    "regenerate": "Regenerate",
+    "errors": {
+      "off": "The AI is switched off for this workspace (Settings → AI).",
+      "limit": "Today’s limit for AI suggestions is reached.",
+      "notConfigured": "The AI isn’t set up on this server yet.",
+      "noMessages": "There is nothing to suggest a reply to yet."
+    },
+    "knowledge": {
+      "title": "Save as knowledge",
+      "offer": "You edited the AI’s suggestion. Save the answer so the AI knows it next time?",
+      "question": "Customer question",
+      "answer": "Answer",
+      "save": "Save as knowledge",
+      "notNow": "Not now"
+    }
   }
 }

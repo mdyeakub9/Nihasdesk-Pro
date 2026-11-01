@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.AiAgent.Agent;
+using Nihasdesk.Modules.AiAgent.Features.Assistant;
 using Nihasdesk.Modules.AiAgent.Features.Knowledge;
 using Nihasdesk.Modules.AiAgent.Features.Policies;
 using Nihasdesk.Modules.AiAgent.Features.Settings;
@@ -36,11 +37,13 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<AgentBrain>();
         services.AddScoped<AiSettingsStore>();
         services.AddScoped<ReplyAgent>();
+        services.AddScoped<SuggestionAgent>();
         services.AddScoped<IValidator<TeachRequest>, TeachValidator>();
         services.AddScoped<IValidator<AnswerRequest>, AnswerValidator>();
         services.AddScoped<IValidator<AiSettingsRequest>, AiSettingsValidator>();
         services.AddScoped<IValidator<TestChatRequest>, TestChatValidator>();
         services.AddScoped<IValidator<PoliciesRequest>, PoliciesValidator>();
+        services.AddScoped<IValidator<AssistRequest>, AssistValidator>();
 
         services.AddSingleton<AiReplyProcessor>();
         if (configuration.GetValue($"{AiOptions.SectionName}:{nameof(AiOptions.BackgroundProcessing)}", true))
@@ -54,5 +57,6 @@ public sealed class AiAgentModule : IModule
         KnowledgeEndpoints.Map(endpoints);
         AiSettingsEndpoints.Map(endpoints);
         PolicyEndpoints.Map(endpoints);
+        AssistantEndpoints.Map(endpoints);
     }
 }

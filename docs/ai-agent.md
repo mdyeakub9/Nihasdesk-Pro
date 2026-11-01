@@ -63,3 +63,6 @@ Rules:
 - Team edits of AI drafts and human answers can be saved as knowledge with one click.
 - Agents' 👍/👎 on AI replies are stored for review and the eval set.
 - Later: plain-language change requests ("Tell the AI what to change") that edit the draft after confirmation.
+
+## Team AI assistant
+In the inbox side panel the team can ask for a summary and a suggested reply (ADR 0023). It is the same brain and reply check as the agent, with read-only tools (no handoff, orders or leads) and the same history without notes. The text is only inserted into the composer and sent by a person; an edited suggestion can be saved as knowledge (learning loop).

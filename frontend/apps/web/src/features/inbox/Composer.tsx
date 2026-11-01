@@ -8,7 +8,9 @@ import { useSession } from '../session/useSession';
 import { useMembers } from '../team/api';
 import { useSendMessage } from './api';
 import { useDraftStore } from './drafts';
+import { SaveAsKnowledge } from './SaveAsKnowledge';
 import { SavedReplyPicker } from './SavedReplyPicker';
+import { useSuggestionStore } from './suggestions';
 import { useSendTyping, useTypingMembers } from './typing';
 import type { Conversation } from './types';
 
@@ -35,6 +37,13 @@ export function Composer({ conversation }: { conversation: Conversation }) {
   const box = useRef<HTMLTextAreaElement>(null);
   const listId = useId();
   const takesOver = conversation.responder === 'ai';
+  const inserted = useSuggestionStore((state) => state.inserted[conversation.id]);
+  const setInserted = useSuggestionStore((state) => state.setInserted);
+  const setOffer = useSuggestionStore((state) => state.setOffer);
+  // A new offer starts the form fresh.
+  const offerKey = useSuggestionStore((state) => state.offer?.answer ?? 'none');
+  // Teaching the AI is Owner/Admin work (`ai.teach`); the API checks it too.
+  const canTeach = session?.role === 'owner' || session?.role === 'admin';
 
   const matches = query === null ? [] : matchSavedReplies(savedReplies, query);
   const open = matches.length > 0;
@@ -65,7 +74,21 @@ export function Composer({ conversation }: { conversation: Conversation }) {
     event?.preventDefault();
     const value = text.trim();
     if (!value || send.isPending) return;
-    send.mutate(value, { onSuccess: () => setDraft(conversation.id, '') });
+    send.mutate(value, {
+      onSuccess: () => {
+        setDraft(conversation.id, '');
+        offerKnowledge(value);
+      },
+    });
+  }
+
+  /** An AI suggestion was inserted and then edited: Owner/Admin may keep the answer (ADR 0023). */
+  function offerKnowledge(sent: string) {
+    const suggestion = inserted;
+    setInserted(conversation.id, null);
+    if (!suggestion || sent === suggestion.trim() || !canTeach) return;
+    const question = conversation.messages.findLast((m) => m.author === 'customer')?.text ?? '';
+    setOffer({ conversationId: conversation.id, question, answer: sent });
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -96,6 +119,7 @@ export function Composer({ conversation }: { conversation: Conversation }) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-3 border-t p-4">
+      <SaveAsKnowledge key={offerKey} conversationId={conversation.id} />
       <div className="relative">
         {open && <SavedReplyPicker id={listId} matches={matches} active={active} onPick={insert} />}
         <Textarea

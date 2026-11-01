@@ -269,3 +269,29 @@ export function useResolveNote(id: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });
 }
+
+/** What the AI assistant knew the reply from (ADR 0023). */
+export type AssistSource = { kind: 'catalog' | 'shipping' | 'policy' | 'answer'; label: string | null };
+
+/** A draft for the team: never sent by itself. `reply` is null when it was held back (`blocked`). */
+export type AssistResult = {
+  summary: string | null;
+  reply: string | null;
+  sources: AssistSource[];
+  blocked: string | null;
+  failed: string | null;
+};
+
+export type AssistStyle = 'default' | 'shorter' | 'friendlier';
+
+/** Asks the AI assistant for a summary and a suggested reply (metered like other AI runs). */
+export function useAssist(id: string) {
+  const { i18n } = useTranslation();
+  return useMutation({
+    mutationFn: (style: AssistStyle) =>
+      apiPost<AssistResult>(`${path(id)}/assist`, {
+        style,
+        language: i18n.resolvedLanguage === 'it' ? 'it' : 'en',
+      }),
+  });
+}

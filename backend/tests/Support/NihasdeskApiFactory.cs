@@ -52,6 +52,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         builder.UseSetting("Ai:BackgroundProcessing", "false");
         // Low enough for the limit test to reach.
         builder.UseSetting("Ai:MaxRepliesPerConversationPerHour", "3");
+        builder.UseSetting("Ai:MaxSuggestionsPerWorkspacePerDay", "4");
         // Generous by default; rate-limit tests pass their own limits.
         foreach (var policy in new[] { "login", "signup", "email", "invite", "messages", "uploads" })
         {

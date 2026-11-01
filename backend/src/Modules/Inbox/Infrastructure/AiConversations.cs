@@ -44,15 +44,27 @@ internal sealed class AiConversations(
             return null;
         }
 
+        return await ContextAsync(conversation, historySize, cancellationToken);
+    }
+
+    public async Task<AiConversation?> HistoryAsync(Guid conversationId, int historySize, CancellationToken cancellationToken)
+    {
+        var conversation = await db.Conversations.AsNoTracking().SingleOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
+        return conversation is null ? null : await ContextAsync(conversation, historySize, cancellationToken);
+    }
+
+    /// <summary>What the AI may see: never internal notes (CLAUDE.md rule 7, SEC-37), never team names.</summary>
+    private async Task<AiConversation> ContextAsync(Conversation conversation, int historySize, CancellationToken cancellationToken)
+    {
         var history = await db.Messages
             .AsNoTracking()
-            .Where(m => m.ConversationId == conversationId && !m.Internal)
+            .Where(m => m.ConversationId == conversation.Id && !m.Internal)
             .OrderByDescending(m => m.SentAt)
             .ThenByDescending(m => m.Id)
             .Take(historySize)
             .Select(m => new { m.Author, m.Text, m.SentAt })
             .ToListAsync(cancellationToken);
-        var aiHasReplied = await db.Messages.AnyAsync(m => m.ConversationId == conversationId && m.Author == MessageAuthor.Ai && !m.Internal, cancellationToken);
+        var aiHasReplied = await db.Messages.AnyAsync(m => m.ConversationId == conversation.Id && m.Author == MessageAuthor.Ai && !m.Internal, cancellationToken);
 
         return new AiConversation(
             conversation.Id,

@@ -144,8 +144,6 @@
     "seen": "Primo contatto {{firstSeen}} fa · Attivo {{active}} fa",
     "labels": "Etichette",
     "teamNote": "Note del team",
-    "assistant": "Assistente",
-    "noSummary": "Il riepilogo IA compare dopo qualche messaggio.",
     "lead": "Lead",
     "leadHint": "Classificato dall'IA; il team può modificarlo.",
     "orders": "Ordini",
@@ -743,5 +741,40 @@
     "empty": "Ancora nessuna risposta salvata.",
     "loading": "Caricamento…",
     "picker": "Risposte salvate"
+  },
+  "sidePanel": {
+    "tabs": "Pannello laterale",
+    "customer": "Cliente",
+    "assistant": "Assistente IA"
+  },
+  "assistant": {
+    "intro": "Un riepilogo e una risposta suggerita dall’IA. La modifichi e la invii con il normale Invia.",
+    "suggest": "Suggerisci una risposta",
+    "thinking": "Sto pensando…",
+    "result": "Suggerimento dell’IA",
+    "summary": "Riepilogo",
+    "reply": "Risposta suggerita",
+    "blocked": "L’IA non è riuscita a scrivere un suggerimento sicuro (es. un prezzo che non è nel catalogo). Riprova o rispondi tu.",
+    "failed": "L’IA non è disponibile in questo momento. Riprova tra poco.",
+    "sources": "Basato su: {{sources}}",
+    "catalog": "catalogo prodotti",
+    "insert": "Inserisci nella risposta",
+    "shorter": "Più breve",
+    "friendlier": "Più cordiale",
+    "regenerate": "Rigenera",
+    "errors": {
+      "off": "L’IA è disattivata per questo workspace (Impostazioni → IA).",
+      "limit": "Il limite di oggi per i suggerimenti dell’IA è stato raggiunto.",
+      "notConfigured": "L’IA non è ancora configurata su questo server.",
+      "noMessages": "Non c’è ancora niente a cui suggerire una risposta."
+    },
+    "knowledge": {
+      "title": "Salva come conoscenza",
+      "offer": "Hai modificato il suggerimento dell’IA. Salvare la risposta perché l’IA la conosca la prossima volta?",
+      "question": "Domanda del cliente",
+      "answer": "Risposta",
+      "save": "Salva come conoscenza",
+      "notNow": "Non ora"
+    }
   }
 }
