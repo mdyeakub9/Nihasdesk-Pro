@@ -143,7 +143,6 @@ async function getConversation(id: string): Promise<Raw<Conversation> | null> {
       messages: messages.items.map(toMessage),
       ...(messages.before ? { olderCursor: messages.before } : {}),
       labels: [],
-      orderCount: 0,
       handoffCount: 0,
     };
   } catch (error) {

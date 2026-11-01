@@ -185,6 +185,42 @@ public sealed class OrdersTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task A_quote_prices_a_draft_without_saving_or_taking_stock_and_counts_and_chat_filter_work()
+    {
+        var inbox = new InboxTests(fixture);
+        var (owner, workspace) = await inbox.OwnerAsync();
+        var (ownerB, _) = await inbox.OwnerAsync("Bottega Blu");
+        var bag = await ProductAsync(owner, "Borsa", 8900, stock: 2);
+        var zone = await ZoneAsync(owner, price: 700, freeOver: 10000);
+        var chat = (await inbox.ReceiveAsync(workspace, "visitor-o7", "Ciao")).ConversationId;
+        var other = (await inbox.ReceiveAsync(workspace, "visitor-o8", "Ciao")).ConversationId;
+
+        var quote = await PostAsync(owner, $"{Path}/quote", new { shippingZoneId = zone, items = new[] { new { productId = bag.Id, variantId = bag.VariantId, quantity = 2, unitPrice = 1 } } });
+        Assert.Equal(HttpStatusCode.OK, quote.StatusCode);
+        var body = await quote.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(17800, body.GetProperty("subtotal").GetInt64());
+        Assert.Equal(0, body.GetProperty("shippingCost").GetInt64());
+        Assert.Equal(8900, body.GetProperty("items")[0].GetProperty("unitPrice").GetInt64());
+        Assert.Equal(2, await StockAsync(owner, bag));
+        Assert.Empty((await owner.Http.GetFromJsonAsync<JsonElement>(Path)).GetProperty("items").EnumerateArray());
+        Assert.Equal("product.not_available", await AuthFlowTests.CodeOf(await PostAsync(owner, $"{Path}/quote", new { shippingZoneId = zone, items = new[] { new { productId = bag.Id, variantId = bag.VariantId, quantity = 3 } } })));
+        Assert.Equal(HttpStatusCode.BadRequest, (await PostAsync(owner, $"{Path}/quote", new { shippingZoneId = zone })).StatusCode);
+        await AssertNotFound(PostAsync(ownerB, $"{Path}/quote", new { shippingZoneId = zone, items = new[] { new { productId = bag.Id, variantId = bag.VariantId, quantity = 1 } } }), "product.not_found");
+
+        await owner.PostAsync(Path, Order(zone, (bag, 1), chat));
+        await RequestAsync(workspace, other, bag, 1, zone);
+        var counts = await owner.Http.GetFromJsonAsync<JsonElement>($"{Path}/counts");
+        Assert.Equal(1, counts.GetProperty("pending").GetInt32());
+        Assert.Equal(1, counts.GetProperty("confirmed").GetInt32());
+        Assert.Equal(0, counts.GetProperty("rejected").GetInt32());
+        Assert.Equal(0, (await ownerB.Http.GetFromJsonAsync<JsonElement>($"{Path}/counts")).GetProperty("pending").GetInt32());
+
+        var forChat = (await owner.Http.GetFromJsonAsync<JsonElement>($"{Path}?conversationId={chat}")).GetProperty("items");
+        Assert.Equal("confirmed", Assert.Single(forChat.EnumerateArray()).GetProperty("status").GetString());
+        Assert.Empty((await ownerB.Http.GetFromJsonAsync<JsonElement>($"{Path}?conversationId={chat}")).GetProperty("items").EnumerateArray());
+    }
+
+    [Fact]
     public async Task Another_workspace_gets_not_found_and_the_database_hides_its_orders()
     {
         var inbox = new InboxTests(fixture);

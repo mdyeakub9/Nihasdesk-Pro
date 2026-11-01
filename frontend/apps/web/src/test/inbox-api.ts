@@ -184,6 +184,8 @@ export function fakeInboxApi({
   const routes: Record<string, (body: unknown, url: URL) => Response> = {
     // Names for the responder chip and @mentions.
     'GET /api/v1/team/members': () => json(teamMembers),
+    // The customer panel lists a chat's orders (ADR 0025); none by default.
+    'GET /api/v1/orders': () => json({ items: [], nextCursor: null }),
     'GET /api/v1/saved-replies': () => json(savedReplies),
     'GET /api/v1/conversations': () =>
       json({

@@ -28,7 +28,7 @@ internal static class OrderEndpoints
             .RequireAuthorization()
             .AddEndpointFilter<RequireTeamMember>();
 
-        orders.MapGet("/", async (string? status, string? cursor, int? limit, OrdersHandler handler, CancellationToken ct) =>
+        orders.MapGet("/", async (string? status, Guid? conversationId, string? cursor, int? limit, OrdersHandler handler, CancellationToken ct) =>
         {
             if ((status is not null && !Statuses.ContainsKey(status))
                 || (cursor is not null && !OrdersHandler.TryDecode(cursor, out _))
@@ -37,8 +37,19 @@ internal static class OrderEndpoints
                 return Error.Validation("validation.failed", "Status must be pending, confirmed or rejected; check cursor and limit.").ToProblem();
             }
 
-            return Results.Ok(await handler.ListAsync(status is null ? null : Statuses[status], cursor, limit, ct));
+            return Results.Ok(await handler.ListAsync(status is null ? null : Statuses[status], conversationId, cursor, limit, ct));
         });
+
+        orders.MapGet("/counts", async (OrdersHandler handler, CancellationToken ct) => Results.Ok(await handler.CountsAsync(ct)));
+
+        // A preview for the Create order form: prices by code, nothing saved (SEC-41).
+        orders.MapPost("/quote", async (QuoteRequest request, OrdersHandler handler, CancellationToken ct) =>
+            {
+                var result = await handler.QuoteAsync(request, ct);
+                return result.IsSuccess ? Results.Ok(result.Value) : result.Error.ToProblem();
+            })
+            .AddEndpointFilter<ValidationFilter<QuoteRequest>>()
+            .RequireRateLimiting(RatePolicies.Messages);
 
         orders.MapGet("/{id:guid}", async (Guid id, OrdersHandler handler, CancellationToken ct) =>
             await handler.GetAsync(id, ct) is { } order ? Results.Ok(order) : OrderErrors.NotFound.ToProblem());

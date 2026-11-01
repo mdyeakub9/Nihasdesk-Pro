@@ -797,9 +797,82 @@
     },
     "order": {
       "title": "Create order",
-      "name": "Customer name",
+      "create": "Create order",
+      "created": "Order #{{number}} is confirmed and the stock is updated.",
+      "open": "Open order"
+    }
+  },
+  "orders": {
+    "status": "Order status",
+    "statuses": {
+      "pending": "Pending approval",
+      "confirmed": "Confirmed",
+      "rejected": "Rejected"
+    },
+    "empty": {
+      "pending": "No order requests waiting for approval.",
+      "confirmed": "No confirmed orders yet.",
+      "rejected": "No rejected orders."
+    },
+    "columns": {
+      "order": "Order",
+      "customer": "Customer",
+      "items": "Items",
+      "total": "Total",
+      "created": "Created"
+    },
+    "byAi": "From the AI",
+    "ago": "{{age}} ago",
+    "more": "Load more",
+    "cancel": "Cancel",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping ({{zone}})",
+    "totalCod": "Total, cash on delivery",
+    "form": {
+      "products": "Products",
+      "lines": "Order lines",
+      "searchProducts": "Search the catalog",
+      "noneInStock": "No variant is in stock.",
+      "standard": "Standard",
+      "add": "Add {{name}}",
+      "remove": "Remove {{name}}",
+      "quantity": "Quantity of {{name}}",
+      "customer": "Customer",
+      "name": "Name",
       "phone": "Phone",
-      "comingSoon": "Orders come with the Orders module: address, items and delivery will be added here. An order you create is confirmed; the AI only creates order requests."
+      "street": "Street and number",
+      "postalCode": "Postal code",
+      "city": "City",
+      "province": "Province",
+      "country": "Country (e.g. IT)",
+      "zone": "Delivery zone",
+      "chooseZone": "Choose a zone",
+      "noZones": "No delivery zones yet: add them in Settings → Shop knowledge.",
+      "notes": "Notes",
+      "summary": "Order total",
+      "totalHint": "Add products and choose a zone to see the total."
+    },
+    "detail": {
+      "back": "Back to orders",
+      "notFound": "Order not found",
+      "decide": "The AI created this order request. Check it, then approve, edit or reject it.",
+      "approve": "Approve",
+      "edit": "Edit",
+      "reject": "Reject",
+      "reason": "Reason (the team sees it)",
+      "confirmReject": "Reject request",
+      "saveChanges": "Save changes",
+      "rejectedBecause": "Rejected: {{reason}}",
+      "openChat": "Open chat",
+      "address": "Delivery address",
+      "created": "Created {{day}}, {{time}}"
+    },
+    "errors": {
+      "product_not_available": "Not enough stock for one of the products. Change the quantity or the product.",
+      "product_not_found": "One of the products is no longer in the catalog.",
+      "order_zone_not_found": "This delivery zone no longer exists. Choose another one.",
+      "order_mixed_currency": "The products and the delivery zone use different currencies.",
+      "order_not_pending": "Someone already approved or rejected this order."
     }
   }
 }

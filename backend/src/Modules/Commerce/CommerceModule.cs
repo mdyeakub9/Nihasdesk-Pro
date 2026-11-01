@@ -28,6 +28,7 @@ public sealed class CommerceModule : IModule
         services.AddScoped<IOrderRequests, OrderRequestsService>();
         services.AddScoped<IValidator<OrderRequest>, OrderValidator>();
         services.AddScoped<IValidator<RejectRequest>, RejectValidator>();
+        services.AddScoped<IValidator<QuoteRequest>, QuoteValidator>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

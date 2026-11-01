@@ -797,9 +797,82 @@
     },
     "order": {
       "title": "Crea ordine",
-      "name": "Nome del cliente",
+      "create": "Crea ordine",
+      "created": "L’ordine #{{number}} è confermato e il magazzino è aggiornato.",
+      "open": "Apri ordine"
+    }
+  },
+  "orders": {
+    "status": "Stato dell’ordine",
+    "statuses": {
+      "pending": "Da approvare",
+      "confirmed": "Confermati",
+      "rejected": "Rifiutati"
+    },
+    "empty": {
+      "pending": "Nessuna richiesta d’ordine da approvare.",
+      "confirmed": "Ancora nessun ordine confermato.",
+      "rejected": "Nessun ordine rifiutato."
+    },
+    "columns": {
+      "order": "Ordine",
+      "customer": "Cliente",
+      "items": "Articoli",
+      "total": "Totale",
+      "created": "Creato"
+    },
+    "byAi": "Dall’IA",
+    "ago": "{{age}} fa",
+    "more": "Carica altri",
+    "cancel": "Annulla",
+    "subtotal": "Subtotale",
+    "shipping": "Spedizione ({{zone}})",
+    "totalCod": "Totale, pagamento alla consegna",
+    "form": {
+      "products": "Prodotti",
+      "lines": "Righe dell’ordine",
+      "searchProducts": "Cerca nel catalogo",
+      "noneInStock": "Nessuna variante disponibile.",
+      "standard": "Standard",
+      "add": "Aggiungi {{name}}",
+      "remove": "Rimuovi {{name}}",
+      "quantity": "Quantità di {{name}}",
+      "customer": "Cliente",
+      "name": "Nome",
       "phone": "Telefono",
-      "comingSoon": "Gli ordini arrivano con il modulo Ordini: indirizzo, articoli e consegna verranno aggiunti qui. Un ordine creato da te è confermato; l’IA crea solo richieste d’ordine."
+      "street": "Via e numero civico",
+      "postalCode": "CAP",
+      "city": "Città",
+      "province": "Provincia",
+      "country": "Paese (es. IT)",
+      "zone": "Zona di consegna",
+      "chooseZone": "Scegli una zona",
+      "noZones": "Ancora nessuna zona di consegna: aggiungile in Impostazioni → Info negozio.",
+      "notes": "Note",
+      "summary": "Totale ordine",
+      "totalHint": "Aggiungi prodotti e scegli una zona per vedere il totale."
+    },
+    "detail": {
+      "back": "Torna agli ordini",
+      "notFound": "Ordine non trovato",
+      "decide": "L’IA ha creato questa richiesta d’ordine. Controllala, poi approvala, modificala o rifiutala.",
+      "approve": "Approva",
+      "edit": "Modifica",
+      "reject": "Rifiuta",
+      "reason": "Motivo (lo vede il team)",
+      "confirmReject": "Rifiuta richiesta",
+      "saveChanges": "Salva modifiche",
+      "rejectedBecause": "Rifiutato: {{reason}}",
+      "openChat": "Apri chat",
+      "address": "Indirizzo di consegna",
+      "created": "Creato {{day}}, {{time}}"
+    },
+    "errors": {
+      "product_not_available": "Non c’è abbastanza disponibilità per uno dei prodotti. Cambia quantità o prodotto.",
+      "product_not_found": "Uno dei prodotti non è più nel catalogo.",
+      "order_zone_not_found": "Questa zona di consegna non esiste più. Scegline un’altra.",
+      "order_mixed_currency": "I prodotti e la zona di consegna usano valute diverse.",
+      "order_not_pending": "Qualcuno ha già approvato o rifiutato questo ordine."
     }
   }
 }

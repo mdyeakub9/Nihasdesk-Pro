@@ -25,9 +25,15 @@ internal sealed class OrdersHandler(
     ITenantContext tenant,
     TimeProvider time)
 {
-    public async Task<OrderPageResponse> ListAsync(OrderStatus? status, string? cursor, int? limit, CancellationToken ct)
+    /// <summary><paramref name="conversationId"/>: one chat's orders, for the inbox's customer panel.</summary>
+    public async Task<OrderPageResponse> ListAsync(OrderStatus? status, Guid? conversationId, string? cursor, int? limit, CancellationToken ct)
     {
         var orders = db.Orders.AsNoTracking();
+        if (conversationId is { } conversation)
+        {
+            orders = orders.Where(o => o.ConversationId == conversation);
+        }
+
         if (status is { } wanted)
         {
             orders = orders.Where(o => o.Status == wanted);
@@ -61,6 +67,32 @@ internal sealed class OrdersHandler(
             o.Id, o.Number, Text(o.Status), Text(o.Source), o.CustomerName, o.Total, o.Currency, o.ItemCount, o.CreatedAt)).ToList();
         var next = page.Count > size ? Encode(page[size - 1].CreatedAt, page[size - 1].Id) : null;
         return new OrderPageResponse(items, next);
+    }
+
+    public async Task<OrderCountsResponse> CountsAsync(CancellationToken ct)
+    {
+        var counts = await db.Orders.AsNoTracking().GroupBy(o => o.Status).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct);
+        int Of(OrderStatus status) => counts.SingleOrDefault(c => c.Key == status)?.Count ?? 0;
+        return new OrderCountsResponse(Of(OrderStatus.Pending), Of(OrderStatus.Confirmed), Of(OrderStatus.Rejected));
+    }
+
+    /// <summary>The same prices a saved order would get; nothing is stored and no stock is taken.</summary>
+    public async Task<Result<QuoteResponse>> QuoteAsync(QuoteRequest request, CancellationToken ct)
+    {
+        var priced = await pricer.PriceAsync(request.Items!, request.ShippingZoneId, ct);
+        if (!priced.IsSuccess)
+        {
+            return priced.Error;
+        }
+
+        var p = priced.Value;
+        return Result.Success(new QuoteResponse(
+            p.Lines.Select(l => new OrderItemResponse(l.ProductId, l.VariantId, l.Title, l.Variant, l.Sku, l.UnitPrice, l.Quantity, l.UnitPrice * l.Quantity)).ToList(),
+            p.ShippingZoneName,
+            p.ShippingCost,
+            p.Subtotal,
+            p.Total,
+            p.Currency));
     }
 
     public async Task<OrderResponse?> GetAsync(Guid id, CancellationToken ct) =>

@@ -148,15 +148,71 @@ describe('+ menu', () => {
     expect(card).toHaveTextContent('Nero · €89.00 · SKU SKU-v-nero');
   });
 
-  it('opens the order modal with the customer’s name and phone', async () => {
-    fakeInboxApi();
+  it('creates a confirmed order from the chat with the server’s total, sending IDs only', async () => {
+    const { fetchMock } = fakeInboxApi({
+      routes: {
+        ...catalogRoutes(),
+        'GET /api/v1/shipping/zones': () =>
+          json([
+            {
+              id: 'z-sar',
+              name: 'Sardegna',
+              areas: null,
+              price: 700,
+              currency: 'EUR',
+              freeOver: null,
+              minDays: 2,
+              maxDays: 4,
+            },
+          ]),
+        'POST /api/v1/orders/quote': () =>
+          json({
+            items: [],
+            shippingZoneName: 'Sardegna',
+            shippingCost: 700,
+            subtotal: 17800,
+            total: 18500,
+            currency: 'EUR',
+          }),
+        'POST /api/v1/orders': () => json({ id: 'o-1', number: 1001, status: 'confirmed' }, 201),
+      },
+    });
     await renderApp('/inbox/c-giulia');
 
     await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Create order' }));
     const dialog = await screen.findByRole('dialog', { name: 'Create order' });
-    expect(within(dialog).getByRole('textbox', { name: 'Customer name' })).toHaveValue('Giulia Rossi');
+    expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('Giulia Rossi');
     expect(within(dialog).getByRole('textbox', { name: 'Phone' })).toHaveValue('+39 333 000 1111');
-    expect(within(dialog).getByRole('note')).toHaveTextContent('Orders come with the Orders module');
+
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Borsa nera' }));
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Add Borsa nera — Nero' }));
+    expect(within(dialog).queryByRole('button', { name: /Rosso/ })).not.toBeInTheDocument();
+    const quantity = within(dialog).getByRole('spinbutton', { name: 'Quantity of Borsa nera — Nero' });
+    await userEvent.clear(quantity);
+    await userEvent.type(quantity, '2');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Street and number' }), 'Via Roma 12');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Postal code' }), '07100');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'City' }), 'Sassari');
+    await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Delivery zone' }), 'z-sar');
+
+    const summary = within(dialog).getByRole('region', { name: 'Order total' });
+    expect(await within(summary).findByText('€185.00')).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Create order' }));
+
+    expect(await within(dialog).findByRole('status')).toHaveTextContent('Order #1001 is confirmed');
+    expect(callsTo(fetchMock, '/api/v1/orders').find((c) => c.body)?.body).toEqual({
+      conversationId: 'c-giulia',
+      customerName: 'Giulia Rossi',
+      phone: '+39 333 000 1111',
+      street: 'Via Roma 12',
+      postalCode: '07100',
+      city: 'Sassari',
+      province: null,
+      country: 'IT',
+      shippingZoneId: 'z-sar',
+      notes: null,
+      items: [{ productId: 'p-bag', variantId: 'v-nero', quantity: 2 }],
+    });
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -168,5 +224,40 @@ describe('+ menu', () => {
     await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Saved reply' }));
     expect(await screen.findByRole('listbox', { name: 'Saved replies' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Reply' })).toHaveValue('/');
+  });
+});
+
+describe('Customer panel orders', () => {
+  it('lists this chat’s orders with links', async () => {
+    const { fetchMock } = fakeInboxApi({
+      routes: {
+        'GET /api/v1/orders': () =>
+          json({
+            items: [
+              {
+                id: 'o-1',
+                number: 1001,
+                status: 'pending',
+                source: 'ai',
+                customerName: 'Giulia Rossi',
+                total: 18500,
+                currency: 'EUR',
+                itemCount: 2,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+            nextCursor: null,
+          }),
+      },
+    });
+    await renderApp('/inbox/c-giulia');
+
+    const panel = await screen.findByRole('complementary', { name: 'Customer details' });
+    const list = await within(panel).findByRole('list', { name: 'Orders' });
+    expect(within(list).getByRole('link', { name: '#1001' })).toHaveAttribute('href', '/orders/o-1');
+    expect(list).toHaveTextContent('Pending approval');
+    expect(list).toHaveTextContent('€185.00');
+    expect(within(panel).getByText('1 order')).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('conversationId=c-giulia'))).toBe(true);
   });
 });
