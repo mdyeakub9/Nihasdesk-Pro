@@ -59,9 +59,9 @@ describe('App', () => {
     });
 
     it('shows a placeholder for sections that are not built yet', async () => {
-      await renderApp('/orders');
+      await renderApp('/leads');
 
-      expect(await screen.findByRole('heading', { name: 'Orders' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Leads' })).toBeInTheDocument();
       expect(screen.getByText('This section is coming soon.')).toBeInTheDocument();
     });
 

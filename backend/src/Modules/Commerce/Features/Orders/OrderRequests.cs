@@ -24,6 +24,20 @@ internal sealed record OrderRequest(
 
 internal sealed record RejectRequest(string? Reason);
 
+/// <summary>Prices for a draft order (the Create order form's preview); nothing is saved or reserved.</summary>
+internal sealed record QuoteRequest(Guid ShippingZoneId, IReadOnlyList<OrderItemRequest>? Items);
+
+internal sealed record QuoteResponse(
+    IReadOnlyList<OrderItemResponse> Items,
+    string ShippingZoneName,
+    long ShippingCost,
+    long Subtotal,
+    long Total,
+    string Currency);
+
+/// <summary>For the Orders page's tabs.</summary>
+internal sealed record OrderCountsResponse(int Pending, int Confirmed, int Rejected);
+
 internal sealed record OrderItemResponse(Guid ProductId, Guid VariantId, string Title, string Variant, string? Sku, long UnitPrice, int Quantity, long LineTotal);
 
 internal sealed record OrderResponse(
@@ -119,6 +133,22 @@ internal sealed partial class OrderValidator : AbstractValidator<OrderRequest>
 
     [GeneratedRegex("^[A-Z0-9][A-Z0-9 -]{1,10}$")]
     private static partial Regex OtherPostalCode();
+}
+
+internal sealed class QuoteValidator : AbstractValidator<QuoteRequest>
+{
+    public QuoteValidator()
+    {
+        RuleFor(r => r.ShippingZoneId).NotEqual(Guid.Empty).WithMessage("Choose a delivery zone.");
+        RuleFor(r => r.Items).Cascade(CascadeMode.Stop).NotEmpty()
+            .Must(i => i!.Count <= OrderValues.MaxLines).WithMessage($"At most {OrderValues.MaxLines} lines.");
+        RuleForEach(r => r.Items).ChildRules(item =>
+        {
+            item.RuleFor(i => i.ProductId).NotEqual(Guid.Empty);
+            item.RuleFor(i => i.VariantId).NotEqual(Guid.Empty);
+            item.RuleFor(i => i.Quantity).InclusiveBetween(1, OrderValues.MaxQuantity);
+        });
+    }
 }
 
 internal sealed class RejectValidator : AbstractValidator<RejectRequest>

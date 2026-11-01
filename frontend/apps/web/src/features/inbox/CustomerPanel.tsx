@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ChannelIcon } from '../../components/ChannelIcon';
 import { formatAge } from '../../lib/format';
 import { useUpdateConversation } from './api';
+import { ConversationOrderCount, ConversationOrders } from './ConversationOrders';
 import { NoteCount, TeamNotes } from './TeamNotes';
 import type { Conversation, LeadStatus } from './types';
 
@@ -118,9 +119,9 @@ export function CustomerPanel({ conversation }: { conversation: Conversation }) 
       <Section
         icon={<ShoppingBag className={iconClass} aria-hidden="true" />}
         title={t('customer.orders')}
-        aside={t('customer.orderCount', { count: conversation.orderCount })}
+        aside={<ConversationOrderCount conversationId={conversation.id} />}
       >
-        {t('customer.ordersHint')}
+        <ConversationOrders conversationId={conversation.id} />
       </Section>
 
       <Section icon={<UserCheck className={iconClass} aria-hidden="true" />} title={t('customer.aiOrPerson')}>

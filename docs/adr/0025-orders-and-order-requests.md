@@ -20,6 +20,13 @@ PRD 4.9: the AI collects an order and creates an **order request**; an order exi
 - **The AI's entry point:** `Commerce.Contracts.IOrderRequests.CreateAsync` uses the same validation and pricing and creates a pending request only. When validation fails, the error lists field names only (never the customer's values), so the AI knows what to ask again.
 - **No module circle:** Commerce defines `IOrderConversations` (which contact a conversation belongs to, in this workspace) and the Inbox implements it. Other workspaces' conversation IDs give `404 conversation.not_found`.
 
+## Update 2026-11-01 (part 2: Orders page and Create order)
+- **Orders page** `/orders`: tabs Pending approval / Confirmed / Rejected with counts (`GET /api/v1/orders/counts`). The detail page `/orders/{id}` shows lines, totals, customer, address and a link to the chat.
+  - A pending request gets **Approve**, **Edit** (the shared order form; priced again on the server) and **Reject** (a reason is required).
+- **Create order** in the inbox + menu is the real form now: name and phone from the contact, products with in-stock variants only, quantities 1–99, address, zone, notes. Saving creates a confirmed team order and takes the stock.
+- **Prices in the form come from the server:** `POST /api/v1/orders/quote` runs the same pricing as a saved order, without saving or reserving anything. The dashboard never computes a total.
+- The inbox **customer panel** lists the chat's orders (`GET /api/v1/orders?conversationId=`), replacing the placeholder count.
+
 ## Consequences
 - Prices are fixed when the request is created or edited. A catalog price change between request and approval isn't applied automatically: edit the request to price it again.
 - Customer messages on approval and rejection, team alerts and the WhatsApp template outside the 24-hour window come with part 3.

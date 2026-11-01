@@ -72,7 +72,6 @@ export type Conversation = ConversationSummary & {
   /** Team member the conversation is assigned to; the responder chip shows their name. */
   assigneeId: string | null;
   leadStatus: LeadStatus;
-  orderCount: number;
   handoffCount: number;
   /** AI allowed for this conversation at all (PRD 4.8: AI on/off per conversation). */
   aiEnabled: boolean;

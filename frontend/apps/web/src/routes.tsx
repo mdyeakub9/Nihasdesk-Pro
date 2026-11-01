@@ -16,6 +16,8 @@ import { ProductEditorPage } from './features/catalog/ProductEditorPage';
 import { ProductsPage } from './features/catalog/ProductsPage';
 import { ChannelsPage } from './features/channels/ChannelsPage';
 import { AiSettingsPage } from './features/ai/AiSettingsPage';
+import { OrderDetailPage } from './features/orders/OrderDetailPage';
+import { OrdersPage } from './features/orders/OrdersPage';
 import { PoliciesPage } from './features/policies/PoliciesPage';
 import { SavedRepliesPage } from './features/saved-replies/SavedRepliesPage';
 import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
@@ -26,7 +28,7 @@ import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 /** Phase 1 sections that only have a placeholder so far. */
-const comingSoon = ['orders', 'leads', 'customers', 'analytics'] as const;
+const comingSoon = ['leads', 'customers', 'analytics'] as const;
 
 export const routes: RouteObject[] = [
   {
@@ -68,6 +70,8 @@ export const routes: RouteObject[] = [
       { path: 'inbox', element: <InboxPage /> },
       { path: 'inbox/:conversationId', element: <InboxPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
+      { path: 'orders', element: <OrdersPage /> },
+      { path: 'orders/:orderId', element: <OrderDetailPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'products/new', element: <ProductEditorPage /> },
       { path: 'products/import', element: <ImportPage /> },
