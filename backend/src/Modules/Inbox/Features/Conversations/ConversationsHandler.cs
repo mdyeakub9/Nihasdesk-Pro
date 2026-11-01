@@ -300,7 +300,8 @@ internal sealed class ConversationsHandler(
             InboxValues.Text(m.Delivery),
             m.MentionedUserIds,
             m.ResolvedAt,
-            m.ResolvedByUserId);
+            m.ResolvedByUserId,
+            m.Product is { } p ? new ProductCardResponse(p.ProductId, p.VariantId, p.Title, p.Variant, p.Sku, p.Price, p.Currency) : null);
 
     private sealed class ConversationRow
     {

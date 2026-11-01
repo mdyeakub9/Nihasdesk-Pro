@@ -116,10 +116,7 @@
     "aiName": "Nihas IA",
     "team": "Team",
     "internalNote": "Nota interna",
-    "inStock": "Disponibile",
-    "outOfStock": "Esaurito",
     "sku": "Codice",
-    "viewDetails": "Vedi dettagli",
     "delivery": {
       "sent": "Inviato",
       "delivered": "Consegnato",
@@ -128,7 +125,8 @@
       "failed": "Non consegnato"
     },
     "loadOlder": "Carica messaggi precedenti",
-    "teamOnly": "Lo vede solo il tuo team"
+    "teamOnly": "Lo vede solo il tuo team",
+    "productCard": "Prodotto: {{name}}"
   },
   "composer": {
     "reply": "Rispondi",
@@ -775,6 +773,33 @@
       "answer": "Risposta",
       "save": "Salva come conoscenza",
       "notNow": "Non ora"
+    }
+  },
+  "actions": {
+    "open": "Altre azioni",
+    "close": "Chiudi",
+    "sendProducts": "Invia prodotti",
+    "createOrder": "Crea ordine",
+    "savedReply": "Risposta salvata",
+    "sendFile": "Invia immagine o file",
+    "products": {
+      "title": "Invia prodotti",
+      "search": "Cerca nel catalogo",
+      "results": "Prodotti",
+      "loading": "Caricamento…",
+      "empty": "Nessun prodotto attivo trovato.",
+      "noneInStock": "Nessuna variante disponibile.",
+      "single": "Standard",
+      "picked": "{{count}} di {{max}} selezionati",
+      "send_one": "Invia {{count}} prodotto",
+      "send_other": "Invia {{count}} prodotti",
+      "notAvailable": "Uno dei prodotti non è più disponibile. Scegli di nuovo."
+    },
+    "order": {
+      "title": "Crea ordine",
+      "name": "Nome del cliente",
+      "phone": "Telefono",
+      "comingSoon": "Gli ordini arrivano con il modulo Ordini: indirizzo, articoli e consegna verranno aggiunti qui. Un ordine creato da te è confermato; l’IA crea solo richieste d’ordine."
     }
   }
 }

@@ -116,10 +116,7 @@
     "aiName": "Nihas AI",
     "team": "Team",
     "internalNote": "Internal note",
-    "inStock": "In stock",
-    "outOfStock": "Out of stock",
     "sku": "SKU",
-    "viewDetails": "View details",
     "delivery": {
       "sent": "Sent",
       "delivered": "Delivered",
@@ -128,7 +125,8 @@
       "failed": "Not delivered"
     },
     "loadOlder": "Load older messages",
-    "teamOnly": "Only your team sees this"
+    "teamOnly": "Only your team sees this",
+    "productCard": "Product: {{name}}"
   },
   "composer": {
     "reply": "Reply",
@@ -775,6 +773,33 @@
       "answer": "Answer",
       "save": "Save as knowledge",
       "notNow": "Not now"
+    }
+  },
+  "actions": {
+    "open": "More actions",
+    "close": "Close",
+    "sendProducts": "Send products",
+    "createOrder": "Create order",
+    "savedReply": "Saved reply",
+    "sendFile": "Send image or file",
+    "products": {
+      "title": "Send products",
+      "search": "Search the catalog",
+      "results": "Products",
+      "loading": "Loading…",
+      "empty": "No active products found.",
+      "noneInStock": "No variant is in stock.",
+      "single": "Standard",
+      "picked": "{{count}} of {{max}} selected",
+      "send_one": "Send {{count}} product",
+      "send_other": "Send {{count}} products",
+      "notAvailable": "One of the products is no longer in stock. Pick again."
+    },
+    "order": {
+      "title": "Create order",
+      "name": "Customer name",
+      "phone": "Phone",
+      "comingSoon": "Orders come with the Orders module: address, items and delivery will be added here. An order you create is confirmed; the AI only creates order requests."
     }
   }
 }

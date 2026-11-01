@@ -181,6 +181,33 @@ public sealed class MessengerTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Product_cards_go_out_through_the_page_as_text_with_the_catalog_price()
+    {
+        var (owner, _, pageId) = await ConnectedOwnerAsync();
+        var id = await ConversationAsync(owner, pageId);
+        var created = await (await owner.PostAsync("/api/v1/products", new
+        {
+            title = "Borsa nera",
+            status = "active",
+            optionNames = ProductOptions,
+            variants = new object[] { new { sku = "BN-1", option1 = "Nero", price = 8900 } },
+        })).Content.ReadFromJsonAsync<JsonElement>();
+
+        var sent = await owner.PostAsync($"/api/v1/conversations/{id}/products", new
+        {
+            items = new[] { new { productId = created.GetProperty("id").GetString(), variantId = created.GetProperty("variants")[0].GetProperty("id").GetString() } },
+        });
+        Assert.Equal(HttpStatusCode.Created, sent.StatusCode);
+        Assert.Equal("pending", (await sent.Content.ReadFromJsonAsync<JsonElement>())[0].GetProperty("delivery").GetString());
+
+        Assert.Equal(1, await Api.SendRepliesAsync());
+        using var body = JsonDocument.Parse(Api.Meta.Sends.Last().Body);
+        Assert.Equal("🛍️ Borsa nera — Nero\n€89.00 · SKU BN-1", body.RootElement.GetProperty("message").GetProperty("text").GetString());
+    }
+
+    private static readonly string[] ProductOptions = ["Colore"];
+
+    [Fact]
     public async Task The_sender_checks_the_window_again_before_sending()
     {
         var (owner, _, pageId) = await ConnectedOwnerAsync();

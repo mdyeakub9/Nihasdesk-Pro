@@ -1,5 +1,5 @@
-import { Avatar, Badge, Button, cn } from '@nihasdesk/ui';
-import { AlertCircle, CheckCheck, Clock, ExternalLink, Lock, ShoppingBag, Sparkles } from 'lucide-react';
+import { Avatar, Button, cn } from '@nihasdesk/ui';
+import { AlertCircle, CheckCheck, Clock, Lock, ShoppingBag, Sparkles } from 'lucide-react';
 import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format';
@@ -9,25 +9,23 @@ import type { Conversation, Message, ProductCard } from './types';
 function ProductMessage({ product }: { product: ProductCard }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage ?? 'en';
+  // As it was sent: catalog name and price at that moment (ADR 0024).
+  const details = [
+    product.variant,
+    formatPrice(product.price.amount, product.price.currency, language),
+    product.sku ? `${t('message.sku')} ${product.sku}` : null,
+  ].filter(Boolean);
   return (
-    <div className="flex w-full max-w-90 flex-col gap-2 rounded-lg border bg-surface p-3">
+    <div
+      role="group"
+      aria-label={t('message.productCard', { name: product.name })}
+      className="flex w-full max-w-90 flex-col gap-1 rounded-lg border bg-surface p-3"
+    >
       <div className="flex items-center gap-2">
         <ShoppingBag className="size-4 text-secondary-foreground" aria-hidden="true" />
         <span className="flex-1 text-sm font-medium">{product.name}</span>
-        <Badge tone={product.inStock ? 'success' : 'warning'}>
-          {t(product.inStock ? 'message.inStock' : 'message.outOfStock')}
-        </Badge>
       </div>
-      <p className="text-[13px] text-secondary-foreground">
-        {product.variant} · {formatPrice(product.price.amount, product.price.currency, language)} ·{' '}
-        {t('message.sku')} {product.sku}
-      </p>
-      <div>
-        <Button size="sm" variant="outline" disabled title={t('comingSoon.short')}>
-          <ExternalLink aria-hidden="true" />
-          {t('message.viewDetails')}
-        </Button>
-      </div>
+      <p className="text-[13px] text-secondary-foreground">{details.join(' · ')}</p>
     </div>
   );
 }
@@ -80,7 +78,7 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
   return (
     <li className="flex flex-col items-end gap-1">
       {message.product && <ProductMessage product={message.product} />}
-      {message.text && (
+      {!message.product && message.text && (
         <div className="max-w-125 rounded-lg bg-selected px-3 py-2">
           <p className="text-sm">{message.text}</p>
         </div>

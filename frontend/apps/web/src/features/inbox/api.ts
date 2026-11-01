@@ -53,6 +53,15 @@ type ApiMessage = {
   mentionedUserIds: string[];
   resolvedAt: string | null;
   resolvedByUserId: string | null;
+  product: {
+    productId: string;
+    variantId: string;
+    title: string;
+    variant: string;
+    sku: string | null;
+    price: number;
+    currency: string;
+  } | null;
 };
 
 type ConversationPage = { items: ApiConversationSummary[]; nextCursor: string | null };
@@ -92,6 +101,17 @@ function toMessage(m: ApiMessage): Message {
     ...(m.mentionedUserIds?.length ? { mentionedUserIds: m.mentionedUserIds } : {}),
     ...(m.resolvedAt ? { resolvedAt: m.resolvedAt } : {}),
     ...(m.resolvedByUserId ? { resolvedByUserId: m.resolvedByUserId } : {}),
+    ...(m.product
+      ? {
+          product: {
+            name: m.product.title,
+            variant: m.product.variant,
+            ...(m.product.sku ? { sku: m.product.sku } : {}),
+            // Cents from the API, units for formatting.
+            price: { amount: m.product.price / 100, currency: m.product.currency },
+          },
+        }
+      : {}),
     ...(m.delivery !== 'none' ? { delivery: m.delivery } : {}),
   };
 }
@@ -293,5 +313,15 @@ export function useAssist(id: string) {
         style,
         language: i18n.resolvedLanguage === 'it' ? 'it' : 'en',
       }),
+  });
+}
+
+/** Catalog variants to send as product cards (ADR 0024); names and prices come from the server. */
+export function useSendProducts(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (items: { productId: string; variantId: string }[]) =>
+      apiPost(`${path(id)}/products`, { items }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });
 }
