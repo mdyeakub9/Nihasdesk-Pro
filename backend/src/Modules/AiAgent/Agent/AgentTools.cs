@@ -82,7 +82,12 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
             """{"type":"object","properties":{"reason":{"type":"string","enum":["unknown_answer","customer_asked_for_human","complaint","refund","order","special_request","low_confidence","other"]},"question":{"type":"string","description":"For unknown_answer: the customer's question, short, in their words"},"summary":{"type":"string","description":"One sentence for the team"}},"required":["reason"],"additionalProperties":false}"""),
     ];
 
-    public async Task<ToolOutcome> RunAsync(LlmToolCall call, CancellationToken ct)
+    /// <summary>The team's AI assistant only reads (ADR 0023): no handoff, no orders, no leads.</summary>
+    public static readonly IReadOnlyList<LlmTool> ReadOnlyDefinitions =
+        [.. Definitions.Where(t => t.Name != "handoff_to_human")];
+
+    /// <summary><paramref name="readOnly"/>: tools that change something are refused, whatever the model asks.</summary>
+    public async Task<ToolOutcome> RunAsync(LlmToolCall call, CancellationToken ct, bool readOnly = false)
     {
         ArgumentNullException.ThrowIfNull(call);
         JsonElement args;
@@ -107,7 +112,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
             "get_product_options" => await ProductOptionsAsync(args, ct),
             "get_shipping_options" => await ShippingOptionsAsync(ct),
             "search_knowledge" => await SearchKnowledgeAsync(args, ct),
-            "handoff_to_human" => Handoff(args),
+            "handoff_to_human" when !readOnly => Handoff(args),
             _ => Error("Unknown tool."),
         };
     }

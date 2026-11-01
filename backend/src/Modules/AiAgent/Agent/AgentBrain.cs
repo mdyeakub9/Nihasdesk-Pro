@@ -33,10 +33,12 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
 {
     private AiOptions Options => options.Value;
 
-    public async Task<Thought> ThinkAsync(string systemPrompt, IReadOnlyList<AiHistoryMessage> history, CancellationToken ct)
+    /// <summary><paramref name="readOnly"/>: the team's assistant (ADR 0023) gets only the tools that read.</summary>
+    public async Task<Thought> ThinkAsync(string systemPrompt, IReadOnlyList<AiHistoryMessage> history, CancellationToken ct, bool readOnly = false)
     {
         var messages = new List<LlmMessage> { LlmMessage.System(systemPrompt) };
         messages.AddRange(history.Select(m => m.Author == "customer" ? LlmMessage.User(m.Text) : LlmMessage.Assistant(m.Text)));
+        var offered = readOnly ? AgentTools.ReadOnlyDefinitions : AgentTools.Definitions;
         var usedTools = new List<string>();
         int input = 0, output = 0;
         Thought Done(string? reply = null, string? handoff = null, string? question = null, string? blocked = null, string? failed = null) =>
@@ -48,7 +50,7 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
             try
             {
                 response = await llm.CompleteAsync(
-                    new LlmRequest(Options.ReplyModel, messages, round < Options.MaxToolRounds ? AgentTools.Definitions : [], Options.MaxOutputTokens),
+                    new LlmRequest(Options.ReplyModel, messages, round < Options.MaxToolRounds ? offered : [], Options.MaxOutputTokens),
                     ct);
             }
             catch (LlmException ex)
@@ -68,7 +70,7 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
             foreach (var call in response.ToolCalls)
             {
                 usedTools.Add(call.Name.Length <= 40 ? call.Name : call.Name[..40]);
-                var outcome = await tools.RunAsync(call, ct);
+                var outcome = await tools.RunAsync(call, ct, readOnly);
                 if (outcome.HandoffReason is { } reason)
                 {
                     return Done(handoff: reason, question: outcome.Question);

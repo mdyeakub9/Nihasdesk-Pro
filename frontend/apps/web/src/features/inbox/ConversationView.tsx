@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { ChannelIcon } from '../../components/ChannelIcon';
 import { useConversation, useUpdateConversation } from './api';
 import { Composer } from './Composer';
-import { CustomerPanel } from './CustomerPanel';
+import { SidePanel } from './SidePanel';
 import { MessageList } from './MessageList';
 
 export function ConversationView({ id }: { id: string }) {
@@ -103,7 +103,7 @@ export function ConversationView({ id }: { id: string }) {
           aria-label={t('customer.title')}
           className="hidden w-80 shrink-0 overflow-y-auto border-l bg-surface xl:block"
         >
-          <CustomerPanel conversation={conversation} />
+          <SidePanel key={conversation.id} conversation={conversation} />
         </aside>
       </div>
     </div>

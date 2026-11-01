@@ -71,7 +71,6 @@ export type Conversation = ConversationSummary & {
   labels: string[];
   /** Team member the conversation is assigned to; the responder chip shows their name. */
   assigneeId: string | null;
-  aiSummary?: string;
   leadStatus: LeadStatus;
   orderCount: number;
   handoffCount: number;

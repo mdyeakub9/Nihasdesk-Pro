@@ -75,6 +75,18 @@ export const savedReplies = [
   },
 ];
 
+/** The AI assistant's default answer in tests (ADR 0023). */
+export const defaultSuggestion = {
+  summary: 'Giulia asks if the black bag is in stock.',
+  reply: 'Sì Giulia, la borsa nera è disponibile a €89.00!',
+  sources: [
+    { kind: 'catalog', label: null },
+    { kind: 'policy', label: 'returns' },
+  ],
+  blocked: null,
+  failed: null,
+};
+
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 
 let nextId = 1;
@@ -154,12 +166,15 @@ type Options = Parameters<typeof fakeApi>[0] & {
   reply?: (conversation: FakeConversation, text: string) => Response | undefined;
   /** Messages per page before "older"; default 50. */
   pageSize?: number;
+  /** How the AI assistant answers `POST /assist` (ADR 0023); a fixed suggestion by default. */
+  assist?: (conversation: FakeConversation, body: { style?: string; language?: string }) => Response;
 };
 
 /** Installs the fake; `state.conversations` can be changed by tests (e.g. a new message arrives). */
 export function fakeInboxApi({
   conversations = seedConversations(),
   reply,
+  assist,
   pageSize = 50,
   ...options
 }: Options = {}) {
@@ -218,6 +233,9 @@ export function fakeInboxApi({
       return json({ conversation: summary(c), contact: null });
     });
     routes[`POST ${base}/typing`] = withConversation(() => new Response(null, { status: 204 }));
+    routes[`POST ${base}/assist`] = withConversation((c, body: { style?: string; language?: string }) =>
+      assist ? assist(c, body) : json(defaultSuggestion),
+    );
     routes[`POST ${base}/read`] = withConversation((c) => {
       c.unread = false;
       return new Response(null, { status: 204 });

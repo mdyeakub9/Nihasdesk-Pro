@@ -156,6 +156,9 @@ internal sealed class AiOptions
 
     public int MaxRepliesPerWorkspacePerDay { get; set; } = 500;
 
+    /// <summary>The team's AI assistant (ADR 0023), per workspace and day (SEC-39).</summary>
+    public int MaxSuggestionsPerWorkspacePerDay { get; set; } = 500;
+
     /// <summary>Off in tests, which run the processor step by step.</summary>
     public bool BackgroundProcessing { get; set; } = true;
 

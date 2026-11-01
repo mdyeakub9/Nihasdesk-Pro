@@ -169,7 +169,8 @@ internal static class AiSettingsEndpoints
             .RequireRateLimiting(RatePolicies.Messages);
     }
 
-    private static async Task<List<TestSource>> SourcesAsync(IReadOnlyList<string> codes, AiDbContext db, CancellationToken ct)
+    /// <summary>Readable sources for the dashboard; also used by the team's AI assistant.</summary>
+    internal static async Task<List<TestSource>> SourcesAsync(IReadOnlyList<string> codes, AiDbContext db, CancellationToken ct)
     {
         var answerIds = codes
             .Where(c => c.StartsWith(KnowledgeSources.AnswerPrefix, StringComparison.Ordinal))

@@ -1,15 +1,5 @@
 import { Badge, Switch } from '@nihasdesk/ui';
-import {
-  ChevronDown,
-  Mail,
-  MapPin,
-  Phone,
-  Sparkles,
-  StickyNote,
-  Target,
-  ShoppingBag,
-  UserCheck,
-} from 'lucide-react';
+import { ChevronDown, Mail, MapPin, Phone, StickyNote, Target, ShoppingBag, UserCheck } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChannelIcon } from '../../components/ChannelIcon';
@@ -113,10 +103,6 @@ export function CustomerPanel({ conversation }: { conversation: Conversation }) 
         aside={<NoteCount conversationId={conversation.id} />}
       >
         <TeamNotes conversationId={conversation.id} />
-      </Section>
-
-      <Section icon={<Sparkles className={iconClass} aria-hidden="true" />} title={t('customer.assistant')}>
-        {conversation.aiSummary ?? t('customer.noSummary')}
       </Section>
 
       <Section

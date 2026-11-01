@@ -105,6 +105,9 @@ internal enum RunOutcome
     LimitReached,
     Failed,
     Dropped,
+
+    /// <summary>A draft for the team from the AI assistant (ADR 0023); nothing was sent.</summary>
+    Suggested,
 }
 
 /// <summary>
