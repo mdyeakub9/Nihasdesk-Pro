@@ -20,6 +20,8 @@ The API checks every permission on the server, reading the member's **current** 
 | `ai.teach` — answer those questions, add and edit taught answers (ADR 0019) | ✅ | ✅ | ❌ |
 | `knowledge.view` — see shipping zones, shop policies and the FAQ (Settings → Shop knowledge) | ✅ | ✅ | ✅ |
 | `knowledge.manage` — change shipping zones and shop policies (ADR 0020); the FAQ follows `ai.teach` | ✅ | ✅ | ❌ |
+| `inbox.saved_replies.manage` — create, edit and delete saved replies (ADR 0022); every member uses them with `/` | ✅ | ✅ | ❌ |
+| Delete a team note — own notes for everyone; any note for Owner and Admin (ADR 0021) | ✅ | ✅ | own |
 | Settings, AI settings _(with those modules)_ | ✅ | ✅ | ❌ |
 | Billing, workspace deletion, ownership transfer _(later)_ | ✅ | ❌ | ❌ |
 

@@ -133,10 +133,11 @@
   "composer": {
     "reply": "Rispondi",
     "replyPlaceholder": "Scrivi una risposta…",
-    "enterToSend": "Invio per inviare",
     "send": "Invia",
     "outsideWindow": "L'ultimo messaggio del cliente ha più di 24 ore, quindi il canale non permette di rispondere ora. Aggiungi una nota del team nel pannello laterale o rispondi quando scrive di nuovo.",
-    "sendAndTakeOver": "Invia e subentra"
+    "sendAndTakeOver": "Invia e subentra",
+    "shortcuts": "Ctrl+Invio per inviare · / per le risposte salvate",
+    "typing": "{{names}} sta scrivendo…"
   },
   "customer": {
     "title": "Dettagli cliente",
@@ -317,7 +318,8 @@
     "channels": "Canali",
     "security": "Sicurezza",
     "ai": "IA",
-    "knowledge": "Info negozio"
+    "knowledge": "Info negozio",
+    "savedReplies": "Risposte salvate"
   },
   "policies": {
     "title": "Regole del negozio",
@@ -722,5 +724,24 @@
     "cancel": "Annulla",
     "count_one": "{{count}} nota",
     "count_other": "{{count}} note"
+  },
+  "savedReplies": {
+    "title": "Risposte salvate",
+    "intro": "Risposte pronte che il team inserisce scrivendo / nel campo di risposta. Vengono messe nella risposta da modificare, mai inviate da sole.",
+    "add": "Aggiungi risposta salvata",
+    "shortcut": "Scorciatoia",
+    "titleLabel": "Titolo",
+    "textEn": "Testo in inglese",
+    "textIt": "Testo in italiano",
+    "variables": "Puoi usare {first_name} (il nome del cliente) e {shop_name}. La lingua del cliente decide quale testo usare.",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "deleteConfirm": "Eliminare questa risposta salvata?",
+    "shortcutTaken": "Un’altra risposta salvata usa già questa scorciatoia.",
+    "empty": "Ancora nessuna risposta salvata.",
+    "loading": "Caricamento…",
+    "picker": "Risposte salvate"
   }
 }

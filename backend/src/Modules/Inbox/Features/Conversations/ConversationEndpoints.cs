@@ -42,6 +42,14 @@ internal static class ConversationEndpoints
             return result.IsSuccess ? Results.NoContent() : result.Error.ToProblem();
         });
 
+        // "X is typing…" for the other team members in this conversation (PRD 4.4).
+        conversations.MapPost("/{id:guid}/typing", async (Guid id, ConversationsHandler handler, CancellationToken ct) =>
+            {
+                var result = await handler.TypingAsync(id, ct);
+                return result.IsSuccess ? Results.NoContent() : result.Error.ToProblem();
+            })
+            .RequireRateLimiting(RatePolicies.Messages);
+
         conversations.MapGet("/{id:guid}/messages", async (Guid id, [AsParameters] ListMessagesQuery query, ConversationsHandler handler, CancellationToken ct) =>
                 await handler.MessagesAsync(id, query, ct) is { } page ? Results.Ok(page) : InboxErrors.NotFound.ToProblem())
             .AddEndpointFilter<ValidationFilter<ListMessagesQuery>>();

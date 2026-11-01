@@ -22,3 +22,4 @@ _Status: draft._
 - SignalR hub `/api/v1/hubs/inbox` (ADR 0016), signed-in members only. The negotiate request is a POST, so it needs `X-XSRF-TOKEN` like any other change.
 - Events carry IDs only (`conversationChanged` → `{ conversationId }`); the dashboard reloads the data through the REST API.
 - `mentioned` → `{ conversationId, noteId }` goes only to the mentioned member's own connections in that workspace (ADR 0021).
+- `typing` → `{ conversationId, userId }` goes to the workspace, after `POST /conversations/{id}/typing`; never the text (ADR 0022).

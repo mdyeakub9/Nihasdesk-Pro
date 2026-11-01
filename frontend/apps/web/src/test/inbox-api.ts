@@ -55,6 +55,26 @@ export const teamMembers = [
   },
 ];
 
+/** Saved replies for the `/` picker (ADR 0022). */
+export const savedReplies = [
+  {
+    id: 'r-ship',
+    shortcut: 'ship',
+    title: 'Shipping times',
+    textEn: 'Hi {first_name}, {shop_name} ships in 2 days.',
+    textIt: 'Ciao {first_name}, {shop_name} spedisce in 2 giorni.',
+    updatedAt: '2026-10-30T09:00:00Z',
+  },
+  {
+    id: 'r-size',
+    shortcut: 'size',
+    title: 'Size guide',
+    textEn: 'Our sizes run small.',
+    textIt: null,
+    updatedAt: '2026-10-30T09:00:00Z',
+  },
+];
+
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 
 let nextId = 1;
@@ -149,6 +169,7 @@ export function fakeInboxApi({
   const routes: Record<string, (body: unknown, url: URL) => Response> = {
     // Names for the responder chip and @mentions.
     'GET /api/v1/team/members': () => json(teamMembers),
+    'GET /api/v1/saved-replies': () => json(savedReplies),
     'GET /api/v1/conversations': () =>
       json({
         items: [...state.conversations]
@@ -196,6 +217,7 @@ export function fakeInboxApi({
       Object.assign(c, patch);
       return json({ conversation: summary(c), contact: null });
     });
+    routes[`POST ${base}/typing`] = withConversation(() => new Response(null, { status: 204 }));
     routes[`POST ${base}/read`] = withConversation((c) => {
       c.unread = false;
       return new Response(null, { status: 204 });

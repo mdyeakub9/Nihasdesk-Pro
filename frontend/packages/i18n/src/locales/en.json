@@ -133,10 +133,11 @@
   "composer": {
     "reply": "Reply",
     "replyPlaceholder": "Write a reply…",
-    "enterToSend": "Enter to send",
     "send": "Send",
     "outsideWindow": "The customer's last message is more than 24 hours old, so the channel doesn't allow a reply now. Add a team note in the side panel, or answer when they write again.",
-    "sendAndTakeOver": "Send & take over"
+    "sendAndTakeOver": "Send & take over",
+    "shortcuts": "Ctrl+Enter to send · / for saved replies",
+    "typing": "{{names}} is typing…"
   },
   "customer": {
     "title": "Customer details",
@@ -317,7 +318,8 @@
     "channels": "Channels",
     "security": "Security",
     "ai": "AI",
-    "knowledge": "Shop knowledge"
+    "knowledge": "Shop knowledge",
+    "savedReplies": "Saved replies"
   },
   "policies": {
     "title": "Shop policies",
@@ -722,5 +724,24 @@
     "cancel": "Cancel",
     "count_one": "{{count}} note",
     "count_other": "{{count}} notes"
+  },
+  "savedReplies": {
+    "title": "Saved replies",
+    "intro": "Ready-made answers your team inserts by typing / in the reply box. They are put in the reply to edit, never sent by themselves.",
+    "add": "Add saved reply",
+    "shortcut": "Shortcut",
+    "titleLabel": "Title",
+    "textEn": "English text",
+    "textIt": "Italian text",
+    "variables": "You can use {first_name} (the customer’s first name) and {shop_name}. The customer’s language decides which text is used.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this saved reply?",
+    "shortcutTaken": "Another saved reply already uses this shortcut.",
+    "empty": "No saved replies yet.",
+    "loading": "Loading…",
+    "picker": "Saved replies"
   }
 }

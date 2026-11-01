@@ -5,6 +5,7 @@ import { apiUrl, getCsrfToken } from '../../lib/api';
 import { useSession } from '../session/useSession';
 import { inboxKeys } from './api';
 import { useMentionStore } from './mentions';
+import { useTypingStore } from './typing';
 
 /**
  * Live inbox updates (ADR 0016): the hub only says which conversation changed — IDs, never text —
@@ -41,6 +42,12 @@ export function useInboxRealtime() {
       connection.on('mentioned', (event: { conversationId?: unknown; noteId?: unknown }) => {
         if (typeof event?.conversationId === 'string' && typeof event.noteId === 'string') {
           useMentionStore.getState().received({ conversationId: event.conversationId, noteId: event.noteId });
+        }
+      });
+      // A team member is writing in a conversation (PRD 4.4): IDs only.
+      connection.on('typing', (event: { conversationId?: unknown; userId?: unknown }) => {
+        if (typeof event?.conversationId === 'string' && typeof event.userId === 'string') {
+          useTypingStore.getState().received(event.conversationId, event.userId);
         }
       });
       // Missed events while offline: reload everything once the connection is back.

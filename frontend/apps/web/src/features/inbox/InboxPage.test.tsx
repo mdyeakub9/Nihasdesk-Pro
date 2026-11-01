@@ -122,7 +122,10 @@ describe('Inbox', () => {
     const { fetchMock } = fakeInboxApi();
     await renderApp('/inbox/c-giulia');
 
-    await userEvent.type(await screen.findByRole('textbox', { name: 'Reply' }), 'Sì, ce l’abbiamo.{Enter}');
+    await userEvent.type(
+      await screen.findByRole('textbox', { name: 'Reply' }),
+      'Sì, ce l’abbiamo.{Control>}{Enter}{/Control}',
+    );
     expect(await within(await messages()).findByText('Sì, ce l’abbiamo.')).toBeInTheDocument();
     expect(within(await messages()).getByText('Sending…')).toBeInTheDocument();
     expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/messages').at(-1)?.body).toEqual({
@@ -143,7 +146,10 @@ describe('Inbox', () => {
     await renderApp('/inbox/c-giulia');
 
     expect(await within(await messages()).findByText('Not delivered')).toBeInTheDocument();
-    await userEvent.type(screen.getByRole('textbox', { name: 'Reply' }), 'Too late{Enter}');
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Reply' }),
+      'Too late{Control>}{Enter}{/Control}',
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent('more than 24 hours old');
   });
 

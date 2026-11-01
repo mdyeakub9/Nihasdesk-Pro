@@ -281,6 +281,57 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                     b.ToTable("read_markers", "inbox");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.SavedReply", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Shortcut")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("shortcut");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TextEn")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("text_en");
+
+                    b.Property<string>("TextIt")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("text_it");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_saved_replies");
+
+                    b.HasIndex("TenantId", "Shortcut")
+                        .IsUnique()
+                        .HasDatabaseName("ix_saved_replies_tenant_id_shortcut");
+
+                    b.ToTable("saved_replies", "inbox");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.Message", b =>
                 {
                     b.HasOne("Nihasdesk.Modules.Inbox.Domain.Conversation", null)
