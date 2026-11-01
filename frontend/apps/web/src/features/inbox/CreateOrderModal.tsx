@@ -1,5 +1,6 @@
 import { Button, Card } from '@nihasdesk/ui';
 import { useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useCreateOrder, type Order } from '../orders/api';
@@ -29,7 +30,9 @@ export function CreateOrderModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
+  // Rendered on <body>: it is opened from the composer, and a <form> inside the composer's <form>
+  // would make the browser submit (reload the page) instead of saving the order.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 p-4">
       <Card
         role="dialog"
@@ -73,6 +76,7 @@ export function CreateOrderModal({
           />
         )}
       </Card>
-    </div>
+    </div>,
+    document.body,
   );
 }

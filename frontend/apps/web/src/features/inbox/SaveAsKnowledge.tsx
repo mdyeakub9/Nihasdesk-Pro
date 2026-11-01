@@ -36,7 +36,9 @@ export function SaveAsKnowledge({ conversationId }: { conversationId: string }) 
       <Textarea id={ids.answer} rows={3} value={answer} onChange={(e) => setAnswer(e.target.value)} />
       {add.error && <FieldError>{authErrorMessage(add.error, t)}</FieldError>}
       <div className="flex gap-2">
+        {/* type="button": this sits inside the composer's form, which must not be submitted from here. */}
         <Button
+          type="button"
           size="sm"
           disabled={!question.trim() || !answer.trim() || add.isPending}
           onClick={() =>
@@ -48,7 +50,7 @@ export function SaveAsKnowledge({ conversationId }: { conversationId: string }) 
         >
           {t('assistant.knowledge.save')}
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setOffer(null)}>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setOffer(null)}>
           {t('assistant.knowledge.notNow')}
         </Button>
       </div>
