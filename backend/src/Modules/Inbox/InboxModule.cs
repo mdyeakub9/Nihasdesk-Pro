@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.Modules.Inbox.Features.Conversations;
 using Nihasdesk.Modules.Inbox.Features.Notes;
@@ -28,6 +29,7 @@ public sealed class InboxModule : IModule
         services.AddScoped<IInboxIngest, InboxIngest>();
         services.AddScoped<IOutboundMessages, OutboundMessages>();
         services.AddScoped<IAiConversations, AiConversations>();
+        services.AddScoped<IOrderConversations, OrderConversations>();
         services.AddScoped<ConversationsHandler>();
         services.AddScoped<IValidator<ListConversationsQuery>, ListConversationsValidator>();
         services.AddScoped<IValidator<ListMessagesQuery>, ListMessagesValidator>();

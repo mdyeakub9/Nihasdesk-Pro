@@ -236,6 +236,7 @@
         "dependencies": {
           "Nihasdesk.Infrastructure": "[1.0.0, )",
           "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.Modules.Shipping": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"
         }
       },
@@ -262,6 +263,14 @@
           "Nihasdesk.Infrastructure": "[1.0.0, )",
           "Nihasdesk.Modules.Commerce": "[1.0.0, )",
           "Nihasdesk.Modules.Contacts": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.shipping": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
           "Nihasdesk.Modules.Identity": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"
         }
