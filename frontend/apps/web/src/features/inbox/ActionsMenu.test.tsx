@@ -181,6 +181,8 @@ describe('+ menu', () => {
 
     await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Create order' }));
     const dialog = await screen.findByRole('dialog', { name: 'Create order' });
+    // Not inside the composer's form: a nested form would reload the page instead of saving.
+    expect(dialog.closest('form')).toBeNull();
     expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('Giulia Rossi');
     expect(within(dialog).getByRole('textbox', { name: 'Phone' })).toHaveValue('+39 333 000 1111');
 
