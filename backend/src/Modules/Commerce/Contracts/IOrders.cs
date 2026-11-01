@@ -49,8 +49,23 @@ public interface IOrderRequests
     Task<Result<OrderRequestCreated>> CreateAsync(Guid conversationId, IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken);
 }
 
+/// <summary>One line of a confirmed order, as the customer sees it. Amounts in cents.</summary>
+public sealed record ConfirmedOrderLine(string Title, string Variant, int Quantity, long LineTotal);
+
+/// <summary>What the customer is told when their order is confirmed (ADR 0025). Amounts in cents.</summary>
+public sealed record ConfirmedOrderSummary(
+    int Number,
+    IReadOnlyList<ConfirmedOrderLine> Lines,
+    string ShippingZoneName,
+    long ShippingCost,
+    long Total,
+    string Currency,
+    string Street,
+    string PostalCode,
+    string City);
+
 /// <summary>
-/// What happened to an AI order request, for the chat it came from (ADR 0025). Defined here and
+/// What happened to an order of a chat, for that chat (ADR 0025). Defined here and
 /// implemented by the Inbox: it tells the team and writes to the customer within the channel's rules.
 /// </summary>
 public interface IOrderNotifications
@@ -58,8 +73,11 @@ public interface IOrderNotifications
     /// <summary>A new request waits for a person: the team's dashboards are told (IDs only).</summary>
     Task RequestCreatedAsync(Guid conversationId, Guid orderId, CancellationToken cancellationToken);
 
-    /// <summary>A person approved it: the customer gets the confirmation with the total to pay on delivery.</summary>
-    Task ApprovedAsync(Guid conversationId, int number, long total, string currency, CancellationToken cancellationToken);
+    /// <summary>
+    /// An order of this chat is confirmed — a team member created it, or approved the AI's request:
+    /// the customer gets the summary (lines, shipping, total to pay on delivery, address).
+    /// </summary>
+    Task ConfirmedAsync(Guid conversationId, ConfirmedOrderSummary order, CancellationToken cancellationToken);
 
     /// <summary>A person rejected it: the customer gets a polite message; the reason stays with the team.</summary>
     Task RejectedAsync(Guid conversationId, int number, CancellationToken cancellationToken);

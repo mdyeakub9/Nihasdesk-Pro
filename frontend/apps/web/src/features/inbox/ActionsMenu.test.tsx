@@ -174,7 +174,8 @@ describe('+ menu', () => {
             total: 18500,
             currency: 'EUR',
           }),
-        'POST /api/v1/orders': () => json({ id: 'o-1', number: 1001, status: 'confirmed' }, 201),
+        'POST /api/v1/orders': () =>
+          json({ id: 'o-1', number: 1001, status: 'confirmed', conversationId: 'c-giulia' }, 201),
       },
     });
     await renderApp('/inbox/c-giulia');
@@ -201,7 +202,9 @@ describe('+ menu', () => {
     expect(await within(summary).findByText('€185.00')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Create order' }));
 
-    expect(await within(dialog).findByRole('status')).toHaveTextContent('Order #1001 is confirmed');
+    const created = await within(dialog).findByRole('status');
+    expect(created).toHaveTextContent('Order #1001 is confirmed');
+    expect(created).toHaveTextContent('The customer got the order summary in the chat.');
     expect(callsTo(fetchMock, '/api/v1/orders').find((c) => c.body)?.body).toEqual({
       conversationId: 'c-giulia',
       customerName: 'Giulia Rossi',

@@ -799,7 +799,8 @@
       "title": "Create order",
       "create": "Create order",
       "created": "Order #{{number}} is confirmed and the stock is updated.",
-      "open": "Open order"
+      "open": "Open order",
+      "summarySent": "The customer got the order summary in the chat."
     }
   },
   "orders": {
@@ -878,6 +879,7 @@
       "text": "New order request from the AI, waiting for approval.",
       "open": "Open",
       "dismiss": "Dismiss"
-    }
+    },
+    "new": "New order"
   }
 }

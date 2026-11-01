@@ -799,7 +799,8 @@
       "title": "Crea ordine",
       "create": "Crea ordine",
       "created": "L’ordine #{{number}} è confermato e il magazzino è aggiornato.",
-      "open": "Apri ordine"
+      "open": "Apri ordine",
+      "summarySent": "Il cliente ha ricevuto il riepilogo dell’ordine in chat."
     }
   },
   "orders": {
@@ -878,6 +879,7 @@
       "text": "Nuova richiesta d’ordine dall’IA, da approvare.",
       "open": "Apri",
       "dismiss": "Chiudi"
-    }
+    },
+    "new": "Nuovo ordine"
   }
 }
