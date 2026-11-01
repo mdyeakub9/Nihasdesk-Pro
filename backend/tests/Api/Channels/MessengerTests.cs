@@ -201,7 +201,7 @@ public sealed class MessengerTests(AuthFixture fixture)
         Assert.Equal("pending", (await sent.Content.ReadFromJsonAsync<JsonElement>())[0].GetProperty("delivery").GetString());
 
         Assert.Equal(1, await Api.SendRepliesAsync());
-        using var body = JsonDocument.Parse(Api.Meta.Sends.Last().Body);
+        using var body = JsonDocument.Parse(Api.Meta.Sends[^1].Body);
         Assert.Equal("🛍️ Borsa nera — Nero\n€89.00 · SKU BN-1", body.RootElement.GetProperty("message").GetProperty("text").GetString());
     }
 
