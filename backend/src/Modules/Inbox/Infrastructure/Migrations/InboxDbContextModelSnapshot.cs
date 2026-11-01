@@ -340,6 +340,42 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_messages_conversations_conversation_id");
+
+                    b.OwnsOne("Nihasdesk.Modules.Inbox.Domain.ProductSnapshot", "Product", b1 =>
+                        {
+                            b1.Property<Guid>("MessageId");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired();
+
+                            b1.Property<long>("Price");
+
+                            b1.Property<Guid>("ProductId");
+
+                            b1.Property<string>("Sku");
+
+                            b1.Property<string>("Title")
+                                .IsRequired();
+
+                            b1.Property<string>("Variant")
+                                .IsRequired();
+
+                            b1.Property<Guid>("VariantId");
+
+                            b1.HasKey("MessageId");
+
+                            b1.ToTable("messages", "inbox");
+
+                            b1
+                                .ToJson("product")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MessageId")
+                                .HasConstraintName("fk_messages_messages_id");
+                        });
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.ReadMarker", b =>

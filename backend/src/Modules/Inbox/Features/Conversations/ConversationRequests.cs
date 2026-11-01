@@ -60,7 +60,12 @@ internal sealed record MessageResponse(
     // Notes only (PRD 4.4).
     IReadOnlyList<Guid> MentionedUserIds,
     DateTimeOffset? ResolvedAt,
-    Guid? ResolvedByUserId);
+    Guid? ResolvedByUserId,
+    // Product cards only (ADR 0024).
+    ProductCardResponse? Product);
+
+/// <summary>A product as it was sent; price in cents.</summary>
+internal sealed record ProductCardResponse(Guid ProductId, Guid VariantId, string Title, string Variant, string? Sku, long Price, string Currency);
 
 /// <summary>Oldest first; <see cref="Before"/> loads the next older page.</summary>
 internal sealed record MessagePageResponse(IReadOnlyList<MessageResponse> Items, string? Before);

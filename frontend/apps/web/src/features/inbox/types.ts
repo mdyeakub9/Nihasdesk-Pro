@@ -12,12 +12,12 @@ export type Responder = 'ai' | 'human';
 /** AI classification per conversation, editable by agents (PRD 4.5). */
 export type LeadStatus = 'new' | 'hot' | 'customer' | 'support' | 'spam';
 
+/** A catalog product as it was sent (ADR 0024); `amount` in currency units, e.g. 89 for €89.00. */
 export type ProductCard = {
   name: string;
   variant: string;
-  sku: string;
+  sku?: string;
   price: { amount: number; currency: string };
-  inStock: boolean;
 };
 
 export type Message = {

@@ -231,6 +231,14 @@
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
         }
       },
+      "nihasdesk.modules.commerce": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
       "nihasdesk.modules.contacts": {
         "type": "Project",
         "dependencies": {
@@ -252,6 +260,7 @@
         "type": "Project",
         "dependencies": {
           "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Commerce": "[1.0.0, )",
           "Nihasdesk.Modules.Contacts": "[1.0.0, )",
           "Nihasdesk.Modules.Identity": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"

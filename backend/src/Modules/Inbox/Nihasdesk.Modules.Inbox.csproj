@@ -14,6 +14,7 @@
     <!-- Only the Contracts of these modules are reachable: everything else in them is internal. -->
     <ProjectReference Include="..\Identity\Nihasdesk.Modules.Identity.csproj" />
     <ProjectReference Include="..\Contacts\Nihasdesk.Modules.Contacts.csproj" />
+    <ProjectReference Include="..\Commerce\Nihasdesk.Modules.Commerce.csproj" />
   </ItemGroup>
 
   <ItemGroup>

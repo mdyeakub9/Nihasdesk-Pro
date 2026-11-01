@@ -7,7 +7,10 @@ import { fillSavedReply, matchSavedReplies, useSavedReplies, type SavedReply } f
 import { useSession } from '../session/useSession';
 import { useMembers } from '../team/api';
 import { useSendMessage } from './api';
+import { ActionsMenu, type Action } from './ActionsMenu';
+import { CreateOrderModal } from './CreateOrderModal';
 import { useDraftStore } from './drafts';
+import { ProductPicker } from './ProductPicker';
 import { SaveAsKnowledge } from './SaveAsKnowledge';
 import { SavedReplyPicker } from './SavedReplyPicker';
 import { useSuggestionStore } from './suggestions';
@@ -33,6 +36,7 @@ export function Composer({ conversation }: { conversation: Conversation }) {
   const sendTyping = useSendTyping(conversation.id);
   const typing = useTypingMembers(conversation.id, session?.user.id);
   const [query, setQuery] = useState<string | null>(null);
+  const [panel, setPanel] = useState<'products' | 'order' | null>(null);
   const [active, setActive] = useState(0);
   const box = useRef<HTMLTextAreaElement>(null);
   const listId = useId();
@@ -55,6 +59,20 @@ export function Composer({ conversation }: { conversation: Conversation }) {
     setQuery(match ? (match[1] ?? '') : null);
     setActive(0);
     if (value.trim()) sendTyping();
+  }
+
+  /** The + menu (PRD 4.4). "Saved reply" starts a `/` command, like typing it. */
+  function pick(action: Action) {
+    if (action === 'savedReply') {
+      const next = text && !/\s$/.test(text) ? `${text} /` : `${text}/`;
+      setDraft(conversation.id, next);
+      setQuery('');
+      setActive(0);
+      requestAnimationFrame(() => box.current?.setSelectionRange(next.length, next.length));
+      box.current?.focus();
+      return;
+    }
+    setPanel(action);
   }
 
   function insert(reply: SavedReply) {
@@ -120,6 +138,10 @@ export function Composer({ conversation }: { conversation: Conversation }) {
   return (
     <form onSubmit={submit} className="flex flex-col gap-3 border-t p-4">
       <SaveAsKnowledge key={offerKey} conversationId={conversation.id} />
+      {panel === 'products' && (
+        <ProductPicker conversationId={conversation.id} onClose={() => setPanel(null)} />
+      )}
+      {panel === 'order' && <CreateOrderModal conversation={conversation} onClose={() => setPanel(null)} />}
       <div className="relative">
         {open && <SavedReplyPicker id={listId} matches={matches} active={active} onPick={insert} />}
         <Textarea
@@ -144,6 +166,7 @@ export function Composer({ conversation }: { conversation: Conversation }) {
         </FieldError>
       )}
       <div className="flex items-center justify-end gap-3">
+        <ActionsMenu onPick={pick} />
         <p aria-live="polite" className="flex-1 text-xs text-muted-foreground">
           {typingNames.length > 0 && t('composer.typing', { names: typingNames.join(', ') })}
         </p>

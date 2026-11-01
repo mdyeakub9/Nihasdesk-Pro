@@ -93,6 +93,17 @@ internal sealed class Message : TenantEntity
             Internal = isInternal,
         };
 
+    /// <summary>A catalog product the team sends (ADR 0024): the channel gets <paramref name="text"/>, the dashboard shows the card.</summary>
+    public static Message FromTeamProduct(Guid tenantId, Guid conversationId, Guid userId, string authorName, string text, ProductSnapshot product, DateTimeOffset sentAt)
+    {
+        var message = FromTeam(tenantId, conversationId, userId, authorName, text, isInternal: false, sentAt);
+        message.Product = product;
+        return message;
+    }
+
+    /// <summary>Set for product cards sent from the + menu.</summary>
+    public ProductSnapshot? Product { get; private set; }
+
     /// <summary>A team-only note (PRD 4.4). Never delivered to the channel or given to the AI.</summary>
     public static Message TeamNote(Guid tenantId, Guid conversationId, Guid userId, string authorName, string text, IEnumerable<Guid> mentions, DateTimeOffset sentAt)
     {

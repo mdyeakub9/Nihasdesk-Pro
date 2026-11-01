@@ -8,6 +8,7 @@ using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.Modules.Inbox.Features.Conversations;
 using Nihasdesk.Modules.Inbox.Features.Notes;
+using Nihasdesk.Modules.Inbox.Features.Products;
 using Nihasdesk.Modules.Inbox.Features.SavedReplies;
 using Nihasdesk.Modules.Inbox.Infrastructure;
 using Nihasdesk.Modules.Inbox.Realtime;
@@ -36,6 +37,8 @@ public sealed class InboxModule : IModule
         services.AddScoped<IValidator<AddNoteRequest>, AddNoteValidator>();
         services.AddScoped<SavedRepliesHandler>();
         services.AddScoped<IValidator<SavedReplyRequest>, SavedReplyValidator>();
+        services.AddScoped<ProductMessagesHandler>();
+        services.AddScoped<IValidator<SendProductsRequest>, SendProductsValidator>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -43,6 +46,7 @@ public sealed class InboxModule : IModule
         ConversationEndpoints.Map(endpoints);
         NoteEndpoints.Map(endpoints);
         SavedReplyEndpoints.Map(endpoints);
+        ProductMessageEndpoints.Map(endpoints);
         endpoints.MapHub<InboxHub>(InboxHub.Path);
     }
 }
