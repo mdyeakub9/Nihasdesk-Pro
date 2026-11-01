@@ -236,6 +236,7 @@
         "dependencies": {
           "Nihasdesk.Infrastructure": "[1.0.0, )",
           "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.Modules.Shipping": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"
         }
       },
@@ -253,6 +254,14 @@
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.14, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.14, )",
           "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.shipping": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"
         }
       },

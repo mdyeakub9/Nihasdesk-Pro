@@ -12,7 +12,8 @@ The API checks every permission on the server, reading the member's **current** 
 | `team.change_role` — Admin ⇄ Member | ✅ | ❌ | ❌ |
 | `team.remove_member` — remove a Member | ✅ | ✅ | ❌ |
 | `team.remove_admin` — remove an Admin | ✅ | ❌ | ❌ |
-| Inbox work (read, reply, take over / return to AI, notes, status, assign, edit contacts; later order approvals) | ✅ | ✅ | ✅ |
+| Inbox work (read, reply, take over / return to AI, notes, status, assign, edit contacts) | ✅ | ✅ | ✅ |
+| Orders — see, create (confirmed), edit, approve and reject order requests (ADR 0025; audited) | ✅ | ✅ | ✅ |
 | `channels.manage` — connect and disconnect channels (Facebook Pages) | ✅ | ✅ | ❌ |
 | `catalog.view` — see products, variants, prices and stock | ✅ | ✅ | ✅ |
 | `catalog.manage` — create and edit products, CSV import (ADR 0018) | ✅ | ✅ | ❌ |

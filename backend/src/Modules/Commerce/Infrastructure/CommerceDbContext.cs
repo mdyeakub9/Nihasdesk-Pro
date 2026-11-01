@@ -20,6 +20,10 @@ internal sealed class CommerceDbContext(DbContextOptions<CommerceDbContext> opti
 
     public DbSet<ProductVariant> Variants => Set<ProductVariant>();
 
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -62,6 +66,47 @@ internal sealed class CommerceDbContext(DbContextOptions<CommerceDbContext> opti
             // Update-by-SKU on import (ADR 0018): one SKU per workspace.
             variant.HasIndex(v => new { v.TenantId, v.Sku }).IsUnique().HasFilter("sku IS NOT NULL");
             variant.HasIndex(v => v.ProductId);
+        });
+
+        modelBuilder.Entity<Order>(order =>
+        {
+            order.ToTable("orders", table =>
+            {
+                table.HasCheckConstraint("ck_orders_amounts", "subtotal >= 0 AND shipping_cost >= 0 AND total = subtotal + shipping_cost");
+                table.HasCheckConstraint("ck_orders_currency", "currency ~ '^[A-Z]{3}$'");
+            });
+            order.Property(o => o.Id).ValueGeneratedNever();
+            order.Property(o => o.CustomerName).HasMaxLength(Order.NameMaxLength);
+            order.Property(o => o.Phone).HasMaxLength(Order.PhoneMaxLength);
+            order.Property(o => o.Street).HasMaxLength(Order.StreetMaxLength);
+            order.Property(o => o.PostalCode).HasMaxLength(Order.PostalCodeMaxLength);
+            order.Property(o => o.City).HasMaxLength(Order.CityMaxLength);
+            order.Property(o => o.Province).HasMaxLength(Order.ProvinceMaxLength);
+            order.Property(o => o.Country).HasMaxLength(2).IsFixedLength();
+            order.Property(o => o.Notes).HasMaxLength(Order.NotesMaxLength);
+            order.Property(o => o.ShippingZoneName).HasMaxLength(Order.ZoneNameMaxLength);
+            order.Property(o => o.Currency).HasMaxLength(ProductVariant.CurrencyLength).IsFixedLength();
+            order.Property(o => o.PaymentMethod).HasMaxLength(20);
+            order.Property(o => o.RejectReason).HasMaxLength(Order.ReasonMaxLength);
+            LowerCaseText(order.Property(o => o.Status));
+            LowerCaseText(order.Property(o => o.Source));
+            order.HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.Cascade);
+            order.Navigation(o => o.Items).HasField("_items").UsePropertyAccessMode(PropertyAccessMode.Field);
+            // #1001, #1002… per workspace (ADR 0025).
+            order.HasIndex(o => new { o.TenantId, o.Number }).IsUnique();
+            // The Orders page: per status, newest first, keyset pagination.
+            order.HasIndex(o => new { o.TenantId, o.Status, o.CreatedAt, o.Id }).IsDescending(false, false, true, true);
+        });
+
+        modelBuilder.Entity<OrderItem>(item =>
+        {
+            item.ToTable("order_items", table =>
+                table.HasCheckConstraint("ck_order_items_quantity", "quantity > 0 AND unit_price >= 0 AND line_total = unit_price * quantity"));
+            item.Property(i => i.Id).ValueGeneratedNever();
+            item.Property(i => i.Title).HasMaxLength(OrderItem.TitleMaxLength);
+            item.Property(i => i.Variant).HasMaxLength(OrderItem.VariantMaxLength);
+            item.Property(i => i.Sku).HasMaxLength(ProductVariant.SkuMaxLength);
+            item.HasIndex(i => i.OrderId);
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);

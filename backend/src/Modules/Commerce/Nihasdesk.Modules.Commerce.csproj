@@ -13,6 +13,8 @@
     <ProjectReference Include="..\..\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
     <!-- Only Identity.Contracts is reachable: everything else in Identity is internal. -->
     <ProjectReference Include="..\Identity\Nihasdesk.Modules.Identity.csproj" />
+    <!-- Delivery zones and costs for order totals (ADR 0025); only its Contracts are public. -->
+    <ProjectReference Include="..\Shipping\Nihasdesk.Modules.Shipping.csproj" />
   </ItemGroup>
 
   <ItemGroup>
