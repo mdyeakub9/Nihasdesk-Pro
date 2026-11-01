@@ -1,8 +1,9 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { callsTo, fakeApi, json, problem } from '../../test/fake-api';
 import { renderApp } from '../../test/render-app';
+import { hub } from '../../test/signalr-mock';
 import type { Order, OrderSummary } from './api';
 
 const request: Order = {
@@ -202,5 +203,23 @@ describe('Orders', () => {
     fakeApi({ routes: { 'GET /api/v1/orders/o-x': () => problem(404, 'order.not_found') } });
     await renderApp('/orders/o-x');
     expect(await screen.findByRole('heading', { name: 'Order not found' })).toBeInTheDocument();
+  });
+});
+
+describe('Order request alert', () => {
+  it('tells the team about a new AI request and links to it', async () => {
+    fakeOrders();
+    await renderApp('/orders');
+    await waitFor(() => expect(hub.started).toBe(1));
+
+    act(() => hub.emit('orderRequested', { conversationId: 'c-giulia', orderId: 'o-1' }));
+
+    const text = await screen.findByText('New order request from the AI, waiting for approval.');
+    const alert = text.closest('[role="status"]') as HTMLElement;
+    await userEvent.click(within(alert).getByRole('link', { name: 'Open' }));
+    expect(await screen.findByRole('heading', { name: '#1001' })).toBeInTheDocument();
+    expect(
+      screen.queryByText('New order request from the AI, waiting for approval.'),
+    ).not.toBeInTheDocument();
   });
 });

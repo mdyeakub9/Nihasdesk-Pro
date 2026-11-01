@@ -873,6 +873,11 @@
       "order_zone_not_found": "Questa zona di consegna non esiste più. Scegline un’altra.",
       "order_mixed_currency": "I prodotti e la zona di consegna usano valute diverse.",
       "order_not_pending": "Qualcuno ha già approvato o rifiutato questo ordine."
+    },
+    "alert": {
+      "text": "Nuova richiesta d’ordine dall’IA, da approvare.",
+      "open": "Apri",
+      "dismiss": "Chiudi"
     }
   }
 }

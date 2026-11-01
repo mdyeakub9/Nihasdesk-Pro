@@ -4,6 +4,7 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { useDraftStore } from '../features/inbox/drafts';
 import { useSuggestionStore } from '../features/inbox/suggestions';
 import { useTypingStore } from '../features/inbox/typing';
+import { useOrderRequestStore } from '../features/orders/requests';
 import { resetCsrfToken } from '../lib/api';
 import { resetMockNotifications } from '../mocks/notifications';
 import { hub } from './signalr-mock';
@@ -29,6 +30,7 @@ beforeEach(() => {
   useDraftStore.setState({ drafts: {} });
   useTypingStore.setState({ typing: {} });
   useSuggestionStore.setState({ inserted: {}, offer: null });
+  useOrderRequestStore.setState({ latest: null });
 });
 
 afterEach(() => {

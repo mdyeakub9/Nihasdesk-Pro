@@ -46,7 +46,7 @@ internal static class KnowledgeSources
 /// also remembers which prices tools returned, for the reply check (SEC-38), and which knowledge
 /// the answer used.
 /// </summary>
-internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDbContext db)
+internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, AiDbContext db)
 {
     // Tool results go to the model, never into HTML: keep "+39…" and "€" readable instead of +.
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -63,6 +63,15 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
     /// <summary>Knowledge returned in this turn, see <see cref="KnowledgeSources"/>.</summary>
     public IReadOnlyList<string> Sources => _sources;
 
+    /// <summary>
+    /// The conversation this turn answers, set by the caller from the claimed conversation — never
+    /// from the model (SEC-36). Null in the dashboard's test chat, where no order can be requested.
+    /// </summary>
+    public Guid? ConversationId { get; set; }
+
+    /// <summary>Set when this turn created an order request (for the run record).</summary>
+    public int? OrderNumber { get; private set; }
+
     public static readonly IReadOnlyList<LlmTool> Definitions =
     [
         Tool("search_products",
@@ -77,14 +86,20 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
         Tool("search_knowledge",
             "The shop's own rules and answers: returns, payment, contact details and opening hours, and answers the team wrote for customer questions. Use it for any question that is not about a product or shipping cost.",
             """{"type":"object","properties":{"query":{"type":"string","description":"The customer's question in a few words"},"topic":{"type":"string","enum":["shipping","returns","payment","contact","other"],"description":"What the question is about"}},"required":["query","topic"],"additionalProperties":false}"""),
+        Tool("quote_order",
+            "The order summary for chosen variants and a delivery zone: unit prices, subtotal, shipping and total, computed by the shop's system. Use it before asking the customer to confirm, and show exactly these amounts.",
+            """{"type":"object","properties":{"items":{"type":"array","maxItems":20,"items":{"type":"object","properties":{"product_id":{"type":"string"},"variant_id":{"type":"string","description":"An available variant id from get_product_options"},"quantity":{"type":"integer","minimum":1,"maximum":99}},"required":["product_id","variant_id","quantity"],"additionalProperties":false}},"zone_id":{"type":"string","description":"The id from get_shipping_options"}},"required":["items","zone_id"],"additionalProperties":false}"""),
+        Tool("create_order_request",
+            "Create an order request for the shop's team to approve, only after the customer confirmed the summary from quote_order. It is NOT a confirmed order: tell the customer the shop will confirm it shortly. Payment is cash on delivery.",
+            """{"type":"object","properties":{"items":{"type":"array","maxItems":20,"items":{"type":"object","properties":{"product_id":{"type":"string"},"variant_id":{"type":"string"},"quantity":{"type":"integer","minimum":1,"maximum":99}},"required":["product_id","variant_id","quantity"],"additionalProperties":false}},"zone_id":{"type":"string"},"customer_name":{"type":"string"},"phone":{"type":"string"},"street":{"type":"string","description":"Street and number"},"postal_code":{"type":"string"},"city":{"type":"string"},"province":{"type":"string"},"country":{"type":"string","description":"Two-letter code, e.g. IT"},"notes":{"type":"string"}},"required":["items","zone_id","customer_name","phone","street","postal_code","city","country"],"additionalProperties":false}"""),
         Tool("handoff_to_human",
-            "Give the conversation to the shop's team. Use when you don't know the answer, the customer wants a person, wants to order, complains or asks for a refund, or you are unsure. Don't tell the customer you are 'handing off'; the team will answer.",
+            "Give the conversation to the shop's team. Use when you don't know the answer, the customer wants a person, has a special request about an order you can't take, complains or asks for a refund, or you are unsure. Don't tell the customer you are 'handing off'; the team will answer.",
             """{"type":"object","properties":{"reason":{"type":"string","enum":["unknown_answer","customer_asked_for_human","complaint","refund","order","special_request","low_confidence","other"]},"question":{"type":"string","description":"For unknown_answer: the customer's question, short, in their words"},"summary":{"type":"string","description":"One sentence for the team"}},"required":["reason"],"additionalProperties":false}"""),
     ];
 
     /// <summary>The team's AI assistant only reads (ADR 0023): no handoff, no orders, no leads.</summary>
     public static readonly IReadOnlyList<LlmTool> ReadOnlyDefinitions =
-        [.. Definitions.Where(t => t.Name != "handoff_to_human")];
+        [.. Definitions.Where(t => t.Name is not ("handoff_to_human" or "create_order_request"))];
 
     /// <summary><paramref name="readOnly"/>: tools that change something are refused, whatever the model asks.</summary>
     public async Task<ToolOutcome> RunAsync(LlmToolCall call, CancellationToken ct, bool readOnly = false)
@@ -112,6 +127,8 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
             "get_product_options" => await ProductOptionsAsync(args, ct),
             "get_shipping_options" => await ShippingOptionsAsync(ct),
             "search_knowledge" => await SearchKnowledgeAsync(args, ct),
+            "quote_order" => await QuoteOrderAsync(args, ct),
+            "create_order_request" when !readOnly => await CreateOrderRequestAsync(args, ct),
             "handoff_to_human" when !readOnly => Handoff(args),
             _ => Error("Unknown tool."),
         };
@@ -244,6 +261,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
         {
             zones = zones.Select(z => new
             {
+                id = z.Id,
                 zone = z.Name,
                 areas = z.Areas,
                 cost = z.Price == 0 ? "free" : Allowed(z.Price, z.Currency),
@@ -252,6 +270,125 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, AiDb
             }).ToList(),
         });
     }
+
+    /// <summary>The order summary by code (rule 5): its amounts become the only totals the reply may state (SEC-38).</summary>
+    private async Task<ToolOutcome> QuoteOrderAsync(JsonElement args, CancellationToken ct)
+    {
+        if (Lines(args) is not { } lines || Id(args, "zone_id") is not { } zoneId)
+        {
+            return Error("Send items (product_id, variant_id, quantity 1-99) and the zone_id from get_shipping_options.");
+        }
+
+        var quote = await orders.QuoteAsync(lines, zoneId, ct);
+        if (!quote.IsSuccess)
+        {
+            return OrderError(quote.Error.Code, quote.Error.Message);
+        }
+
+        var q = quote.Value;
+        return Result(new
+        {
+            lines = q.Lines.Select(l => new
+            {
+                product = l.Title,
+                variant = l.Variant,
+                quantity = l.Quantity,
+                unitPrice = Allowed(l.UnitPrice, q.Currency),
+                lineTotal = Allowed(l.UnitPrice * l.Quantity, q.Currency),
+            }).ToList(),
+            zone = q.ShippingZoneName,
+            shipping = q.ShippingCost == 0 ? "free" : Allowed(q.ShippingCost, q.Currency),
+            subtotal = Allowed(q.Subtotal, q.Currency),
+            total = Allowed(q.Total, q.Currency),
+            payment = "cash on delivery",
+            note = "Show this summary with exactly these amounts and ask the customer to confirm before create_order_request.",
+        });
+    }
+
+    /// <summary>
+    /// Creates an order request — never a confirmed order (CLAUDE.md rule 5). The conversation comes
+    /// from the turn, the prices from the catalog; validation is done by code (PRD 4.9).
+    /// </summary>
+    private async Task<ToolOutcome> CreateOrderRequestAsync(JsonElement args, CancellationToken ct)
+    {
+        if (ConversationId is not { } conversationId)
+        {
+            return Error("Orders can be requested only in a real conversation, not in the test chat.");
+        }
+
+        if (Lines(args) is not { } lines || Id(args, "zone_id") is not { } zoneId)
+        {
+            return Error("Send items (product_id, variant_id, quantity 1-99) and the zone_id from get_shipping_options.");
+        }
+
+        var details = new OrderRequestDetails(
+            Text(args, "customer_name", 100) ?? string.Empty,
+            Text(args, "phone", 30) ?? string.Empty,
+            Text(args, "street", 200) ?? string.Empty,
+            Text(args, "postal_code", 12) ?? string.Empty,
+            Text(args, "city", 100) ?? string.Empty,
+            Text(args, "province", 50),
+            Text(args, "country", 2) ?? string.Empty,
+            zoneId,
+            Text(args, "notes", 500));
+        var created = await orders.CreateAsync(conversationId, lines, details, ct);
+        if (!created.IsSuccess)
+        {
+            return OrderError(created.Error.Code, created.Error.Message);
+        }
+
+        var order = created.Value;
+        OrderNumber = order.Number;
+        return Result(new
+        {
+            ok = true,
+            orderNumber = order.Number,
+            status = "waiting for the shop's confirmation",
+            total = Allowed(order.Total, order.Currency),
+            payment = "cash on delivery",
+            note = "Tell the customer the request is received and the shop will confirm it shortly. Don't say the order is confirmed.",
+        });
+    }
+
+    /// <summary>Errors the model can act on: ask again, offer another variant, or let the team handle it.</summary>
+    private static ToolOutcome OrderError(string code, string message) => code switch
+    {
+        "order.invalid" => Error(message),
+        "product.not_available" => Error("Not enough stock for one of the items. Check get_product_options and offer what is available."),
+        "product.not_found" => Error("A product or variant id is not valid. Use the ids from search_products and get_product_options."),
+        "order.zone_not_found" => Error("Unknown zone_id. Use an id from get_shipping_options."),
+        "order.pending_exists" => Error("This chat already has an order request waiting for the shop. Tell the customer the team will confirm it shortly; for changes, hand off with reason order."),
+        _ => Error("The order couldn't be created. Hand off with reason order."),
+    };
+
+    /// <summary>The model's items as catalog IDs and quantities; null when malformed (max 20 lines).</summary>
+    private static List<OrderRequestLine>? Lines(JsonElement args)
+    {
+        if (!args.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array || items.GetArrayLength() is 0 or > 20)
+        {
+            return null;
+        }
+
+        var lines = new List<OrderRequestLine>();
+        foreach (var item in items.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object
+                || Id(item, "product_id") is not { } productId
+                || Id(item, "variant_id") is not { } variantId
+                || !item.TryGetProperty("quantity", out var q) || q.ValueKind != JsonValueKind.Number
+                || !q.TryGetInt32(out var quantity) || quantity is < 1 or > 99)
+            {
+                return null;
+            }
+
+            lines.Add(new OrderRequestLine(productId, variantId, quantity));
+        }
+
+        return lines;
+    }
+
+    private static Guid? Id(JsonElement args, string name) =>
+        Text(args, name, 40) is { } text && Guid.TryParse(text, out var id) ? id : null;
 
     /// <summary>
     /// Records a source; amounts in the shop's own text (e.g. "return shipping €5") may then be
