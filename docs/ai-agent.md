@@ -66,3 +66,6 @@ Rules:
 
 ## Team AI assistant
 In the inbox side panel the team can ask for a summary and a suggested reply (ADR 0023). It is the same brain and reply check as the agent, with read-only tools (no handoff, orders or leads) and the same history without notes. The text is only inserted into the composer and sent by a person; an edited suggestion can be saved as knowledge (learning loop).
+
+## Order requests
+The agent takes orders as requests a person approves (PRD 4.9, ADR 0025): `quote_order` gives the summary computed by code, `create_order_request` stores a pending request only after the customer confirms it, and the conversation comes from the turn, never from the model. The team approves or rejects in the Orders page, and the customer is told in the same chat.

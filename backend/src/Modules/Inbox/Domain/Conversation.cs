@@ -112,6 +112,12 @@ internal sealed class Conversation : TenantEntity
         }
     }
 
+    /// <summary>
+    /// The shop told the customer about their order (ADR 0025): the chat shows it, but who answers
+    /// the customer doesn't change.
+    /// </summary>
+    public void OrderUpdateSent(Message message) => Touch(message);
+
     /// <summary>The AI answered (ADR 0019).</summary>
     public void RepliedByAi(Message message)
     {

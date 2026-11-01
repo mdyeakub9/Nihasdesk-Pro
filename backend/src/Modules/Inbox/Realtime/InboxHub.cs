@@ -68,6 +68,12 @@ internal sealed class InboxNotifier(IHubContext<InboxHub> hub)
     public Task ConversationChangedAsync(Guid tenantId, Guid conversationId, CancellationToken cancellationToken) =>
         hub.Clients.Group(Group(tenantId)).SendAsync(ConversationChanged, new { conversationId }, cancellationToken);
 
+    /// <summary>The AI created an order request that waits for a person (ADR 0025): IDs only.</summary>
+    public const string OrderRequested = "orderRequested";
+
+    public Task OrderRequestedAsync(Guid tenantId, Guid conversationId, Guid orderId, CancellationToken cancellationToken) =>
+        hub.Clients.Group(Group(tenantId)).SendAsync(OrderRequested, new { conversationId, orderId }, cancellationToken);
+
     public Task TypingAsync(Guid tenantId, Guid conversationId, Guid userId, CancellationToken cancellationToken) =>
         hub.Clients.Group(Group(tenantId)).SendAsync(Typing, new { conversationId, userId }, cancellationToken);
 

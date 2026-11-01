@@ -7,6 +7,7 @@ import { MfaReminder } from '../features/account/MfaReminder';
 import { ReauthDialog } from '../features/account/ReauthDialog';
 import { MentionAlert } from '../features/inbox/MentionAlert';
 import { useInboxRealtime } from '../features/inbox/realtime';
+import { OrderRequestAlert } from '../features/orders/OrderRequestAlert';
 import { useUiStore } from '../stores/ui-store';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -47,6 +48,7 @@ export function AppShell() {
       </div>
       <ReauthDialog />
       <MentionAlert />
+      <OrderRequestAlert />
     </div>
   );
 }

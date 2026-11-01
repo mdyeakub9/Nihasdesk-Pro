@@ -175,5 +175,7 @@ internal static class OrderErrors
 
     public static readonly Error MixedCurrency = Error.Validation("order.mixed_currency", "All products and the delivery zone must use the same currency.");
 
+    public static readonly Error PendingExists = Error.Conflict("order.pending_exists", "This chat already has an order request waiting for the team.");
+
     public static readonly Error NotPending = Error.Conflict("order.not_pending", "This order was already approved or rejected.");
 }

@@ -27,6 +27,22 @@ PRD 4.9: the AI collects an order and creates an **order request**; an order exi
 - **Prices in the form come from the server:** `POST /api/v1/orders/quote` runs the same pricing as a saved order, without saving or reserving anything. The dashboard never computes a total.
 - The inbox **customer panel** lists the chat's orders (`GET /api/v1/orders?conversationId=`), replacing the placeholder count.
 
+## Update 2026-11-01 (part 3: the AI takes order requests)
+- **Two new AI tools.** `quote_order` (items + zone) returns the summary computed by code: unit prices, line totals, shipping, subtotal and total. These amounts become the only totals the reply may state (SEC-38). `create_order_request` (items, zone, name, phone, address) creates a **pending request** through `IOrderRequests`.
+  - The conversation comes from the claimed turn (`AgentTools.ConversationId`), never from the model (SEC-36). The dashboard's test chat can't create requests.
+  - Neither tool can confirm an order.
+- **Prompt:** offer only available variants; collect the template fields and ask only for what is missing or wrong; show the quote; create the request only after the customer confirms; then say the shop will confirm shortly, never that the order is confirmed. Complaints, refunds, a request for a person, or things outside an order request still hand off.
+- **Errors the AI can act on:**
+  - Invalid fields come back as field names only (no customer values), so the AI asks again.
+  - Not enough stock → the AI offers what is available.
+  - A second request while one is pending → `order.pending_exists` (one open request per chat, SEC-42).
+- `get_shipping_options` now also returns each zone's `id`. The team's assistant (ADR 0023) doesn't get `create_order_request`.
+- **Customer and team, through `IOrderNotifications`** (defined in Commerce, implemented by the Inbox):
+  - A new request sends `orderRequested` `{ conversationId, orderId }` to the workspace's dashboards, which show an alert linking to the order.
+  - On approval the customer gets, in their language and from the person who decided: "Ordine #1001 confermato! ✅ Totale da pagare alla consegna: €185.00." On rejection they get a polite message; the reason stays with the team.
+  - These messages don't change who answers the chat.
+  - Outside Meta's 24-hour window nothing is sent (SEC-43); the team gets a note in the chat to contact the customer another way. WhatsApp utility templates come later.
+
 ## Consequences
 - Prices are fixed when the request is created or edited. A catalog price change between request and approval isn't applied automatically: edit the request to price it again.
 - Customer messages on approval and rejection, team alerts and the WhatsApp template outside the 24-hour window come with part 3.

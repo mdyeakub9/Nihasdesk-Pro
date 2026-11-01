@@ -873,6 +873,11 @@
       "order_zone_not_found": "This delivery zone no longer exists. Choose another one.",
       "order_mixed_currency": "The products and the delivery zone use different currencies.",
       "order_not_pending": "Someone already approved or rejected this order."
+    },
+    "alert": {
+      "text": "New order request from the AI, waiting for approval.",
+      "open": "Open",
+      "dismiss": "Dismiss"
     }
   }
 }

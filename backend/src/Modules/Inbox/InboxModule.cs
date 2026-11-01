@@ -30,6 +30,7 @@ public sealed class InboxModule : IModule
         services.AddScoped<IOutboundMessages, OutboundMessages>();
         services.AddScoped<IAiConversations, AiConversations>();
         services.AddScoped<IOrderConversations, OrderConversations>();
+        services.AddScoped<IOrderNotifications, OrderNotifications>();
         services.AddScoped<ConversationsHandler>();
         services.AddScoped<IValidator<ListConversationsQuery>, ListConversationsValidator>();
         services.AddScoped<IValidator<ListMessagesQuery>, ListMessagesValidator>();

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { apiUrl, getCsrfToken } from '../../lib/api';
 import { useSession } from '../session/useSession';
 import { inboxKeys } from './api';
+import { useOrderRequestStore } from '../orders/requests';
 import { useMentionStore } from './mentions';
 import { useTypingStore } from './typing';
 
@@ -42,6 +43,15 @@ export function useInboxRealtime() {
       connection.on('mentioned', (event: { conversationId?: unknown; noteId?: unknown }) => {
         if (typeof event?.conversationId === 'string' && typeof event.noteId === 'string') {
           useMentionStore.getState().received({ conversationId: event.conversationId, noteId: event.noteId });
+        }
+      });
+      // The AI created an order request that waits for a person (ADR 0025): IDs only.
+      connection.on('orderRequested', (event: { conversationId?: unknown; orderId?: unknown }) => {
+        if (typeof event?.conversationId === 'string' && typeof event.orderId === 'string') {
+          useOrderRequestStore
+            .getState()
+            .received({ conversationId: event.conversationId, orderId: event.orderId });
+          void queryClient.invalidateQueries({ queryKey: ['orders'] });
         }
       });
       // A team member is writing in a conversation (PRD 4.4): IDs only.

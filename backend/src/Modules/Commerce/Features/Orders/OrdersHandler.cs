@@ -20,6 +20,7 @@ internal sealed class OrdersHandler(
     CommerceDbContext db,
     OrderPricer pricer,
     IOrderConversations conversations,
+    IOrderNotifications notifications,
     ITeamDirectory team,
     IAuditTrail audit,
     ITenantContext tenant,
@@ -141,16 +142,28 @@ internal sealed class OrdersHandler(
             return OrderErrors.ConversationNotFound;
         }
 
+        // One open request per chat (SEC-42): the team decides it before the AI takes another.
+        if (await db.Orders.AnyAsync(o => o.ConversationId == conversationId && o.Status == OrderStatus.Pending, ct))
+        {
+            return OrderErrors.PendingExists;
+        }
+
         var priced = await pricer.PriceAsync(request.Items!, request.ShippingZoneId, ct);
         if (!priced.IsSuccess)
         {
             return priced.Error;
         }
 
-        return await SaveNewAsync(
+        var created = await SaveNewAsync(
             number => Order.RequestFromAi(tenant.TenantId, number, conversationId, contactId.Value, Details(request), priced.Value),
             takeStock: false,
             ct);
+        if (created.IsSuccess)
+        {
+            await notifications.RequestCreatedAsync(conversationId, created.Value.Id, ct);
+        }
+
+        return created;
     }
 
     /// <summary>"Edit then approve": a pending request gets new details and lines, priced again from the catalog.</summary>
@@ -188,6 +201,10 @@ internal sealed class OrdersHandler(
         if (result.IsSuccess)
         {
             await audit.RecordAsync("order.approved", ct);
+            if (FromAiChat(result.Value) is { } chat)
+            {
+                await notifications.ApprovedAsync(chat, result.Value.Number, result.Value.Total, result.Value.Currency, ct);
+            }
         }
 
         return result;
@@ -200,10 +217,17 @@ internal sealed class OrdersHandler(
         if (result.IsSuccess)
         {
             await audit.RecordAsync("order.rejected", ct);
+            if (FromAiChat(result.Value) is { } chat)
+            {
+                await notifications.RejectedAsync(chat, result.Value.Number, ct);
+            }
         }
 
         return result;
     }
+
+    /// <summary>The customer hears back only about requests the AI took in their chat; the team handles its own orders.</summary>
+    private static Guid? FromAiChat(OrderResponse order) => order.Source == "ai" ? order.ConversationId : null;
 
     /// <summary>Locks the order row, so the same request is never approved twice, then decides it.</summary>
     private async Task<Result<OrderResponse>> DecideAsync(Guid id, Action<Order> decide, bool takeStock, CancellationToken ct)
@@ -351,8 +375,31 @@ internal sealed class OrdersHandler(
 }
 
 /// <summary>The AI's entry point (PRD 4.9): same validation and prices as the team's, result is a pending request.</summary>
-internal sealed class OrderRequestsService(OrdersHandler orders, FluentValidation.IValidator<OrderRequest> validator) : IOrderRequests
+internal sealed class OrderRequestsService(OrdersHandler orders, OrderPricer pricer, FluentValidation.IValidator<OrderRequest> validator) : IOrderRequests
 {
+    public async Task<Result<OrderQuote>> QuoteAsync(IReadOnlyList<OrderRequestLine> lines, Guid shippingZoneId, CancellationToken cancellationToken)
+    {
+        if (lines.Count is 0 or > OrderValues.MaxLines || lines.Any(l => l.Quantity is < 1 or > OrderValues.MaxQuantity))
+        {
+            return Error.Validation("order.invalid", $"Send 1 to {OrderValues.MaxLines} items with a quantity of 1 to {OrderValues.MaxQuantity}.");
+        }
+
+        var priced = await pricer.PriceAsync(lines.Select(l => new OrderItemRequest(l.ProductId, l.VariantId, l.Quantity)).ToList(), shippingZoneId, cancellationToken);
+        if (!priced.IsSuccess)
+        {
+            return priced.Error;
+        }
+
+        var p = priced.Value;
+        return Result.Success(new OrderQuote(
+            p.Lines.Select(l => new OrderQuoteLine(l.ProductId, l.VariantId, l.Title, l.Variant, l.UnitPrice, l.Quantity)).ToList(),
+            p.ShippingZoneName,
+            p.Subtotal,
+            p.ShippingCost,
+            p.Total,
+            p.Currency));
+    }
+
     public async Task<Result<OrderRequestCreated>> CreateAsync(
         Guid conversationId, IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken)
     {

@@ -82,6 +82,7 @@ internal static partial class Guardrails
 /// </summary>
 internal sealed partial class ReplyAgent(
     AgentBrain brain,
+    AgentTools tools,
     AiSettingsStore settingsStore,
     IAiConversations conversations,
     IContactDirectory contacts,
@@ -141,6 +142,8 @@ internal sealed partial class ReplyAgent(
 
         var contact = (await contacts.GetAsync([conversation.ContactId], ct)).GetValueOrDefault(conversation.ContactId);
         var shop = await settingsStore.ShopNameAsync(ct);
+        // Order requests belong to this conversation; the model never picks one (SEC-36).
+        tools.ConversationId = conversationId;
         var thought = await brain.ThinkAsync(Prompt.System(shop, settings, FirstName(contact?.Name), contact?.Language), conversation.Messages, ct);
 
         if (thought.Failed is { } failed)
@@ -216,7 +219,9 @@ internal static class Prompt
         - Shipping costs, free-shipping thresholds and delivery times come ONLY from get_shipping_options. Don't add up totals: give each price as the tools say it.
         - Shop rules (returns, payment, contact details, opening hours…) come ONLY from search_knowledge.
         - If you don't find the answer, call handoff_to_human with reason "unknown_answer" and the question. Don't make anything up.
-        - If the customer wants to order, complains, asks for a refund or a person, call handoff_to_human with the matching reason.
+        - To take an order: offer only available variants (get_product_options). Collect the name, phone, street and number, postal code, city, province, country and the delivery zone (get_shipping_options). Reuse what the customer already wrote, even in one message, and ask only for what is missing or wrong.
+        - Then call quote_order and show its summary with exactly its amounts (payment: cash on delivery). Only after the customer confirms, call create_order_request. Afterwards say the shop will confirm the order shortly — never that it is confirmed.
+        - If the customer complains, asks for a refund or a person, or wants something you can't take as an order request, call handoff_to_human with the matching reason.
         - Never share links. Share a phone number, email or address only exactly as search_knowledge gave it. Never promise discounts, delivery dates or anything the tools didn't say.
 
         {{OwnerGuidance(settings)}}
