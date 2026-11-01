@@ -43,6 +43,11 @@ PRD 4.9: the AI collects an order and creates an **order request**; an order exi
   - These messages don't change who answers the chat.
   - Outside Meta's 24-hour window nothing is sent (SEC-43); the team gets a note in the chat to contact the customer another way. WhatsApp utility templates come later.
 
+
+## Update 2026-11-01 (owner feedback: summary to the customer, New order)
+- **The customer gets the order summary in the chat** whenever an order of that chat is confirmed: a team order created from the chat, or an approved AI request. It lists the lines (quantity, variant, line total), shipping with the zone, the total to pay on delivery and the delivery address, in the customer's language, from the person who confirmed it. All amounts come from the saved order (rule 5). Outside the 24-hour window the team gets a note instead (SEC-43). `IOrderNotifications.ApprovedAsync` became `ConfirmedAsync(conversationId, ConfirmedOrderSummary)`.
+- **Orders page → New order:** the same create dialog as the inbox, without a chat (e.g. an order taken by phone). Such an order sends nobody a message.
+
 ## Consequences
 - Prices are fixed when the request is created or edited. A catalog price change between request and approval isn't applied automatically: edit the request to price it again.
 - Customer messages on approval and rejection, team alerts and the WhatsApp template outside the 24-hour window come with part 3.

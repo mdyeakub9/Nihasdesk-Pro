@@ -6,6 +6,7 @@ using Nihasdesk.Api.Tests.Auth;
 using Nihasdesk.Api.Tests.Inbox;
 using Nihasdesk.Infrastructure.Tenancy;
 using Nihasdesk.Modules.Commerce.Contracts;
+using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.TestSupport;
 using Npgsql;
 
@@ -58,6 +59,56 @@ public sealed class OrdersTests(AuthFixture fixture)
 
         var list = await owner.Http.GetFromJsonAsync<JsonElement>($"{Path}?status=confirmed");
         Assert.Equal([1002, 1001], list.GetProperty("items").EnumerateArray().Select(o => o.GetProperty("number").GetInt32()));
+    }
+
+    [Fact]
+    public async Task A_team_order_from_a_chat_sends_the_summary_there_and_one_without_a_chat_sends_nothing()
+    {
+        var inbox = new InboxTests(fixture);
+        var (owner, workspace) = await inbox.OwnerAsync();
+        var bag = await ProductAsync(owner, "Borsa nera", 8900, stock: 5);
+        var zone = await ZoneAsync(owner, price: 700);
+        var chat = (await inbox.ReceiveAsync(workspace, "visitor-o9", "Vorrei la borsa")).ConversationId;
+
+        Assert.Equal(HttpStatusCode.Created, (await owner.PostAsync(Path, Order(zone, (bag, 2), chat))).StatusCode);
+        var messages = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{chat}/messages")).GetProperty("items").EnumerateArray().ToList();
+        var summary = messages.Last();
+        Assert.False(summary.GetProperty("internal").GetBoolean());
+        Assert.Equal("agent", summary.GetProperty("author").GetString());
+        Assert.Equal(
+            "Ordine #1001 confermato ✅\n\n2× Borsa nera — Nero  €178.00\nSpedizione (Sardegna)  €7.00\nTotale da pagare alla consegna: €185.00\nConsegna: Via Roma 12, 07100 Sassari\n\nGrazie!",
+            summary.GetProperty("text").GetString());
+        // Telling the customer about the order doesn't change who answers the chat.
+        var conversation = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{chat}")).GetProperty("conversation");
+        Assert.Equal("ai", conversation.GetProperty("responder").GetString());
+
+        // An order without a chat (e.g. from the Orders page) writes to nobody.
+        var before = messages.Count;
+        var phoneOrder = await (await owner.PostAsync(Path, Order(zone, (bag, 1)))).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Null, phoneOrder.GetProperty("conversationId").ValueKind);
+        Assert.Equal(before, (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{chat}/messages")).GetProperty("items").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task A_team_order_outside_the_24_hour_window_leaves_a_note_instead_of_writing()
+    {
+        var inbox = new InboxTests(fixture);
+        var (owner, workspace) = await inbox.OwnerAsync();
+        var bag = await ProductAsync(owner, "Borsa nera", 8900, stock: 5);
+        var zone = await ZoneAsync(owner, price: 700);
+        Guid chat;
+        await using (var scope = Scope(workspace))
+        {
+            // A Messenger customer who last wrote 25 hours ago (SEC-43).
+            chat = (await scope.ServiceProvider.GetRequiredService<IInboxIngest>().ReceiveAsync(
+                new InboundMessage("messenger", "visitor-o10", "Giulia Rossi", "Ciao", null, Api.Clock.GetUtcNow().AddHours(-25)),
+                CancellationToken.None)).ConversationId;
+        }
+
+        Assert.Equal(HttpStatusCode.Created, (await owner.PostAsync(Path, Order(zone, (bag, 1), chat))).StatusCode);
+        var last = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{chat}/messages")).GetProperty("items").EnumerateArray().Last();
+        Assert.True(last.GetProperty("internal").GetBoolean());
+        Assert.Contains("24-hour window is closed", last.GetProperty("text").GetString(), StringComparison.Ordinal);
     }
 
     [Fact]

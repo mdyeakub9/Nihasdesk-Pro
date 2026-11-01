@@ -130,7 +130,14 @@ internal sealed class OrdersHandler(
         }
 
         await audit.RecordAsync("order.created", ct);
-        return Result.Success(ToResponse(created.Value));
+        var order = ToResponse(created.Value);
+        // Created from a chat: the customer gets the summary there (PRD 4.9).
+        if (order.ConversationId is { } chat)
+        {
+            await notifications.ConfirmedAsync(chat, Summary(order), ct);
+        }
+
+        return Result.Success(order);
     }
 
     /// <summary>The AI's order request (via <see cref="IOrderRequests"/>): pending, no stock taken yet.</summary>
@@ -203,7 +210,7 @@ internal sealed class OrdersHandler(
             await audit.RecordAsync("order.approved", ct);
             if (FromAiChat(result.Value) is { } chat)
             {
-                await notifications.ApprovedAsync(chat, result.Value.Number, result.Value.Total, result.Value.Currency, ct);
+                await notifications.ConfirmedAsync(chat, Summary(result.Value), ct);
             }
         }
 
@@ -228,6 +235,17 @@ internal sealed class OrdersHandler(
 
     /// <summary>The customer hears back only about requests the AI took in their chat; the team handles its own orders.</summary>
     private static Guid? FromAiChat(OrderResponse order) => order.Source == "ai" ? order.ConversationId : null;
+
+    private static ConfirmedOrderSummary Summary(OrderResponse o) => new(
+        o.Number,
+        o.Items.Select(i => new ConfirmedOrderLine(i.Title, i.Variant, i.Quantity, i.LineTotal)).ToList(),
+        o.ShippingZoneName,
+        o.ShippingCost,
+        o.Total,
+        o.Currency,
+        o.Street,
+        o.PostalCode,
+        o.City);
 
     /// <summary>Locks the order row, so the same request is never approved twice, then decides it.</summary>
     private async Task<Result<OrderResponse>> DecideAsync(Guid id, Action<Order> decide, bool takeStock, CancellationToken ct)

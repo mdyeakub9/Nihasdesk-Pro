@@ -25,14 +25,36 @@ internal sealed class OrderNotifications(
     public Task RequestCreatedAsync(Guid conversationId, Guid orderId, CancellationToken cancellationToken) =>
         notifier.OrderRequestedAsync(tenant.TenantId, conversationId, orderId, cancellationToken);
 
-    public Task ApprovedAsync(Guid conversationId, int number, long total, string currency, CancellationToken cancellationToken) =>
-        TellCustomerAsync(
-            conversationId,
-            italian => italian
-                ? $"Ordine #{number} confermato! ✅ Totale da pagare alla consegna: {ProductMessagesHandler.Price(total, currency)}. Grazie!"
-                : $"Your order #{number} is confirmed! ✅ Total to pay on delivery: {ProductMessagesHandler.Price(total, currency)}. Thank you!",
-            $"order #{number} was confirmed",
-            cancellationToken);
+    public Task ConfirmedAsync(Guid conversationId, ConfirmedOrderSummary order, CancellationToken cancellationToken) =>
+        TellCustomerAsync(conversationId, italian => SummaryText(order, italian), $"order #{order.Number} was confirmed", cancellationToken);
+
+    /// <summary>
+    /// The order as the customer reads it (PRD 4.9): lines, shipping, the total to pay on delivery and
+    /// the address. Every amount comes from the saved order, which code priced (rule 5).
+    /// </summary>
+    internal static string SummaryText(ConfirmedOrderSummary order, bool italian)
+    {
+        string Money(long cents) => ProductMessagesHandler.Price(cents, order.Currency);
+        var lines = order.Lines.Select(l =>
+            $"{l.Quantity}× {(string.IsNullOrEmpty(l.Variant) ? l.Title : $"{l.Title} — {l.Variant}")}  {Money(l.LineTotal)}");
+        var shipping = order.ShippingCost == 0 ? (italian ? "gratis" : "free") : Money(order.ShippingCost);
+        var text = new List<string>
+        {
+            italian ? $"Ordine #{order.Number} confermato ✅" : $"Your order #{order.Number} is confirmed ✅",
+            string.Empty,
+        };
+        text.AddRange(lines);
+        text.Add(italian ? $"Spedizione ({order.ShippingZoneName})  {shipping}" : $"Shipping ({order.ShippingZoneName})  {shipping}");
+        text.Add(italian ? $"Totale da pagare alla consegna: {Money(order.Total)}" : $"Total to pay on delivery: {Money(order.Total)}");
+        text.Add(italian
+            ? $"Consegna: {order.Street}, {order.PostalCode} {order.City}"
+            : $"Delivery: {order.Street}, {order.PostalCode} {order.City}");
+        text.Add(string.Empty);
+        text.Add(italian ? "Grazie!" : "Thank you!");
+        var message = string.Join('\n', text);
+        // A message has at most 4,000 characters; 20 lines fit easily, but never fail on it.
+        return message.Length <= Message.TextMaxLength ? message : message[..Message.TextMaxLength];
+    }
 
     public Task RejectedAsync(Guid conversationId, int number, CancellationToken cancellationToken) =>
         TellCustomerAsync(

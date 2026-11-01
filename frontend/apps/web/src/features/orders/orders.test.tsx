@@ -223,3 +223,133 @@ describe('Order request alert', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe('New order from the Orders page', () => {
+  it('creates an order without a chat, with the server total and IDs only', async () => {
+    const fetchMock = fakeApi({
+      routes: {
+        'GET /api/v1/orders': () => json({ items: [], nextCursor: null }),
+        'GET /api/v1/orders/counts': () => json({ pending: 0, confirmed: 0, rejected: 0 }),
+        'GET /api/v1/shipping/zones': () =>
+          json([
+            {
+              id: 'z-sar',
+              name: 'Sardegna',
+              areas: null,
+              price: 700,
+              currency: 'EUR',
+              freeOver: null,
+              minDays: 2,
+              maxDays: 4,
+            },
+          ]),
+        'GET /api/v1/products': () =>
+          json({
+            items: [
+              {
+                id: 'p-bag',
+                title: 'Borsa nera',
+                handle: 'borsa',
+                status: 'active',
+                productType: null,
+                category: null,
+                vendor: null,
+                variantCount: 1,
+                priceMin: 8900,
+                priceMax: 8900,
+                currency: 'EUR',
+                stock: 5,
+                updatedAt: '2026-10-30T09:00:00Z',
+              },
+            ],
+            nextCursor: null,
+          }),
+        'GET /api/v1/products/p-bag': () =>
+          json({
+            id: 'p-bag',
+            title: 'Borsa nera',
+            handle: 'borsa',
+            description: null,
+            status: 'active',
+            productType: null,
+            category: null,
+            vendor: null,
+            tags: [],
+            optionNames: ['Colore'],
+            variants: [
+              {
+                id: 'v-nero',
+                sku: 'BN-1',
+                barcode: null,
+                option1: 'Nero',
+                option2: null,
+                option3: null,
+                price: 8900,
+                compareAtPrice: null,
+                cost: null,
+                currency: 'EUR',
+                trackInventory: true,
+                stock: 5,
+                inventoryPolicy: 'deny',
+                weightGrams: null,
+                requiresShipping: true,
+                available: true,
+              },
+            ],
+            createdAt: '2026-10-30T09:00:00Z',
+            updatedAt: '2026-10-30T09:00:00Z',
+          }),
+        'POST /api/v1/orders/quote': () =>
+          json({
+            items: [],
+            shippingZoneName: 'Sardegna',
+            shippingCost: 700,
+            subtotal: 8900,
+            total: 9600,
+            currency: 'EUR',
+          }),
+        'POST /api/v1/orders': () =>
+          json(
+            {
+              ...request,
+              id: 'o-2',
+              number: 1002,
+              status: 'confirmed',
+              source: 'team',
+              conversationId: null,
+            },
+            201,
+          ),
+      },
+    });
+    await renderApp('/orders');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'New order' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Create order' });
+    expect(dialog.closest('form')).toBeNull();
+    expect(within(dialog).getByRole('textbox', { name: 'Name' })).toHaveValue('');
+
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Borsa nera' }));
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Add Borsa nera — Nero' }));
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Name' }), 'Marco Bianchi');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Phone' }), '+39 340 1112233');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Street and number' }), 'Via Mare 3');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Postal code' }), '07100');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'City' }), 'Sassari');
+    await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: 'Delivery zone' }), 'z-sar');
+    expect(
+      await within(within(dialog).getByRole('region', { name: 'Order total' })).findByText('€96.00'),
+    ).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Create order' }));
+
+    const status = await within(dialog).findByRole('status');
+    expect(status).toHaveTextContent('Order #1002 is confirmed');
+    // No chat: nobody is written to.
+    expect(status).not.toHaveTextContent('summary');
+    expect(callsTo(fetchMock, '/api/v1/orders').find((c) => c.body)?.body).toMatchObject({
+      conversationId: null,
+      customerName: 'Marco Bianchi',
+      items: [{ productId: 'p-bag', variantId: 'v-nero', quantity: 1 }],
+    });
+  });
+});

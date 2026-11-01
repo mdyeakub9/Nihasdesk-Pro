@@ -126,7 +126,9 @@ public sealed class OrderRequestTests(AuthFixture fixture)
         var confirmation = messages.Last();
         Assert.Equal("agent", confirmation.GetProperty("author").GetString());
         Assert.False(confirmation.GetProperty("internal").GetBoolean());
-        Assert.Equal("Ordine #1001 confermato! ✅ Totale da pagare alla consegna: €185.00. Grazie!", confirmation.GetProperty("text").GetString());
+        Assert.Equal(
+            "Ordine #1001 confermato ✅\n\n2× Borsa nera — Nero  €178.00\nSpedizione (Sardegna)  €7.00\nTotale da pagare alla consegna: €185.00\nConsegna: Via Roma 12, 07100 Sassari\n\nGrazie!",
+            confirmation.GetProperty("text").GetString());
         Assert.Equal(3, await StockAsync(shop));
         // Telling the customer doesn't take the chat away from the AI.
         Assert.Equal("ai", (await shop.Owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}")).GetProperty("conversation").GetProperty("responder").GetString());

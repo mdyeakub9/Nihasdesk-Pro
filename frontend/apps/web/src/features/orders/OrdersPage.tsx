@@ -1,10 +1,11 @@
 import { Badge, Button, cn } from '@nihasdesk/ui';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { Plus, ShoppingBag, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { formatAge } from '../../lib/format';
 import { formatMoney } from '../catalog/money';
+import { CreateOrderDialog } from './CreateOrderDialog';
 import { orderStatuses, useOrderCounts, useOrders, type OrderStatus } from './api';
 import { statusTone } from './status';
 
@@ -13,6 +14,7 @@ export function OrdersPage() {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage ?? 'en';
   const [status, setStatus] = useState<OrderStatus>('pending');
+  const [creating, setCreating] = useState(false);
   const { data: counts } = useOrderCounts();
   const orders = useOrders(status);
   const items = orders.data?.pages.flatMap((page) => page.items) ?? [];
@@ -20,7 +22,14 @@ export function OrdersPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="flex flex-col gap-6 p-4 md:p-8">
-        <h1 className="text-[28px] leading-9 font-semibold">{t('nav.orders')}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="flex-1 text-[28px] leading-9 font-semibold">{t('nav.orders')}</h1>
+          <Button onClick={() => setCreating(true)}>
+            <Plus aria-hidden="true" />
+            {t('orders.new')}
+          </Button>
+        </div>
+        {creating && <CreateOrderDialog onClose={() => setCreating(false)} />}
 
         <div role="group" aria-label={t('orders.status')} className="flex flex-wrap gap-1">
           {orderStatuses.map((value) => (
