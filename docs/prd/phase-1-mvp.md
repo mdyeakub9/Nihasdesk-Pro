@@ -1,7 +1,7 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.7 · 2026-10-31 · Owner: Yeakub_
-_Related: `docs/project-brief.md`, ADR 0003._
+_Status: draft v0.8 · 2026-11-03 · Owner: Yeakub_
+_Related: `docs/project-brief.md`, ADR 0003, ADR 0026 (AI knowledge and memory)._
 
 ## 1. Problem
 Owners of small online shops in Italy sell through Instagram, Facebook and WhatsApp. Customers ask the same questions all day and night (price, size, colour, stock, delivery, returns). If nobody answers quickly, the sale is lost. Owners can't be online 24/7, and messages are spread across three apps, so leads get forgotten.
@@ -96,6 +96,7 @@ The AI is never "trained"; it is given the right information per message. Inform
 These values are used by **code**: order totals, shipping cost and delivery estimates are always computed from them, never written or calculated by the model (rule 5, SEC-41). The AI receives the relevant values through tools.
 
 **Layer 2 — Instructions (short, always sent).** Small blocks the owner writes: about the shop, tone, do's and don'ts, current offer. Each block can be switched on/off. A size budget is shown (characters) because every block is sent with every message. Seeded from templates of the shop's vertical pack (ADR 0003).
+- **Temporary notes (snippets with an end date):** a block can have "show until" (date and time), e.g. "Deliveries are 2 days late this week". It switches itself off at that time and moves to "Expired" (can be renewed). The owner sees active temporary notes at the top of the AI page.
 
 **Layer 3 — Knowledge (long, looked up when needed).**
 - Sources: text pasted with a title, FAQ entries, PDF/DOCX upload, single website page import (through the SSRF-safe client, SEC-05), and the answers the team teaches via "Teach the AI".
@@ -103,27 +104,64 @@ These values are used by **code**: order totals, shipping cost and delivery esti
 - A **"test a question"** box shows which passages the AI would find for a question.
 - Each answer shows the owner which sources/passages were used.
 
+**Importing a source (ingestion)** — how a file or page becomes knowledge (technical design: ADR 0026)
+- Upload or URL → the file is checked (type by content, size, SEC-04) and stored → a background job reads it → the source shows a status: **Reading… → Ready to review → Live**, or **Failed** with a plain reason ("This PDF is a scan; we can't read text from images yet").
+- The AI never reads the raw file. Code reads it once, cleans it, splits it into sections and stores them with search indexes; the AI only gets the 3–4 best sections for a question later.
+- Readers: PDF with selectable text, DOCX, plain text, one web page (main content only, menus and footers removed). Tables are kept whole as tables; headings are kept as the section path ("Shipping › Italy › Islands").
+- Limits per workspace (Phase 1 defaults, shown in the UI): file up to **20 MB** and **300 pages**, up to **100 sources**, text only (no images, no scanned PDFs, no password-protected files). Reaching a limit shows a clear message, never a silent failure.
+- Same file uploaded again → detected (content hash) and not stored twice. A new version of a file replaces the old one only when published.
+- **Web pages are re-read automatically once a week** (and on "Re-read now"). If the page changed, the new content becomes a draft to review; if re-reading fails twice in a row, the owner gets an in-app notice and an email, and the last good version stays live.
+- Deleting a source deletes its sections and search data (SEC-45).
+
+**Knowledge review (preview before it goes live)**
+- After reading, the owner sees **exactly what the AI will be able to find**: the source split into sections, each with its heading path, text and page number.
+- Per section: edit the text, exclude it ("AI should not use this"), or merge it with the next one. Edits are saved in the draft.
+- Warnings shown at the top, in plain words:
+  - "No text found on pages 4–6" (scanned or image pages).
+  - "This looks like a price list — prices for customers always come from Products" (prices in a document are never used for totals).
+  - **Conflicts with business facts:** the document says something different from Layer 1 (e.g. document "shipping €5", settings "Italy €4.90"; document "returns 30 days", settings "14 days"). The owner chooses: fix the settings, fix the section, or exclude it. Customers always get the Layer 1 value meanwhile.
+- "Test a question" works on the reviewed draft before publishing.
+
+**How the AI finds the right part (retrieval)**
+- The customer's question is turned into a clear search question (using the last messages, e.g. "and to Sardinia?" → "shipping cost to Sardinia").
+- Search by meaning and by keywords at the same time, in Italian and English, only inside this workspace; the best 3–4 sections are given to the AI with their source.
+- If nothing matches well enough, the AI says it will check with the team and hands off (reason "unknown answer"); the question appears in "Teach the AI". It never guesses.
+- The reply records which sections were used, shown to the team as sources.
+
 **Draft → test → publish (Layers 1–3)**
 - Changes are saved as a **draft**. The test chat uses the draft; customers keep getting the **published** version.
 - **Publish** makes the draft live; every publish is a **version** with who/when and a short diff; **one-click rollback** to an earlier version.
-- Exception: turning the AI off, or switching off a single instruction block, applies immediately (safety switch).
+- Exception: turning the AI off, or switching off a single instruction block, applies immediately (safety switch). A temporary note reaching its end date also switches off immediately.
+- Before publishing, the dashboard shows what changed (added / edited / removed sections and blocks) and unresolved conflict warnings.
 
 **Teach the AI (existing, extended)**
 - Questions the AI could not answer are listed for the team; a taught answer becomes a Layer 3 source.
 - When a team member edits an AI draft or takes over and answers, the dashboard offers "Save as knowledge" for that answer.
 
-**Later (not Phase 1):** "Tell the AI what to change" — the owner writes a change in plain language; an assistant shows the current text and the proposed change, applies it to the draft after confirmation and runs the test chat.
+**Later (not Phase 1):** reading scanned PDFs and images (OCR), whole-website crawling and Google Drive/Notion sync, and "Tell the AI what to change" — the owner writes a change in plain language; an assistant shows the current text and the proposed change, applies it to the draft after confirmation and runs the test chat.
 
 ### 4.8 AI agent
 - Replies in the customer's language; tone setting (formal/friendly); owner instructions as Layer 2 blocks (4.7).
 - Knows the shop only through the three layers in 4.7; shipping cost, totals and delivery times always come from Layer 1 via tools.
-- Tools: `search_products`, `get_product_options`, `search_knowledge`, `create_lead`, `create_order_request`, `handoff_to_human`.
+- Tools: `search_products`, `get_product_options`, `get_shipping_options`, `search_knowledge`, `get_customer_profile`, `quote_order`, `create_lead`, `create_order_request`, `handoff_to_human`.
 - Never invents prices, stock or policies; if unsure → asks a clarifying question or hands off.
 - Handoff: reason recorded (complaint, refund, special request, low confidence, customer asked for a human); team notified; optional timer after which the conversation returns to AI.
 - AI on/off per channel and per conversation; business-hours mode (AI only outside hours, or always).
 - AI disclosure message (EU AI Act), editable text.
 - **Test chat** inside the dashboard, using the draft (4.7), optionally continuing the same test conversation.
 - Understands images (match to catalog when possible) and voice notes (transcribe).
+
+**Memory (what the AI remembers in a conversation)** — technical design: ADR 0026
+- The AI has no memory of its own; each reply gets a small, chosen context with a fixed size budget: instructions → conversation summary → customer profile → recent messages → found knowledge → tool results.
+- **Recent messages:** the last messages in full (up to the budget).
+- **Conversation summary:** older parts of a long conversation are kept as a short running summary (what the customer wants, chosen product/size, open questions), updated in the background. Team notes are never part of it.
+- **Customer profile:** first name, language, earlier orders and order requests (number, status, date), only when the question needs it, through a tool (`get_customer_profile`). No phone, email or address is sent unless the order flow needs it (GDPR minimization, rule 7).
+- The team can see the summary in the AI assistant tab; when the team takes over, the summary is what they read first.
+
+**Quality and "why did the AI say this"**
+- Every AI reply has a trace for the team: which instruction version, which knowledge sections, which tools with which results, which guardrail checks; no customer data beyond the conversation itself.
+- An **eval set** (50–100 real-style questions per vertical, Italian + English, with the expected answer or "should hand off") runs before every prompt, model or search change; results are compared with the last run.
+- Team 👍/👎 on AI replies is stored and reviewed; 👎 replies can be added to the eval set.
 
 ### 4.9 Order requests (AI takes the order, a human approves it)
 **Rule: the AI never creates a confirmed order.** It collects the order and creates an *order request*; an order exists only after a human approves it.
@@ -167,6 +205,14 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 - Plan limits enforced (AI stops replying when limit is reached; messages still arrive; owner notified at 80% and 100%).
 - Usage page for the owner.
 
+**Keeping AI cost low (no change visible to customers)** — technical design: ADR 0026
+- The fixed part of every request (rules, instructions, tool list) is sent first and identically, so the provider's prompt cache makes it cheaper.
+- Several quick messages from the same customer ("hi" / "do you have" / "this in black?") are waited for a few seconds and answered once.
+- Simple steps (language, intent, needs a human?) use a cheaper model; replies use the main model.
+- Tool results are trimmed to what the reply needs (e.g. top 5 products, not the whole catalog).
+- Background work (summaries, web page re-reading, eval runs) runs in batches outside the reply path.
+- Answers are never reused between customers (each conversation is different and prices must be live).
+
 ### 4.12 Compliance & security
 - Tenant isolation (rules in CLAUDE.md), EU hosting, data export and deletion per workspace, audit log of key actions.
 
@@ -200,7 +246,9 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 - AI answers product questions only from the catalog; in the eval set, 0 invented prices and ≥ 90% correct/acceptable answers (IT + EN).
 - Handoff works end to end with notification and return-to-AI timer.
 - An order flows end to end via chat and via form: product → option buttons → details (messy chat input correctly extracted, only missing fields asked) → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
-- No cross-workspace data access possible (critical tests).
+- No cross-workspace data access possible (critical tests) — for every module with tenant data (Identity, Contacts, Inbox, Channels, AiAgent, Commerce, Shipping), including knowledge sections and their search data.
+- Knowledge: a PDF, DOCX and web page can be imported, reviewed and published; in the eval set the right section is among the found ones for ≥ 85% of questions, and questions without an answer in the knowledge hand off instead of guessing (0 made-up policies).
+- Customers never get unpublished (draft) knowledge or instructions (test).
 - Usage limits enforced and visible.
 - Internal testing passes on our own test shops, then 5 real Italian shops use it in a beta for 2 weeks.
 
