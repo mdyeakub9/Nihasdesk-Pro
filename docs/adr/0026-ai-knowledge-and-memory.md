@@ -1,0 +1,92 @@
+# ADR 0026: AI knowledge and memory — ingestion, retrieval, memory and cost
+
+Date: 2026-11-03 · Status: Proposed (accepted part by part as the issues are built)
+
+## Context
+PRD 4.7, 4.8 and 4.11 (v0.8) ask for document and web page import with a review screen, hybrid search with sources, conversation memory and lower AI cost. Today (ADR 0019, 0020):
+- `search_knowledge` scores policies and FAQ answers by keywords in memory; there are no embeddings.
+- The agent gets the last 20 messages (`HistorySize`) and nothing older.
+- Draft → publish and versions are written in the PRD but not built.
+- `ai.runs` stores the sources of each answer as codes.
+
+A competitor review (Intercom Fin, respond.io, Tidio Lyro, AiPraktor) showed the common baseline: several source types, short temporary notes, scheduled re-sync with failure alerts, testing before going live. None of them shows the owner what the AI actually read or warns about conflicts with the shop's settings; we do both.
+
+## Decision
+
+### 1. Where things live
+Everything stays in the **AiAgent** module (schema `ai`, RLS, `TenantId` on every row). Other modules are read only through contracts: `ICatalog`, `IShippingRates`, `IOrderRequests`, `IAiConversations`, and a new narrow `IContactProfile` in Contacts.
+
+Tables (names indicative, final in the migration PR):
+- `ai.knowledge_sources`: type (`text`, `faq`, `pdf`, `docx`, `web_page`, `taught`), title, origin (file name or URL), content hash, status (`reading`, `review`, `live`, `failed`, `archived`), failure reason, last read, next re-read.
+- `ai.knowledge_sections`: source id, heading path, page, block kind (`text`, `list`, `table`, `faq`), text, token count, excluded flag, embedding `vector(1536)`, full-text `tsvector`, language, embedding model + version, source version.
+- `ai.knowledge_versions`: published snapshots of layers 2 and 3 (author, time, diff summary). Section rows carry the version they belong to; customers read only the published version.
+- `ai.conversation_memory`: conversation id, running summary, covered-up-to message id, updated at.
+- Raw files go to object storage (local: disk folder), never the database.
+
+### 2. Ingestion pipeline (background, Workers)
+`upload/URL → check → store → queue → parse → normalize → chunk → embed → index → status "review"`
+- **Upload checks (SEC-04):** type by content (magic bytes), size and page limits from PRD 4.7, no encrypted files, file names never used as paths.
+- **Fetching web pages (SEC-05):** only through `SafeHttpClient` (no private IPs, redirect and size limits, timeouts).
+- **Parsers behind `IDocumentParser`**, one per type, all returning the same intermediate model: `Document → Sections (heading path, page) → Blocks (paragraph, list, table)`.
+  - PDF: **PdfPig** (text with positions; headings by font size; pages without text → warning "scan").
+  - DOCX: **Open XML SDK** (heading styles, lists, tables).
+  - Web page: **AngleSharp** + **SmartReader** (Readability port; menus, footers, cookie banners removed).
+  - All are .NET, MIT/Apache licensed, run in-process; no Python service in Phase 1. **Docling** (Python container) and **Tesseract OCR** are the upgrade path for scans and complex layouts.
+- **Chunking:** follow headings; target 300–500 tokens, ~50 tokens overlap inside long sections only; never split a table, a list item or a FAQ pair; prefix each chunk with its title and heading path ("Shipping › Italy › Islands") for search, store the clean text separately for display.
+- **Embeddings:** OpenAI `text-embedding-3-small` (1536 dims) through `IEmbeddingProvider`, on the same EU data-residency project as replies (ADR 0006; confirm embeddings are covered before building). Batched, retried, model and version stored per section so a model change can re-embed in the background. Unchanged text (hash) is not embedded again.
+- **Untrusted content (SEC-35):** imported text is data. It is quoted to the model inside a clearly marked block and can never change instructions or tools.
+- **Conflict check:** after parsing, code (not the model) looks for amounts, day counts and shipping words and compares them with Layer 1 values (shipping zones, return days, payment). Matches that differ become review warnings. Prices in documents are never used for totals (rule 5, SEC-41).
+
+### 3. Retrieval (`search_knowledge`)
+- **Query rewrite:** the cheap model turns the latest message plus the last 2–3 messages into one standalone search query (same language). Skipped when the message is already a full question.
+- **Hybrid search, one SQL query, tenant- and version-scoped:**
+  - meaning: pgvector cosine distance, **HNSW** index;
+  - keywords: PostgreSQL full-text with the `italian` or `english` configuration chosen by the section's stored language (`simple` when unknown) plus `unaccent`;
+  - fused with **Reciprocal Rank Fusion** (k = 60), top 20 candidates.
+- **Rerank:** start without a separate reranker; take the top 3–4 by RRF. Add a cheap-model or cross-encoder rerank only if the eval set shows a gain worth the cost.
+- **"Unknown" threshold:** if the best candidate is below a tuned score, the tool returns "no answer" and the agent hands off with `unknown_answer` (the question goes to "Teach the AI").
+- **Context budget:** at most ~1,500 tokens of knowledge per reply; each passage keeps its source id, section id and version; the run stores them (`ai.runs.sources`), and the test box and AI assistant show them.
+- The existing policy and FAQ answers become sections of the same index, so one search covers all of Layer 3. Layer 1 facts are never answered from Layer 3.
+
+### 4. Memory and context assembly
+Per reply, a **context builder** fills a token budget in a fixed order, so the stable part stays cacheable:
+1. system rules + tool definitions (static),
+2. published Layer 2 instruction blocks (change only on publish),
+3. conversation summary (if any),
+4. recent messages, newest kept, until their budget is used (replaces the fixed `HistorySize = 20`),
+5. tool results of this turn (knowledge passages, products, profile).
+- **Rolling summary:** when a conversation has more messages than fit, a background job (cheap model) summarizes the older part into ≤ 120 words: wishes, chosen product/variant, open questions, promises made. Team notes and internal data are never included. Stored in `ai.conversation_memory`, regenerated on demand.
+- **Customer profile:** tool `get_customer_profile` returns first name, language and the last 3 orders/order requests (number, status, date) through `IContactProfile` and `IOrderRequests`. No phone, email or address (SEC-37, rule 7). The contact comes from `ToolContext`, never from the model (SEC-36).
+- Long-term facts about a customer are not written by the AI in Phase 1; the profile is computed from data the shop already has.
+
+### 5. Draft, publish and versions
+- Layer 2 blocks and Layer 3 sections are edited as a draft; the test chat and "test a question" read the draft; customers read the published version.
+- Publish creates an immutable version with a diff summary; rollback publishes an earlier version again. Kill switches (AI off, block off, temporary note end date) act at once.
+- Temporary notes: Layer 2 blocks with `show_until`; an expired note is treated as switched off without a publish.
+- Web page re-read: weekly scheduled job; changed content becomes a draft for review; two failures in a row → in-app notice + email; the last good version stays live.
+
+### 6. Observability and evals
+- Each run stores: instruction version, knowledge section ids, tool calls with trimmed results, guardrail results, model, tokens and latency (SEC-40: tenant-scoped, retention-limited). The team sees it as "Why this answer".
+- An eval runner (CLI/test project, not in production paths) runs a JSON eval set against a seeded test workspace: retrieval recall@4, answer faithfulness (judge model), made-up prices/policies (must be 0), handoff correctness. Results are saved and compared with the previous run; it runs before prompt, model or search changes.
+
+### 7. Cost
+- Static-first prompt order (above) for provider prompt caching.
+- **Debounce:** the AI waits a few seconds (configurable, default 4 s) after a customer message for more messages, then replies once.
+- **Model routing:** cheap model for query rewrite, language/intent and summaries; main model only for the reply.
+- Tool outputs trimmed (top 5 products, top 3–4 passages).
+- Summaries, re-reads, re-embedding and evals run as background or batch jobs.
+- No answer caching between customers.
+
+## Alternatives considered
+- **Separate vector database (Qdrant, Pinecone):** rejected for Phase 1. pgvector keeps tenant isolation (RLS), backups and transactions in one place; a few thousand sections per shop are small.
+- **Fine-tuning a model on shop data:** rejected. Shop data changes daily; fine-tuning is slow, costly, hard to delete per customer (SEC-45) and does not stop invented facts.
+- **Sending whole documents every time:** rejected: expensive, slower and less accurate than finding the right sections.
+- **Docling/Unstructured as a Python service now:** postponed. Better on scans and complex layouts, but adds a second runtime; .NET parsers cover the Phase 1 limits.
+- **Hosted RAG (OpenAI file search / vector stores):** rejected: less control over tenant isolation, deletion, review and sources, and it ties us to one provider (`ILlmProvider` stays provider-agnostic).
+
+## Consequences
+- New dependencies to justify in their PRs (SEC-20): PdfPig, DocumentFormat.OpenXml, AngleSharp, SmartReader, Pgvector for EF Core.
+- New Critical tests: sections, search and memory are tenant-isolated; customers never see draft content.
+- Knowledge search changes from in-memory to SQL; the existing FAQ and policies are migrated into sections (expand → migrate → contract, rule 4).
+- Erasure (SEC-45) must also delete sections, embeddings and conversation summaries of a contact or workspace.
+- Built in steps (issues): evals and trace → ingestion → review → retrieval → memory → draft/publish → cost.

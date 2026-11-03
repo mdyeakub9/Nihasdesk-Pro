@@ -2,6 +2,10 @@
 
 Weekly, 3–5 lines: done, blocked, decisions.
 
+## 2026-W45
+- Requirements (PRD v0.8, ADR 0026 proposed): AI brain v2 — document and web page import (PDF, DOCX, one page) with a review screen showing what the AI will read and warnings for conflicts with shop settings; hybrid search with sources and "unknown → hand off"; conversation memory (token budget, rolling summary, customer profile); temporary notes with an end date; weekly web page re-read with failure alerts; eval set and "why this answer" trace; cost controls (prompt cache order, debounce, cheap-model routing). Based on a competitor review (Intercom Fin, respond.io, Tidio Lyro, AiPraktor).
+- Build order: Critical isolation tests for all modules → evals and trace → ingestion → review → retrieval → memory → draft/publish → cost.
+
 ## 2026-W44
 - Phase 1 PRD open questions answered (PRD v0.4).
 - Decided: AI provider is OpenAI with European data residency (ADR 0006); dashboard in Italian + English; owner alerts via daily email + web push.
