@@ -21,6 +21,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BuildingBlocks\Infrastructure\Nihasdesk.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\Nihasdesk.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Contacts\Nihasdesk.Modules.Contacts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Inbox\Nihasdesk.Modules.Inbox.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Channels\Nihasdesk.Modules.Channels.csproj" />
+    <ProjectReference Include="..\..\src\Modules\AiAgent\Nihasdesk.Modules.AiAgent.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Commerce\Nihasdesk.Modules.Commerce.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Shipping\Nihasdesk.Modules.Shipping.csproj" />
   </ItemGroup>
 
 </Project>

@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Nihasdesk.CriticalTests" />
     <InternalsVisibleTo Include="Nihasdesk.TestSupport" />
   </ItemGroup>
 
