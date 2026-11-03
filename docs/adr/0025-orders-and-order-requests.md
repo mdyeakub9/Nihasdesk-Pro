@@ -50,5 +50,13 @@ PRD 4.9: the AI collects an order and creates an **order request**; an order exi
 
 ## Consequences
 - Prices are fixed when the request is created or edited. A catalog price change between request and approval isn't applied automatically: edit the request to price it again.
-- Customer messages on approval and rejection, team alerts and the WhatsApp template outside the 24-hour window come with part 3.
+- Customer messages on approval and rejection and team alerts came with part 3. Outside Meta's 24-hour window the team only gets a note; the WhatsApp utility template comes with the WhatsApp channel.
 - Orders hold delivery addresses (personal data): they are covered by the workspace export and deletion work (SEC-45), and retention rules come with it.
+
+## Still open from PRD 4.9
+Not built yet; each gets its own Issue and PR:
+- **Option buttons:** variants as Messenger/Instagram quick replies (WhatsApp reply buttons or a list later), with a numbered text list as fallback. Today the AI lists them as text.
+- **Hosted checkout form:** the same template fields on a short page opened from the chat, with signed, expiring, single-purpose links (SEC-29), and rate limits plus CAPTCHA when abused (SEC-42).
+- **Owner-defined order template:** the owner adds fields (e.g. delivery date, gift message) or makes fields optional; chat and form use the same template.
+- **Old pending requests:** highlighted after a configurable time, with an optional reminder to the team.
+- **WhatsApp utility template** for confirmations after the 24-hour window (with the WhatsApp channel).
