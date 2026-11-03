@@ -243,12 +243,69 @@
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
         }
       },
+      "nihasdesk.modules.aiagent": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Commerce": "[1.0.0, )",
+          "Nihasdesk.Modules.Contacts": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.Modules.Inbox": "[1.0.0, )",
+          "Nihasdesk.Modules.Shipping": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.channels": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Contacts": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.Modules.Inbox": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.commerce": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.Modules.Shipping": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.contacts": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
       "nihasdesk.modules.identity": {
         "type": "Project",
         "dependencies": {
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.14, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.14, )",
           "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.inbox": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Commerce": "[1.0.0, )",
+          "Nihasdesk.Modules.Contacts": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
+          "Nihasdesk.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "nihasdesk.modules.shipping": {
+        "type": "Project",
+        "dependencies": {
+          "Nihasdesk.Infrastructure": "[1.0.0, )",
+          "Nihasdesk.Modules.Identity": "[1.0.0, )",
           "Nihasdesk.SharedKernel": "[1.0.0, )"
         }
       },
