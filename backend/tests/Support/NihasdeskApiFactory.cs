@@ -15,7 +15,8 @@ using Nihasdesk.Modules.Identity.Infrastructure;
 namespace Nihasdesk.TestSupport;
 
 /// <summary>The real API on a real database, with captured email and a controllable clock.</summary>
-public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDictionary<string, string?>? settings = null)
+/// <param name="useRealAi">Keeps the configured AI provider instead of <see cref="Ai"/>; only the eval runner sets it.</param>
+public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDictionary<string, string?>? settings = null, bool useRealAi = false)
     : WebApplicationFactory<Program>
 {
     public const string DashboardUrl = "https://app.test";
@@ -76,8 +77,11 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
             services.AddSingleton<TimeProvider>(Clock);
             services.AddHttpClient("hibp").ConfigurePrimaryHttpMessageHandler(() => Hibp);
             services.AddHttpClient(MetaGraphClient.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => Meta);
-            services.RemoveAll<ILlmProvider>();
-            services.AddSingleton(Ai.Provider);
+            if (!useRealAi)
+            {
+                services.RemoveAll<ILlmProvider>();
+                services.AddSingleton(Ai.Provider);
+            }
         });
     }
 

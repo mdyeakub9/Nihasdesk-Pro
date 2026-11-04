@@ -45,6 +45,9 @@
   <Folder Name="/tests/Critical/">
     <Project Path="tests/Critical/Nihasdesk.CriticalTests.csproj" />
   </Folder>
+  <Folder Name="/tests/Evals/">
+    <Project Path="tests/Evals/Nihasdesk.Evals.csproj" />
+  </Folder>
   <Folder Name="/tests/Modules/">
     <Project Path="tests/Modules/Nihasdesk.Modules.Tests.csproj" />
   </Folder>

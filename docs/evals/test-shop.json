@@ -1,0 +1,119 @@
+{
+  "name": "Bottega Eval",
+  "note": "A made-up leather goods shop in Sassari for the AI eval set. No real people, shops or contact details. Prices in cents (EUR).",
+  "products": [
+    {
+      "title": "Borsa a tracolla in pelle",
+      "status": "active",
+      "description": "Borsa a tracolla in vera pelle italiana, cucita a mano. 28 × 20 cm, tracolla regolabile.",
+      "category": "Borse",
+      "vendor": "Bottega Eval",
+      "tags": ["borsa", "tracolla", "pelle"],
+      "optionNames": ["Colore"],
+      "variants": [
+        { "sku": "EV-TRAC-NERO", "option1": "Nero", "price": 8900, "currency": "EUR", "trackInventory": true, "stock": 5, "inventoryPolicy": "deny" },
+        { "sku": "EV-TRAC-MARR", "option1": "Marrone", "price": 8900, "currency": "EUR", "trackInventory": true, "stock": 0, "inventoryPolicy": "deny" },
+        { "sku": "EV-TRAC-CUOI", "option1": "Cuoio", "price": 9500, "currency": "EUR", "trackInventory": true, "stock": 3, "inventoryPolicy": "deny" }
+      ]
+    },
+    {
+      "title": "Zaino in pelle",
+      "status": "active",
+      "description": "Zaino in pelle con tasca per laptop da 14 pollici.",
+      "category": "Borse",
+      "vendor": "Bottega Eval",
+      "tags": ["zaino", "pelle"],
+      "optionNames": ["Colore"],
+      "variants": [
+        { "sku": "EV-ZAINO-NERO", "option1": "Nero", "price": 12900, "compareAtPrice": 14900, "currency": "EUR", "trackInventory": true, "stock": 4, "inventoryPolicy": "deny" }
+      ]
+    },
+    {
+      "title": "Portafoglio uomo in pelle",
+      "status": "active",
+      "description": "Portafoglio da uomo con 8 tasche per carte e portamonete.",
+      "category": "Accessori",
+      "vendor": "Bottega Eval",
+      "tags": ["portafoglio", "uomo", "pelle"],
+      "optionNames": ["Colore"],
+      "variants": [
+        { "sku": "EV-PORT-NERO", "option1": "Nero", "price": 3900, "currency": "EUR", "trackInventory": true, "stock": 12, "inventoryPolicy": "deny" },
+        { "sku": "EV-PORT-BLU", "option1": "Blu", "price": 3900, "currency": "EUR", "trackInventory": true, "stock": 6, "inventoryPolicy": "deny" }
+      ]
+    },
+    {
+      "title": "Cintura in pelle",
+      "status": "active",
+      "description": "Cintura in pelle con fibbia in ottone, altezza 3,5 cm.",
+      "category": "Accessori",
+      "vendor": "Bottega Eval",
+      "tags": ["cintura", "pelle"],
+      "optionNames": ["Taglia"],
+      "variants": [
+        { "sku": "EV-CINT-90", "option1": "90", "price": 3500, "currency": "EUR", "trackInventory": true, "stock": 4, "inventoryPolicy": "deny" },
+        { "sku": "EV-CINT-100", "option1": "100", "price": 3500, "currency": "EUR", "trackInventory": true, "stock": 6, "inventoryPolicy": "deny" },
+        { "sku": "EV-CINT-110", "option1": "110", "price": 3500, "currency": "EUR", "trackInventory": true, "stock": 0, "inventoryPolicy": "deny" }
+      ]
+    },
+    {
+      "title": "Sciarpa di seta",
+      "status": "active",
+      "description": "Sciarpa in pura seta, 180 × 70 cm.",
+      "category": "Accessori",
+      "vendor": "Bottega Eval",
+      "tags": ["sciarpa", "seta"],
+      "optionNames": ["Colore"],
+      "variants": [
+        { "sku": "EV-SCIA-ROSSO", "option1": "Rosso", "price": 3500, "currency": "EUR", "trackInventory": true, "stock": 8, "inventoryPolicy": "deny" },
+        { "sku": "EV-SCIA-BLU", "option1": "Blu", "price": 3500, "currency": "EUR", "trackInventory": true, "stock": 8, "inventoryPolicy": "deny" }
+      ]
+    },
+    {
+      "title": "Portachiavi in pelle",
+      "status": "active",
+      "description": "Portachiavi in pelle con anello in acciaio.",
+      "category": "Accessori",
+      "vendor": "Bottega Eval",
+      "tags": ["portachiavi", "pelle"],
+      "optionNames": [],
+      "variants": [
+        { "sku": "EV-CHIAVI", "price": 1200, "currency": "EUR", "trackInventory": true, "stock": 30, "inventoryPolicy": "deny" }
+      ]
+    },
+    {
+      "title": "Borsa shopper in tela",
+      "status": "draft",
+      "description": "Not on sale yet: a draft the AI must not offer.",
+      "category": "Borse",
+      "vendor": "Bottega Eval",
+      "tags": ["shopper", "tela"],
+      "optionNames": [],
+      "variants": [
+        { "sku": "EV-SHOPPER", "price": 2900, "currency": "EUR", "trackInventory": true, "stock": 10, "inventoryPolicy": "deny" }
+      ]
+    }
+  ],
+  "shipping": {
+    "zones": [
+      { "name": "Sardegna", "areas": "Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna", "price": 500, "currency": "EUR", "freeOver": 7000, "minDays": 1, "maxDays": 2 },
+      { "name": "Italia", "areas": "Resto d'Italia (Milano, Roma, Napoli, Torino…)", "price": 790, "currency": "EUR", "freeOver": 9900, "minDays": 2, "maxDays": 4 },
+      { "name": "Unione Europea", "areas": "Francia, Germania, Spagna, Austria, Belgio, Paesi Bassi", "price": 1500, "currency": "EUR", "freeOver": null, "minDays": 4, "maxDays": 7 }
+    ]
+  },
+  "policies": {
+    "shippingNotes": "Spediamo con corriere tracciato. Non spediamo fuori dall'Unione Europea.",
+    "returnDays": 14,
+    "returnPolicy": "Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.",
+    "paymentNotes": "Solo contrassegno: paghi in contanti al corriere alla consegna.",
+    "contactPhone": "+39 079 000 0000",
+    "contactEmail": "ciao@bottega-eval.example",
+    "contactAddress": "Via Esempio 1, 07100 Sassari",
+    "openingHours": "Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso"
+  },
+  "answers": [
+    { "question": "Fate incisioni o personalizzazioni?", "answer": "Sì, su portafogli e portachiavi incidiamo gratis le iniziali (massimo 3 lettere). L'incisione aggiunge 2 giorni alla spedizione." },
+    { "question": "La pelle è vera?", "answer": "Sì, usiamo solo vera pelle italiana conciata al vegetale, lavorata nel nostro laboratorio di Sassari." },
+    { "question": "Fate la confezione regalo?", "answer": "Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine." },
+    { "question": "Avete un negozio fisico?", "answer": "Sì, il nostro laboratorio-negozio è in Via Esempio 1 a Sassari, aperto negli orari indicati." }
+  ]
+}
