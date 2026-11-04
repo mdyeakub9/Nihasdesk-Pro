@@ -74,21 +74,26 @@ internal sealed class AiConversations(
             history.AsEnumerable().Reverse().Select(m => new AiHistoryMessage(m.Author.ToString().ToLowerInvariant(), m.Text, m.SentAt)).ToList());
     }
 
-    public async Task<bool> ReplyAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken)
+    public async Task<bool> ReplyAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken) =>
+        await ReplyWithIdsAsync(conversationId, messages, cancellationToken) is not null;
+
+    public async Task<IReadOnlyList<Guid>?> ReplyWithIdsAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken)
     {
         var conversation = await db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
         var now = time.GetUtcNow();
         // The team may have taken over while the AI was thinking: then the AI stays silent.
         if (conversation is null || !conversation.AiAnswers || !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
         {
-            return false;
+            return null;
         }
 
+        var ids = new List<Guid>();
         var sentAt = now;
         foreach (var text in messages)
         {
             var message = Message.FromAi(tenant.TenantId, conversation.Id, text, sentAt);
             db.Messages.Add(message);
+            ids.Add(message.Id);
             conversation.RepliedByAi(message);
             if (conversation.ChannelConnectionId is not null)
             {
@@ -101,7 +106,7 @@ internal sealed class AiConversations(
 
         await db.SaveChangesAsync(cancellationToken);
         await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, cancellationToken);
-        return true;
+        return ids;
     }
 
     public async Task HandOffAsync(Guid conversationId, string teamNote, CancellationToken cancellationToken)

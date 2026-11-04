@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -106,11 +108,19 @@ internal sealed partial class ReplyAgent(
 
         var watch = Stopwatch.StartNew();
 
-        async Task Finish(RunOutcome outcome, string? detail, Thought? thought = null)
+        string? version = null;
+
+        async Task Finish(RunOutcome outcome, string? detail, Thought? thought = null, Guid? messageId = null)
         {
-            db.Runs.Add(AiRun.Finish(
+            var run = AiRun.Finish(
                 tenant.TenantId, conversationId, Options.ReplyModel, thought?.InputTokens ?? 0, thought?.OutputTokens ?? 0,
-                thought?.Tools ?? [], outcome, detail, watch.Elapsed, thought?.Sources));
+                thought?.Tools ?? [], outcome, detail, watch.Elapsed, thought?.Sources, thought?.Trace, version);
+            if (messageId is { } id)
+            {
+                run.Sent(id);
+            }
+
+            db.Runs.Add(run);
             await db.SaveChangesAsync(ct);
         }
 
@@ -144,6 +154,7 @@ internal sealed partial class ReplyAgent(
         var shop = await settingsStore.ShopNameAsync(ct);
         // Order requests belong to this conversation; the model never picks one (SEC-36).
         tools.ConversationId = conversationId;
+        version = Prompt.Version(Prompt.AgentVersion, settings);
         var thought = await brain.ThinkAsync(Prompt.System(shop, settings, FirstName(contact?.Name), contact?.Language), conversation.Messages, ct);
 
         if (thought.Failed is { } failed)
@@ -171,8 +182,9 @@ internal sealed partial class ReplyAgent(
         }
 
         var replies = conversation.AiHasReplied ? new[] { thought.Reply! } : [Prompt.Disclosure(shop, settings), thought.Reply!];
-        var sent = await conversations.ReplyAsync(conversationId, replies, ct);
-        await Finish(sent ? RunOutcome.Replied : RunOutcome.Dropped, sent ? null : "team_took_over", thought);
+        // The answer is the last message (a disclosure may come first): "Why this answer" belongs to it.
+        var sent = await conversations.ReplyWithIdsAsync(conversationId, replies, ct);
+        await Finish(sent is null ? RunOutcome.Dropped : RunOutcome.Replied, sent is null ? "team_took_over" : null, thought, sent?[^1]);
     }
 
     /// <summary>SEC-39: per conversation per hour and per workspace per day. Null when within limits.</summary>
@@ -203,6 +215,15 @@ internal sealed partial class ReplyAgent(
 /// <summary>The words the AI is given and says by itself (ADR 0019). Versioned with the code.</summary>
 internal static class Prompt
 {
+    /// <summary>Change these when the prompt text below changes, so traces and evals show which prompt answered.</summary>
+    public const string AgentVersion = "agent-2026-11-04";
+
+    public const string AssistantVersion = "assistant-2026-11-04";
+
+    /// <summary>The prompt version plus a short hash of the owner's tone and guidance, which the model also gets.</summary>
+    public static string Version(string prompt, AiSettings settings) =>
+        prompt + "+" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"{settings.Tone}|{settings.Instructions}")))[..8];
+
     public static string System(string shop, AiSettings settings, string? firstName, string? language) =>
         $$"""
         You are the virtual shop assistant of "{{shop}}", chatting with a customer on a messaging app.

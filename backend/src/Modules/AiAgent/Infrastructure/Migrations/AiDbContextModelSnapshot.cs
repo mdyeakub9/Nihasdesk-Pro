@@ -51,6 +51,15 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("input_tokens");
 
+                    b.Property<string>("InstructionVersion")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("instruction_version");
+
+                    b.Property<Guid?>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("message_id");
+
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -81,6 +90,10 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("tools");
 
+                    b.Property<string>("Trace")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("trace");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -93,6 +106,9 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "CreatedAt")
                         .HasDatabaseName("ix_runs_tenant_id_created_at");
+
+                    b.HasIndex("TenantId", "MessageId")
+                        .HasDatabaseName("ix_runs_tenant_id_message_id");
 
                     b.ToTable("runs", "ai");
                 });
@@ -194,6 +210,55 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasDatabaseName("ix_knowledge_gaps_tenant_id_status_created_at");
 
                     b.ToTable("knowledge_gaps", "ai");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.ReplyFeedback", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("message_id");
+
+                    b.Property<string>("Rating")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("rating");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("run_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reply_feedback");
+
+                    b.HasIndex("TenantId", "MessageId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reply_feedback_tenant_id_message_id_user_id");
+
+                    b.HasIndex("TenantId", "Rating", "CreatedAt")
+                        .HasDatabaseName("ix_reply_feedback_tenant_id_rating_created_at");
+
+                    b.ToTable("reply_feedback", "ai");
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.ShopPolicies", b =>

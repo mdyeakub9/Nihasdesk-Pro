@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -14,6 +15,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 {
     public const string Schema = "ai";
 
+    private static readonly JsonSerializerOptions TraceJson = new(JsonSerializerDefaults.Web);
+
     public Guid CurrentTenantId => tenantContext.TenantId;
 
     public DbSet<KnowledgeGap> Gaps => Set<KnowledgeGap>();
@@ -25,6 +28,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
     public DbSet<AiSettings> Settings => Set<AiSettings>();
 
     public DbSet<ShopPolicies> Policies => Set<ShopPolicies>();
+
+    public DbSet<ReplyFeedback> Feedback => Set<ReplyFeedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,6 +63,14 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             // Limits count replies per workspace per day and per conversation per hour.
             run.HasIndex(r => new { r.TenantId, r.CreatedAt });
             run.HasIndex(r => new { r.ConversationId, r.CreatedAt });
+            run.Property(r => r.InstructionVersion).HasMaxLength(AiRun.InstructionVersionMaxLength);
+            run.Property(r => r.Trace)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    trace => JsonSerializer.Serialize(trace, TraceJson),
+                    json => JsonSerializer.Deserialize<RunTrace>(json, TraceJson));
+            // "Why this answer" and 👍/👎 find the run by the message it sent.
+            run.HasIndex(r => new { r.TenantId, r.MessageId });
         });
 
         modelBuilder.Entity<AiSettings>(settings =>
@@ -85,6 +98,15 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             policies.Property(p => p.OpeningHours).HasMaxLength(ShopPolicies.OpeningHoursMaxLength);
             // One row per workspace.
             policies.HasIndex(p => p.TenantId).IsUnique();
+        });
+
+        modelBuilder.Entity<ReplyFeedback>(feedback =>
+        {
+            feedback.ToTable("reply_feedback");
+            feedback.Property(f => f.Id).ValueGeneratedNever();
+            LowerCaseText(feedback.Property(f => f.Rating));
+            feedback.HasIndex(f => new { f.TenantId, f.MessageId, f.UserId }).IsUnique();
+            feedback.HasIndex(f => new { f.TenantId, f.Rating, f.CreatedAt });
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);

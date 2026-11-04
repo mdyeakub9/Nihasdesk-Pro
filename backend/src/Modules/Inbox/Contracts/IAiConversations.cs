@@ -32,6 +32,9 @@ public interface IAiConversations
     /// </summary>
     Task<bool> ReplyAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken);
 
+    /// <summary>Like <see cref="ReplyAsync"/>, with the stored messages' IDs in order; null when nothing was sent.</summary>
+    Task<IReadOnlyList<Guid>?> ReplyWithIdsAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken);
+
     /// <summary>
     /// The team's AI assistant (ADR 0023): the same context the AI agent would get — no internal
     /// notes, no team names — without claiming or changing anything. Null when not in this workspace.

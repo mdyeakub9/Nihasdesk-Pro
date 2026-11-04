@@ -23,7 +23,9 @@ internal sealed record Thought(
     int OutputTokens,
     IReadOnlyList<string> Tools,
     // What the answer was based on, see KnowledgeSources.
-    IReadOnlyList<string> Sources);
+    IReadOnlyList<string> Sources,
+    // Tool calls and the reply check, for "Why this answer" (ADR 0026 §6).
+    RunTrace Trace);
 
 /// <summary>
 /// The thinking part of a turn (ADR 0019): prompt, model, tools, reply check. Shared by real
@@ -40,9 +42,11 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
         messages.AddRange(history.Select(m => m.Author == "customer" ? LlmMessage.User(m.Text) : LlmMessage.Assistant(m.Text)));
         var offered = readOnly ? AgentTools.ReadOnlyDefinitions : AgentTools.Definitions;
         var usedTools = new List<string>();
+        var calls = new List<ToolTrace>();
+        string? check = null;
         int input = 0, output = 0;
         Thought Done(string? reply = null, string? handoff = null, string? question = null, string? blocked = null, string? failed = null) =>
-            new(reply, handoff, question, blocked, failed, input, output, usedTools, [.. tools.Sources]);
+            new(reply, handoff, question, blocked, failed, input, output, usedTools, [.. tools.Sources], new RunTrace(calls, check));
 
         for (var round = 0; round <= Options.MaxToolRounds; round++)
         {
@@ -63,7 +67,9 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
             if (response.ToolCalls.Count == 0)
             {
                 var reply = response.Text?.Trim();
-                return Guardrails.Check(reply, tools.AllowedPrices) is { } blocked ? Done(blocked: blocked) : Done(reply: reply);
+                var blocked = Guardrails.Check(reply, tools.AllowedPrices);
+                check = blocked ?? RunTraces.Passed;
+                return blocked is not null ? Done(blocked: blocked) : Done(reply: reply);
             }
 
             messages.Add(new LlmMessage(LlmRole.Assistant, response.Text, response.ToolCalls));
@@ -71,6 +77,7 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
             {
                 usedTools.Add(call.Name.Length <= 40 ? call.Name : call.Name[..40]);
                 var outcome = await tools.RunAsync(call, ct, readOnly);
+                calls.Add(RunTraces.Of(call, outcome));
                 if (outcome.HandoffReason is { } reason)
                 {
                     return Done(handoff: reason, question: outcome.Question);
@@ -80,7 +87,8 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
             }
         }
 
-        return Done(blocked: "too_many_tool_rounds");
+        check = "too_many_tool_rounds";
+        return Done(blocked: check);
     }
 }
 
