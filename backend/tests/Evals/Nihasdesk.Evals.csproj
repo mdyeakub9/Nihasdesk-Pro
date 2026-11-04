@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The AI eval runner (PRD 4.8, ADR 0026 §6): runs docs/evals/eval-set.json against the real agent
+    on a seeded test shop. A console app, not a test project: CI builds it but never runs it (it
+    needs Docker and an AI key). See docs/evals/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Nihasdesk.Evals</RootNamespace>
+    <AssemblyName>Nihasdesk.Evals</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Not a test project: no xunit global using (tests/Directory.Build.props). -->
+    <Using Remove="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Gives WebApplicationFactory the API's content root, as in the API tests. -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Support\Nihasdesk.TestSupport.csproj" />
+    <ProjectReference Include="..\..\src\Modules\AiAgent\Nihasdesk.Modules.AiAgent.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -26,6 +26,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Nihasdesk.CriticalTests" />
     <InternalsVisibleTo Include="Nihasdesk.TestSupport" />
+    <InternalsVisibleTo Include="Nihasdesk.Evals" />
     <!-- The OpenAI request/response mapping is tested against canned answers. -->
     <InternalsVisibleTo Include="Nihasdesk.Api.Tests" />
   </ItemGroup>

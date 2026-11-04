@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "cases": [
+    { "id": "products-01", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "Ciao! Avete la borsa a tracolla in nero?" }], "expect": { "handoff": false, "answer": "Yes, the black leather shoulder bag is available at €89.00." } },
+    { "id": "products-02", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "How much is the leather backpack?" }], "expect": { "handoff": false, "answer": "€129.00 (before €149.00), black, in stock." } },
+    { "id": "products-03", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "La borsa a tracolla marrone è disponibile?" }], "expect": { "handoff": false, "answer": "Brown is sold out; black (€89.00) and cuoio (€95.00) are available." } },
+    { "id": "products-04", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "What colours does the men's wallet come in?" }], "expect": { "handoff": false, "answer": "Black and blue, both €39.00 and available." } },
+    { "id": "products-05", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "Avete la cintura in taglia 110?" }], "expect": { "handoff": false, "answer": "Size 110 is sold out; sizes 90 and 100 are available at €35.00." } },
+    { "id": "products-06", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "Do you sell silk scarves?" }], "expect": { "handoff": false, "answer": "Yes, a pure silk scarf in red or blue at €35.00." } },
+    { "id": "products-07", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "Quanto costa il portachiavi?" }], "expect": { "handoff": false, "answer": "The leather keyring costs €12.00." } },
+    { "id": "products-08", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "Do you have the canvas tote bag?" }], "expect": { "handoff": false, "answer": "It is not in the shop's catalog (the canvas tote is not on sale); no price for it. Offering the leather bags instead, or saying the team can check, is fine." } },
+    { "id": "products-09", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "Avete borse sotto i 50 euro?" }], "expect": { "handoff": false, "answer": "No bag costs under €50 (the shoulder bag is €89.00, the backpack €129.00). Suggesting cheaper accessories with their real prices is fine." } },
+    { "id": "products-10", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "Is the cuoio shoulder bag more expensive than the black one?" }], "expect": { "handoff": false, "answer": "Yes: cuoio €95.00, black €89.00." } },
+    { "id": "products-11", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "Ma la pelle è vera?" }], "expect": { "handoff": false, "answer": "Yes, genuine Italian vegetable-tanned leather, made in the shop's workshop in Sassari." } },
+    { "id": "products-12", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "Can you engrave my initials on the wallet?" }], "expect": { "handoff": false, "answer": "Yes, initials up to 3 letters for free on wallets and keyrings; it adds 2 days to shipping." } },
+
+    { "id": "shipping-01", "topic": "shipping", "language": "it", "messages": [{ "author": "customer", "text": "Quanto costa la spedizione a Cagliari?" }], "expect": { "handoff": false, "answer": "Sardinia: €5.00, free from €70.00, delivery in 1-2 days." } },
+    { "id": "shipping-02", "topic": "shipping", "language": "en", "messages": [{ "author": "customer", "text": "How long does delivery to Milan take?" }], "expect": { "handoff": false, "answer": "2-4 days (zone Italia, €7.90, free from €99.00)." } },
+    { "id": "shipping-03", "topic": "shipping", "language": "it", "messages": [{ "author": "customer", "text": "Spedite anche in Germania?" }], "expect": { "handoff": false, "answer": "Yes, zone Unione Europea: €15.00, 4-7 days, no free shipping threshold." } },
+    { "id": "shipping-04", "topic": "shipping", "language": "en", "messages": [{ "author": "customer", "text": "Do you ship to the USA?" }], "expect": { "handoff": false, "answer": "No, the shop ships only within the European Union." } },
+    { "id": "shipping-05", "topic": "shipping", "language": "it", "messages": [{ "author": "customer", "text": "Da quanto è gratis la spedizione in Italia?" }], "expect": { "handoff": false, "answer": "Free shipping in Italy (outside Sardinia) from €99.00; in Sardinia from €70.00." } },
+    { "id": "shipping-06", "topic": "shipping", "language": "en", "messages": [{ "author": "customer", "text": "If I buy the leather backpack, is shipping to Rome free?" }], "expect": { "handoff": false, "answer": "Yes: the backpack is €129.00, over the €99.00 free-shipping threshold for Italy." } },
+    { "id": "shipping-07", "topic": "shipping", "language": "it", "messages": [{ "author": "customer", "text": "Con che corriere spedite?" }], "expect": { "handoff": false, "answer": "With a tracked courier. The shop data names no courier company, so naming one is a made-up fact." } },
+    { "id": "shipping-08", "topic": "shipping", "language": "en", "messages": [{ "author": "customer", "text": "I live in Sassari. How much is shipping if I only buy a wallet?" }], "expect": { "handoff": false, "answer": "€5.00 (the wallet is €39.00, under the €70.00 free-shipping threshold for Sardinia), 1-2 days." } },
+
+    { "id": "returns-01", "topic": "returns", "language": "it", "messages": [{ "author": "customer", "text": "Posso restituire una borsa se non mi piace?" }], "expect": { "handoff": false, "answer": "Yes, free return within 14 days of delivery if unused and with the tag." } },
+    { "id": "returns-02", "topic": "returns", "language": "en", "messages": [{ "author": "customer", "text": "How long do I have to return something?" }], "expect": { "handoff": false, "answer": "14 days from delivery." } },
+    { "id": "returns-03", "topic": "returns", "language": "it", "messages": [{ "author": "customer", "text": "Dopo il reso, quando arriva il rimborso?" }], "expect": { "handoff": false, "answer": "Within 7 days of the parcel arriving back at the shop." } },
+    { "id": "returns-04", "topic": "returns", "language": "en", "messages": [{ "author": "customer", "text": "Can I return an item I bought on sale?" }], "expect": { "handoff": false, "answer": "Sale items can only be exchanged, not refunded." } },
+    { "id": "returns-05", "topic": "returns", "language": "it", "messages": [{ "author": "customer", "text": "Il reso è gratuito?" }], "expect": { "handoff": false, "answer": "Yes, returns are free within 14 days." } },
+    { "id": "returns-06", "topic": "returns", "language": "en", "messages": [{ "author": "customer", "text": "I wore the belt for a week. Can I still return it?" }], "expect": { "handoff": false, "answer": "Returns are only for unused items with the tag, so a worn belt can't be returned; offering the team for special cases is fine." } },
+
+    { "id": "payment-01", "topic": "payment", "language": "it", "messages": [{ "author": "customer", "text": "Posso pagare con la carta?" }], "expect": { "handoff": false, "answer": "No, only cash on delivery to the courier." } },
+    { "id": "payment-02", "topic": "payment", "language": "en", "messages": [{ "author": "customer", "text": "Do you accept PayPal?" }], "expect": { "handoff": false, "answer": "No, the only payment method is cash on delivery." } },
+    { "id": "payment-03", "topic": "payment", "language": "it", "messages": [{ "author": "customer", "text": "Come si paga?" }], "expect": { "handoff": false, "answer": "Cash on delivery: you pay the courier in cash." } },
+    { "id": "payment-04", "topic": "payment", "language": "en", "messages": [{ "author": "customer", "text": "Can I pay in instalments?" }], "expect": { "handoff": false, "answer": "No, payment is cash on delivery only." } },
+    { "id": "payment-05", "topic": "payment", "language": "it", "messages": [{ "author": "customer", "text": "Il contrassegno costa qualcosa in più?" }], "expect": { "handoff": true, "answer": "The shop data doesn't say whether cash on delivery has a fee." } },
+
+    { "id": "contact-01", "topic": "contact", "language": "it", "messages": [{ "author": "customer", "text": "Che orari fate?" }], "expect": { "handoff": false, "answer": "Monday to Saturday 9:30-13:00 and 16:00-19:30, closed on Sunday." } },
+    { "id": "contact-02", "topic": "contact", "language": "en", "messages": [{ "author": "customer", "text": "What's your phone number?" }], "expect": { "handoff": false, "answer": "+39 079 000 0000." } },
+    { "id": "contact-03", "topic": "contact", "language": "it", "messages": [{ "author": "customer", "text": "Avete un negozio dove posso vedere le borse?" }], "expect": { "handoff": false, "answer": "Yes, the workshop-shop in Via Esempio 1, Sassari, open Mon-Sat 9:30-13:00 and 16:00-19:30." } },
+    { "id": "contact-04", "topic": "contact", "language": "en", "messages": [{ "author": "customer", "text": "Are you open on Sundays?" }], "expect": { "handoff": false, "answer": "No, closed on Sunday." } },
+
+    { "id": "unknown-01", "topic": "unknown", "language": "it", "messages": [{ "author": "customer", "text": "Fate prezzi all'ingrosso per negozi?" }], "expect": { "handoff": true, "answer": "Wholesale is not in the shop data." } },
+    { "id": "unknown-02", "topic": "unknown", "language": "en", "messages": [{ "author": "customer", "text": "Do you have a loyalty card or a points programme?" }], "expect": { "handoff": true, "answer": "Not in the shop data." } },
+    { "id": "unknown-03", "topic": "unknown", "language": "it", "messages": [{ "author": "customer", "text": "Riparate anche borse comprate da voi qualche anno fa?" }], "expect": { "handoff": true, "answer": "Repairs are not in the shop data." } },
+    { "id": "unknown-04", "topic": "unknown", "language": "en", "messages": [{ "author": "customer", "text": "Can I get an invoice with my company's VAT number?" }], "expect": { "handoff": true, "answer": "Invoices are not in the shop data." } },
+    { "id": "unknown-05", "topic": "unknown", "language": "it", "messages": [{ "author": "customer", "text": "Quanto pesa lo zaino in pelle?" }], "expect": { "handoff": true, "answer": "The backpack's weight is not in the shop data." } },
+    { "id": "unknown-06", "topic": "unknown", "language": "en", "messages": [{ "author": "customer", "text": "Is the leather backpack waterproof?" }], "expect": { "handoff": true, "answer": "Not in the shop data." } },
+    { "id": "unknown-07", "topic": "unknown", "language": "it", "messages": [{ "author": "customer", "text": "Avete un codice sconto per il primo ordine?" }], "expect": { "handoff": true, "answer": "Discount codes are not in the shop data; the AI must not promise one." } },
+    { "id": "unknown-08", "topic": "unknown", "language": "en", "messages": [{ "author": "customer", "text": "Can I pick up my order at your shop instead of having it shipped?" }], "expect": { "handoff": true, "answer": "Pick-up is not in the shop data (only the shop's address is)." } },
+
+    { "id": "handoff-01", "topic": "handoff", "language": "it", "messages": [{ "author": "customer", "text": "Il pacco è arrivato rovinato e la borsa è graffiata. Voglio parlare con qualcuno!" }], "expect": { "handoff": true, "answer": "A complaint about a damaged order goes to the team." } },
+    { "id": "handoff-02", "topic": "handoff", "language": "en", "messages": [{ "author": "customer", "text": "Can I talk to a real person, please?" }], "expect": { "handoff": true, "answer": "The customer asks for a person." } },
+
+    { "id": "order-01", "topic": "order", "language": "it", "messages": [
+      { "author": "customer", "text": "Vorrei ordinare la borsa a tracolla nera." },
+      { "author": "ai", "text": "Ottima scelta! Per preparare il riepilogo mi servono nome e cognome, telefono e indirizzo completo (via e numero, CAP, città, provincia)." },
+      { "author": "customer", "text": "Giulia Prova, 333 000 0001, Via Prova 5, 07100 Sassari (SS), Italia" }
+    ], "expect": { "handoff": false, "answer": "A summary: 1 black shoulder bag €89.00, shipping Sardegna free (over €70.00), total €89.00 cash on delivery, and a request to confirm. It must not say the order is confirmed." } },
+    { "id": "order-02", "topic": "order", "language": "en", "messages": [
+      { "author": "customer", "text": "I'd like two blue men's wallets, delivered to Milan." },
+      { "author": "ai", "text": "Great! To prepare the summary I need your full name, phone number and full address (street and number, postal code, city, province)." },
+      { "author": "customer", "text": "Marco Test, +39 333 000 0002, Via Esempio 10, 20121 Milano MI, Italy" }
+    ], "expect": { "handoff": false, "answer": "A summary: 2 × blue wallet €39.00 = €78.00, shipping Italia €7.90, total €85.90 cash on delivery, and a request to confirm. Not confirmed yet." } },
+    { "id": "order-03", "topic": "order", "language": "it", "messages": [
+      { "author": "customer", "text": "Prendo lo zaino in pelle, spedito a Roma." },
+      { "author": "ai", "text": "Perfetto! Mi scrivi nome e cognome, telefono e indirizzo completo?" },
+      { "author": "customer", "text": "Luca Prova, 333 000 0003, Via delle Prove 3, 00184 Roma RM" }
+    ], "expect": { "handoff": false, "answer": "A summary: backpack €129.00, shipping free (over €99.00 for Italia), total €129.00 cash on delivery, asks to confirm." } },
+    { "id": "order-04", "topic": "order", "language": "en", "messages": [
+      { "author": "customer", "text": "I want to order the brown shoulder bag." }
+    ], "expect": { "handoff": false, "answer": "Brown is sold out; offers black (€89.00) or cuoio (€95.00) instead. No order summary for brown." } },
+    { "id": "order-05", "topic": "order", "language": "it", "messages": [
+      { "author": "customer", "text": "Vorrei una sciarpa di seta rossa da spedire a Berlino." },
+      { "author": "ai", "text": "Certo! Mi servono nome e cognome, telefono e indirizzo completo con CAP e città." },
+      { "author": "customer", "text": "Anna Test, +49 30 0000000, Teststraße 1, 10115 Berlin, Germania" }
+    ], "expect": { "handoff": false, "answer": "A summary: red silk scarf €35.00, shipping Unione Europea €15.00, total €50.00 cash on delivery, asks to confirm." } }
+  ]
+}
