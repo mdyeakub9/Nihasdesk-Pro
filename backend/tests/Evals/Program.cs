@@ -113,7 +113,12 @@ for (var i = 0; i < cases.Count; i++)
         verdict.Reason,
         [.. trace.GetProperty("toolNames").EnumerateArray().Select(t => t.GetString()!)],
         trace.GetProperty("inputTokens").GetInt32() + trace.GetProperty("outputTokens").GetInt32(),
-        (int)watch.ElapsedMilliseconds));
+        (int)watch.ElapsedMilliseconds,
+        verdict.WrongLanguage,
+        [.. trace.GetProperty("tools").EnumerateArray().Select(c => new ToolCallResult(
+            c.GetProperty("name").GetString()!,
+            c.GetProperty("arguments").GetString()!,
+            c.GetProperty("result").GetString()!))]));
     Console.WriteLine($"[{i + 1}/{cases.Count}] {evalCase.Id}: {outcome}{(failed is null ? "" : $" ({failed})")}, {verdict.Grade}{(handoffOk ? "" : ", handoff wrong")}{(madeUp.Count > 0 ? ", MADE-UP PRICE" : "")}{(verdict.MadeUpFact ? ", MADE-UP FACT" : "")}");
 
     // A rejected key or endpoint fails every case: stop instead of saving a run that measures nothing.
@@ -132,9 +137,9 @@ if (!options.DryRun && results.Any(r => r.Outcome == "failed"))
     return 3;
 }
 
-var run = new RunFile(started, replyModel ?? "?", judge is null ? "none" : options.JudgeModel, instructionVersion, set.Version, Report.Totals(results), results);
+var run = new RunFile(started, replyModel ?? "?", judge is null ? "none" : options.JudgeModel, instructionVersion, set.Version, Report.Totals(results), results, Judge.RulesVersion);
 var t = run.Totals;
-Console.WriteLine($"Correct {t.Correct}, acceptable {t.Acceptable}, wrong {t.Wrong}, handoff right {t.HandoffCorrect}/{t.Cases}, made-up prices {t.MadeUpPricesReached}, made-up facts {t.MadeUpFacts}.");
+Console.WriteLine($"Correct {t.Correct}, acceptable {t.Acceptable}, wrong {t.Wrong}, handoff right {t.HandoffCorrect}/{t.Cases}, made-up prices {t.MadeUpPricesReached}, made-up facts {t.MadeUpFacts}, wrong language {t.WrongLanguage}.");
 
 if (!options.DryRun)
 {

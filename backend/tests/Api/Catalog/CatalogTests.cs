@@ -16,6 +16,8 @@ namespace Nihasdesk.Api.Tests.Catalog;
 [Collection(AuthTests.Name)]
 public sealed class CatalogTests(AuthFixture fixture)
 {
+    private static readonly string[] ColourOption = ["Colore"];
+
     private NihasdeskApiFactory Api => fixture.Api;
 
     private static object Bag(string title = "Classic Leather Bag", string skuPrefix = "BAG") => new
@@ -287,6 +289,52 @@ public sealed class CatalogTests(AuthFixture fixture)
         var round = await ReportAsync(await UploadAsync(owner, "preview", string.Join("\n", lines)));
         Assert.Empty(round.GetProperty("issues").EnumerateArray());
     }
+
+    [Fact]
+    public async Task The_ai_search_finds_products_by_any_word_best_match_first()
+    {
+        var (owner, workspace) = await OwnerAsync();
+        var (other, _) = await OwnerAsync("Bottega Blu");
+        await CreateAsync(owner, "Borsa a tracolla in pelle", "active", "Borsa cucita a mano.", "Nero", "Marrone");
+        await CreateAsync(owner, "Zaino in pelle", "active", "Con tasca per laptop.", "Nero");
+        await CreateAsync(owner, "Sciarpa di seta", "active", null, "Rosso");
+        await CreateAsync(owner, "Borsa shopper in tela", "draft", null, "Nero");
+        await CreateAsync(other, "Borsa di un altro negozio", "active", null, "Nero");
+
+        await using var scope = Api.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TenantContext>().SetTenant(Guid.Parse(workspace));
+        var catalog = scope.ServiceProvider.GetRequiredService<ICatalog>();
+        async Task<List<string>> Titles(string query) =>
+            (await catalog.SearchAsync(query, 5, CancellationToken.None)).Select(p => p.Title).ToList();
+
+        // The whole phrase isn't in any title; its words are. This found nothing with phrase search.
+        Assert.Equal("Borsa a tracolla in pelle", (await Titles("borsa a tracolla nera"))[0]);
+        // Word forms: plural, and a colour that is only an option value.
+        Assert.Contains("Borsa a tracolla in pelle", await Titles("borse"));
+        Assert.Contains("Sciarpa di seta", await Titles("sciarpe rosse"));
+        Assert.Contains("Zaino in pelle", await Titles("nera"));
+        // Also the description; the more words match, the higher.
+        Assert.Equal(["Zaino in pelle"], await Titles("laptop"));
+        Assert.Equal("Zaino in pelle", (await Titles("zaino in pelle"))[0]);
+
+        // Never drafts or another workspace's products; nothing for words that match nothing.
+        Assert.DoesNotContain("Borsa shopper in tela", await Titles("borsa shopper"));
+        Assert.DoesNotContain("Borsa di un altro negozio", await Titles("borsa negozio"));
+        Assert.Empty(await Titles("orologio"));
+        // Pattern characters are plain text, not wildcards (SEC-01).
+        Assert.Empty(await Titles("%"));
+        Assert.Empty(await Titles("_"));
+    }
+
+    private static async Task CreateAsync(ApiClient owner, string title, string status, string? description, params string[] colours) =>
+        (await owner.PostAsync("/api/v1/products", new
+        {
+            title,
+            status,
+            description,
+            optionNames = ColourOption,
+            variants = colours.Select(c => new { option1 = c, price = 1000 }).ToArray(),
+        })).EnsureSuccessStatusCode();
 
     private async Task<(ApiClient Client, string Workspace)> OwnerAsync(string business = "Almanaam")
     {

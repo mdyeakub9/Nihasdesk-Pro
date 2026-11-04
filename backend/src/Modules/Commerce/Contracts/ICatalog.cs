@@ -27,7 +27,10 @@ public sealed record CatalogProduct(
 /// </summary>
 public interface ICatalog
 {
-    /// <summary>Products whose title, SKU, category, vendor or tags match; at most <paramref name="limit"/> (≤ 20).</summary>
+    /// <summary>
+    /// Products matching any word of the query in title, SKU, options, category, vendor, tags or
+    /// description, best match first; at most <paramref name="limit"/> (≤ 20).
+    /// </summary>
     Task<IReadOnlyList<CatalogProduct>> SearchAsync(string query, int limit, CancellationToken cancellationToken);
 
     Task<CatalogProduct?> GetAsync(Guid productId, CancellationToken cancellationToken);

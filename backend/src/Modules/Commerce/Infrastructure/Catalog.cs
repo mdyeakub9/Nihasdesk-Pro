@@ -1,12 +1,21 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Commerce.Domain;
 
 namespace Nihasdesk.Modules.Commerce.Infrastructure;
 
-internal sealed class Catalog(CommerceDbContext db) : ICatalog
+internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
 {
     public const int MaxResults = 20;
+    private const int MaxCandidates = 500;
+    private const int MaxWords = 8;
+
+    // Words that say nothing about a product, in the dashboard's languages.
+    private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
+    {
+        "the", "and", "for", "with", "you", "have", "how", "much", "con", "per", "del", "della", "dei", "che", "avete", "quanto", "costa",
+    };
 
     public async Task<IReadOnlyList<CatalogProduct>> SearchAsync(string query, int limit, CancellationToken cancellationToken)
     {
@@ -16,22 +25,75 @@ internal sealed class Catalog(CommerceDbContext db) : ICatalog
             return [];
         }
 
-        var pattern = "%" + text.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) + "%";
-        var products = await db.Products
+        var stems = Stems(text);
+        // Only short words or stop words ("XL"): the whole text as typed. Stems are letters and digits, safe in a pattern.
+        var patterns = stems.Count > 0
+            ? stems.Select(s => $"%{s}%").ToArray()
+            : ["%" + text.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) + "%"];
+
+        var candidates = await db.Products
             .AsNoTracking()
             .Include(p => p.Variants)
             .Where(p => p.Status == ProductStatus.Active)
             .Where(p =>
-                EF.Functions.ILike(p.Title, pattern)
-                || (p.Category != null && EF.Functions.ILike(p.Category, pattern))
-                || (p.Vendor != null && EF.Functions.ILike(p.Vendor, pattern))
-                || p.Tags.Any(t => EF.Functions.ILike(t, pattern))
-                || p.Variants.Any(v => v.Sku != null && EF.Functions.ILike(v.Sku, pattern)))
+                patterns.Any(x => EF.Functions.ILike(p.Title, x))
+                || (p.Category != null && patterns.Any(x => EF.Functions.ILike(p.Category, x)))
+                || (p.Vendor != null && patterns.Any(x => EF.Functions.ILike(p.Vendor, x)))
+                || (p.Description != null && patterns.Any(x => EF.Functions.ILike(p.Description, x)))
+                || p.Tags.Any(t => patterns.Any(x => EF.Functions.ILike(t, x)))
+                || p.Variants.Any(v =>
+                    (v.Sku != null && patterns.Any(x => EF.Functions.ILike(v.Sku, x)))
+                    || (v.Option1 != null && patterns.Any(x => EF.Functions.ILike(v.Option1, x)))
+                    || (v.Option2 != null && patterns.Any(x => EF.Functions.ILike(v.Option2, x)))
+                    || (v.Option3 != null && patterns.Any(x => EF.Functions.ILike(v.Option3, x)))))
             .OrderBy(p => p.Title)
-            .Take(Math.Clamp(limit, 1, MaxResults))
+            .Take(MaxCandidates)
             .ToListAsync(cancellationToken);
-        return products.Select(ToContract).ToList();
+
+        return candidates
+            .Select(p => (Product: p, Rank: Rank(p, stems)))
+            .OrderByDescending(x => x.Rank.Words)
+            .ThenByDescending(x => x.Rank.Score)
+            .ThenBy(x => x.Product.Title, StringComparer.OrdinalIgnoreCase)
+            .Take(Math.Clamp(limit, 1, MaxResults))
+            .Select(x => ToContract(x.Product))
+            .ToList();
     }
+
+    /// <summary>
+    /// Word starts for matching: letters and digits only, no stop words, without a last vowel or
+    /// "s", so "borse" finds "Borsa" and "nera" finds "Nero". At most <see cref="MaxWords"/>.
+    /// </summary>
+    internal static List<string> Stems(string text) =>
+        WordPattern().Matches(text)
+            .Select(m => m.Value.ToLowerInvariant())
+            .Where(w => !StopWords.Contains(w))
+            .Select(w => w.Length >= 4 && "aeiouàèéìòùs".Contains(w[^1], StringComparison.Ordinal) ? w[..^1] : w)
+            .Distinct()
+            .Take(MaxWords)
+            .ToList();
+
+    /// <summary>How many words of the query the product has; a word in the title counts most.</summary>
+    private static (int Words, int Score) Rank(Product p, List<string> stems)
+    {
+        bool Has(string? value, string stem) => value?.Contains(stem, StringComparison.OrdinalIgnoreCase) == true;
+        int words = 0, score = 0;
+        foreach (var stem in stems)
+        {
+            var points = Has(p.Title, stem) ? 4
+                : p.Tags.Any(t => Has(t, stem)) || p.Variants.Any(v => Has(v.Sku, stem) || Has(v.Option1, stem) || Has(v.Option2, stem) || Has(v.Option3, stem)) ? 3
+                : Has(p.Category, stem) || Has(p.Vendor, stem) ? 2
+                : Has(p.Description, stem) ? 1
+                : 0;
+            words += points > 0 ? 1 : 0;
+            score += points;
+        }
+
+        return (words, score);
+    }
+
+    [GeneratedRegex(@"[\p{L}\p{N}]{3,}")]
+    private static partial Regex WordPattern();
 
     public async Task<CatalogProduct?> GetAsync(Guid productId, CancellationToken cancellationToken)
     {

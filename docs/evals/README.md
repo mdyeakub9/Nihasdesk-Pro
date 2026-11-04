@@ -35,6 +35,7 @@ A full run of 50 cases costs a few cents. It sends only the made-up shop and cha
 - **Made-up prices reaching the customer, must be 0.** Every amount in a reply must be one the shop states, or one this turn's tools returned (quotes add up totals). This is checked by code, independently of the reply check.
 - **Made-up facts, must be 0.** The judge flags a price, stock level, delivery time, policy, contact detail or product that is not in the shop data.
 - **Handoff right**: the AI hands over exactly when the case expects it (unknown answer, complaint, wants a person).
+- **Replies in the wrong language**: the judge compares each reply with the customer's last message. A reply in the wrong language is "acceptable" at most, even when its facts are right. The first baseline (judge rules v1) didn't measure this.
 - Drafts held back by the reply check, provider failures, tokens and time per turn, the model and the prompt version (`Prompt.AgentVersion` + guidance hash).
 - **Retrieval recall@4**: "n/a" until hybrid search returns ranked sections (Issue #53).
 

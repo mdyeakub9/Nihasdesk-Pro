@@ -75,7 +75,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
     public static readonly IReadOnlyList<LlmTool> Definitions =
     [
         Tool("search_products",
-            "Find products in this shop's catalog by words the customer used (name, type, colour, brand…). Returns prices, options and availability. Always use it before mentioning any product or price.",
+            "Find products in this shop's catalog by words (name, type, colour, brand…). Returns prices, options and availability. Always use it before mentioning any product or price. The catalog may be in another language than the customer's: if nothing is found, search again with the words translated (e.g. Italian) and with fewer words, before saying a product doesn't exist or handing off.",
             """{"type":"object","properties":{"query":{"type":"string","description":"Search words, e.g. 'black leather bag'"}},"required":["query"],"additionalProperties":false}"""),
         Tool("get_product_options",
             "The variants of one product that can be ordered now (size, colour…), with prices. Use before offering options.",
@@ -154,7 +154,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
                 options = p.OptionNames,
                 variants = p.Variants.Select(Variant).ToList(),
             }).ToList(),
-            note = products.Count == 0 ? "No matching products. Don't invent any." : null,
+            note = products.Count == 0 ? "No matching products. Try once more with translated or fewer words; don't invent any." : null,
         });
     }
 
