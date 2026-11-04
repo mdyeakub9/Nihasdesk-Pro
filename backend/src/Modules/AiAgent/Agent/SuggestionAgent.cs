@@ -86,7 +86,8 @@ internal sealed class SuggestionAgent(
 
         db.Runs.Add(AiRun.Finish(
             tenant.TenantId, conversationId, Options.ReplyModel, thought.InputTokens, thought.OutputTokens, thought.Tools,
-            RunOutcome.Suggested, thought.Blocked ?? thought.Failed, watch.Elapsed, thought.Sources));
+            RunOutcome.Suggested, thought.Blocked ?? thought.Failed, watch.Elapsed, thought.Sources,
+            thought.Trace, Prompt.Version(Prompt.AssistantVersion, settings)));
         await db.SaveChangesAsync(ct);
 
         var sources = await AiSettingsEndpoints.SourcesAsync(thought.Sources, db, ct);

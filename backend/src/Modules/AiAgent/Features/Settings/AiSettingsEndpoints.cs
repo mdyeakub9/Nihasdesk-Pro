@@ -9,6 +9,7 @@ using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Security;
 using Nihasdesk.Modules.AiAgent.Agent;
 using Nihasdesk.Modules.AiAgent.Domain;
+using Nihasdesk.Modules.AiAgent.Features.Trace;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Identity.Contracts;
@@ -42,7 +43,9 @@ internal sealed record TestChatResponse(
     // Why the provider failed, e.g. http_401 (key rejected), http_429, output_limit.
     string? Failed,
     IReadOnlyList<string> Tools,
-    IReadOnlyList<TestSource> Sources);
+    IReadOnlyList<TestSource> Sources,
+    // "Why this answer" for the test reply, the same view as for a real one.
+    TraceResponse Trace);
 
 /// <summary>
 /// What an answer was based on (PRD 4.7): <c>shipping</c> (the zones), <c>policy</c> with the
@@ -147,11 +150,13 @@ internal static class AiSettingsEndpoints
                 // The same brain as real conversations, with settings as saved; nothing is stored but the metering.
                 var thought = await brain.ThinkAsync(Prompt.System(shop, settings, null, null), history, ct);
 
-                db.Runs.Add(AiRun.Finish(
+                var run = AiRun.Finish(
                     tenant.TenantId, Guid.Empty, options.Value.ReplyModel, thought.InputTokens, thought.OutputTokens, thought.Tools,
-                    thought.Reply is not null ? RunOutcome.Replied : RunOutcome.HandedOff, TestChatDetail, watch.Elapsed, thought.Sources));
+                    thought.Reply is not null ? RunOutcome.Replied : RunOutcome.HandedOff, TestChatDetail, watch.Elapsed, thought.Sources,
+                    thought.Trace, Prompt.Version(Prompt.AgentVersion, settings));
+                db.Runs.Add(run);
                 await db.SaveChangesAsync(ct);
-                var sources = await SourcesAsync(thought.Sources, db, ct);
+                var trace = await TraceEndpoints.ForAsync(run, db, ct);
 
                 var first = history.All(m => m.Author == "customer");
                 return Results.Ok(new TestChatResponse(
@@ -162,7 +167,8 @@ internal static class AiSettingsEndpoints
                     thought.Blocked,
                     thought.Failed,
                     thought.Tools,
-                    sources));
+                    trace.Sources,
+                    trace));
             })
             .AddEndpointFilter(manage)
             .AddEndpointFilter<ValidationFilter<TestChatRequest>>()

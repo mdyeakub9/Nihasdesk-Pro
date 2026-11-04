@@ -159,6 +159,9 @@ internal sealed class AiOptions
     /// <summary>The team's AI assistant (ADR 0023), per workspace and day (SEC-39).</summary>
     public int MaxSuggestionsPerWorkspacePerDay { get; set; } = 500;
 
+    /// <summary>How long run traces ("Why this answer") are kept (SEC-40); the run row stays for metering.</summary>
+    public int TraceRetentionDays { get; set; } = 90;
+
     /// <summary>Off in tests, which run the processor step by step.</summary>
     public bool BackgroundProcessing { get; set; } = true;
 

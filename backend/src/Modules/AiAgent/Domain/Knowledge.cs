@@ -111,13 +111,14 @@ internal enum RunOutcome
 }
 
 /// <summary>
-/// One AI turn, for metering and "why did the AI do this" (SEC-40): model, tokens, tool names and
-/// outcome. No prompt or reply text: the reply is the inbox message.
+/// One AI turn, for metering and "why did the AI do this" (SEC-40, ADR 0026 §6): model, tokens,
+/// tools, sources, outcome and the trace. No prompt or reply text: the reply is the inbox message.
 /// </summary>
 internal sealed class AiRun : TenantEntity
 {
     public const int ModelMaxLength = 100;
     public const int DetailMaxLength = 200;
+    public const int InstructionVersionMaxLength = 60;
 
     private AiRun(Guid tenantId, Guid conversationId)
         : base(tenantId)
@@ -145,9 +146,19 @@ internal sealed class AiRun : TenantEntity
 
     public int DurationMs { get; private set; }
 
+    /// <summary>The AI answer this run sent (the last message when a disclosure came first); null otherwise.</summary>
+    public Guid? MessageId { get; private set; }
+
+    /// <summary>Which prompt and owner guidance the model got, see <c>Prompt.Version</c>.</summary>
+    public string? InstructionVersion { get; private set; }
+
+    /// <summary>Tool calls and checks; cleared after the retention period (SEC-40), the row stays for metering.</summary>
+    public RunTrace? Trace { get; private set; }
+
     public static AiRun Finish(
         Guid tenantId, Guid conversationId, string model, int inputTokens, int outputTokens,
-        IEnumerable<string> tools, RunOutcome outcome, string? detail, TimeSpan duration, IEnumerable<string>? sources = null) =>
+        IEnumerable<string> tools, RunOutcome outcome, string? detail, TimeSpan duration, IEnumerable<string>? sources = null,
+        RunTrace? trace = null, string? instructionVersion = null) =>
         new(tenantId, conversationId)
         {
             Model = model.Length <= ModelMaxLength ? model : model[..ModelMaxLength],
@@ -158,5 +169,52 @@ internal sealed class AiRun : TenantEntity
             Outcome = outcome,
             Detail = detail is null ? null : detail.Length <= DetailMaxLength ? detail : detail[..DetailMaxLength],
             DurationMs = (int)Math.Min(int.MaxValue, duration.TotalMilliseconds),
+            Trace = trace,
+            InstructionVersion = instructionVersion is null || instructionVersion.Length <= InstructionVersionMaxLength ? instructionVersion : instructionVersion[..InstructionVersionMaxLength],
         };
+
+    public void Sent(Guid messageId) => MessageId = messageId;
+}
+
+/// <summary>
+/// One tool call as the team sees it in "Why this answer": arguments and result trimmed, and the
+/// customer's delivery details never stored (only which fields were given; SEC-19, SEC-40).
+/// </summary>
+internal sealed record ToolTrace(string Name, string Arguments, string Result);
+
+/// <summary>
+/// What happened inside a run (ADR 0026 §6). <see cref="Check"/> is the reply check (SEC-38):
+/// <c>passed</c>, or the reason the draft was held back; null when no draft was checked.
+/// </summary>
+internal sealed record RunTrace(IReadOnlyList<ToolTrace> Tools, string? Check);
+
+internal enum Rating
+{
+    Up,
+    Down,
+}
+
+/// <summary>A team member's 👍/👎 on one AI reply (PRD 4.8); one per member and reply.</summary>
+internal sealed class ReplyFeedback : TenantEntity
+{
+    private ReplyFeedback(Guid tenantId, Guid messageId, Guid runId, Guid userId)
+        : base(tenantId)
+    {
+        MessageId = messageId;
+        RunId = runId;
+        UserId = userId;
+    }
+
+    public Guid MessageId { get; private set; }
+
+    public Guid RunId { get; private set; }
+
+    public Guid UserId { get; private set; }
+
+    public Rating Rating { get; private set; }
+
+    public static ReplyFeedback Create(Guid tenantId, Guid messageId, Guid runId, Guid userId, Rating rating) =>
+        new(tenantId, messageId, runId, userId) { Rating = rating };
+
+    public void Change(Rating rating) => Rating = rating;
 }
