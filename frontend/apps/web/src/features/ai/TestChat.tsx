@@ -3,12 +3,14 @@ import { RotateCcw, Send } from 'lucide-react';
 import { useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authErrorMessage } from '../auth/errors';
-import { useTestChat, type TestMessage } from './api';
+import { useTestChat, type TestMessage, type Trace } from './api';
+import { WhyThisTestAnswer } from './TracePanel';
 
 type Line =
   | { kind: 'customer'; text: string }
-  | { kind: 'ai'; text: string; disclosure?: boolean }
-  | { kind: 'notice'; text: string };
+  // `trace`: "Why this answer" (PRD 4.8), under the reply or under the handoff / held-back notice.
+  | { kind: 'ai'; text: string; disclosure?: boolean; trace?: Trace }
+  | { kind: 'notice'; text: string; trace?: Trace };
 
 /**
  * Try the AI before going live (PRD 4.8): type as a customer, see what the AI would answer with
@@ -67,18 +69,9 @@ export function TestChat({ providerConfigured }: { providerConfigured: boolean }
             }),
           });
         }
-        if (result.tools.length > 0)
-          added.push({ kind: 'notice', text: t('aiTest.tools', { tools: result.tools.join(', ') }) });
-        if (result.sources.length > 0) {
-          const names = result.sources.map((source) =>
-            source.kind === 'answer'
-              ? `“${source.label ?? t('aiTest.sources.answer')}”`
-              : source.kind === 'policy'
-                ? t(`aiTest.sources.${source.label ?? 'other'}`, { defaultValue: source.label ?? '' })
-                : t('aiTest.sources.zones'),
-          );
-          added.push({ kind: 'notice', text: t('aiTest.usedSources', { sources: names.join(', ') }) });
-        }
+        // Tools and sources are in the trace now, under the last line of this turn.
+        const last = added.at(-1);
+        if (last && last.kind !== 'customer' && !result.failed) last.trace = result.trace;
         setLines((current) => [...current, ...added]);
       },
     });
@@ -126,6 +119,7 @@ export function TestChat({ providerConfigured }: { providerConfigured: boolean }
             )}
           >
             {line.text}
+            {line.kind !== 'customer' && line.trace && <WhyThisTestAnswer trace={line.trace} />}
           </li>
         ))}
         {test.isPending && (

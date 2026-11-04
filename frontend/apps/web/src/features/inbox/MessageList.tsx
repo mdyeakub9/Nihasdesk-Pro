@@ -3,6 +3,8 @@ import { AlertCircle, CheckCheck, Clock, Lock, ShoppingBag, Sparkles } from 'luc
 import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format';
+import { useAiReplies, type RatedReply } from '../ai/api';
+import { AiReplyTools } from '../ai/TracePanel';
 import { useOlderMessages } from './api';
 import type { Conversation, Message, ProductCard } from './types';
 
@@ -30,7 +32,18 @@ function ProductMessage({ product }: { product: ProductCard }) {
   );
 }
 
-function MessageItem({ message, contactName }: { message: Message; contactName: string }) {
+function MessageItem({
+  message,
+  contactName,
+  conversationId,
+  aiReply,
+}: {
+  message: Message;
+  contactName: string;
+  conversationId: string;
+  /** Set for AI answers that have a trace: 👍/👎 and "Why this answer" (PRD 4.8). */
+  aiReply?: RatedReply | undefined;
+}) {
   const { t, i18n } = useTranslation();
   const time = formatTime(message.sentAt, i18n.resolvedLanguage ?? 'en');
   const fromCustomer = message.author === 'customer';
@@ -103,6 +116,9 @@ function MessageItem({ message, contactName }: { message: Message; contactName: 
           </>
         )}
       </p>
+      {aiReply && (
+        <AiReplyTools conversationId={conversationId} messageId={message.id} rating={aiReply.rating} />
+      )}
     </li>
   );
 }
@@ -113,6 +129,8 @@ export function MessageList({ conversation }: { conversation: Conversation }) {
   const endRef = useRef<HTMLLIElement>(null);
   const today = new Date().toISOString();
   const older = useOlderMessages(conversation.id);
+  const aiReplies = useAiReplies(conversation.id);
+  const rated = new Map(aiReplies.data?.map((reply) => [reply.messageId, reply]));
   // Team notes live in the side panel's Notes section only (ADR 0021); the AI's handoff notes stay.
   const messages = conversation.messages.filter((m) => !(m.internal && m.author === 'agent'));
   const lastId = messages.at(-1)?.id;
@@ -148,7 +166,12 @@ export function MessageList({ conversation }: { conversation: Conversation }) {
                   : formatDay(message.sentAt, language)}
               </li>
             )}
-            <MessageItem message={message} contactName={conversation.contactName} />
+            <MessageItem
+              message={message}
+              contactName={conversation.contactName}
+              conversationId={conversation.id}
+              aiReply={rated.get(message.id)}
+            />
           </Fragment>
         );
       })}

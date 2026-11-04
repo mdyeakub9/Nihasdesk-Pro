@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Role } from '../session/types';
 import { callsTo, fakeApi, json, testSession } from '../../test/fake-api';
 import { renderApp } from '../../test/render-app';
-import type { AiSettings, TestReply } from './api';
+import type { AiSettings, TestReply, Trace } from './api';
 
 const settings = (over: Partial<AiSettings> = {}): AiSettings => ({
   enabled: true,
@@ -29,6 +29,24 @@ function aiApi(role: Role = 'owner', extra: Parameters<typeof fakeApi>[0] = {}) 
   });
 }
 
+const trace = (over: Partial<Trace> = {}): Trace => ({
+  outcome: 'replied',
+  detail: null,
+  model: 'gpt-5-mini',
+  instructionVersion: 'agent-2026-11-04+1a2b3c4d',
+  inputTokens: 900,
+  outputTokens: 40,
+  durationMs: 1500,
+  sources: [],
+  toolNames: [],
+  tools: [],
+  check: 'passed',
+  hasDetails: true,
+  createdAt: '2026-11-04T10:00:00Z',
+  myRating: null,
+  ...over,
+});
+
 const reply = (over: Partial<TestReply> = {}): TestReply => ({
   disclosure: null,
   reply: null,
@@ -38,6 +56,7 @@ const reply = (over: Partial<TestReply> = {}): TestReply => ({
   failed: null,
   tools: [],
   sources: [],
+  trace: trace(),
   ...over,
 });
 
@@ -133,10 +152,17 @@ describe('Settings → AI', () => {
                   disclosure: 'Ciao! Sono l’assistente virtuale.',
                   reply: 'Sì, costa €89.00!',
                   tools: ['search_products', 'search_knowledge'],
-                  sources: [
-                    { kind: 'policy', label: 'returns' },
-                    { kind: 'answer', label: 'Posso cambiare taglia?' },
-                  ],
+                  trace: trace({
+                    sources: [
+                      { kind: 'policy', label: 'returns' },
+                      { kind: 'answer', label: 'Posso cambiare taglia?' },
+                    ],
+                    toolNames: ['search_products', 'search_knowledge'],
+                    tools: [
+                      { name: 'search_products', arguments: '{}', result: '{}' },
+                      { name: 'search_knowledge', arguments: '{}', result: '{}' },
+                    ],
+                  }),
                 })
               : reply({
                   handoff: 'unknown_answer',
@@ -155,8 +181,10 @@ describe('Settings → AI', () => {
     const chat = screen.getByRole('list', { name: 'Test conversation' });
     expect(await within(chat).findByText('Sì, costa €89.00!')).toBeInTheDocument();
     expect(within(chat).getByText('Ciao! Sono l’assistente virtuale.')).toBeInTheDocument();
-    expect(within(chat).getByText('Looked up: search_products, search_knowledge')).toBeInTheDocument();
-    expect(within(chat).getByText('Based on: return policy, “Posso cambiare taglia?”')).toBeInTheDocument();
+    // Tools and sources are in "Why this answer" under the reply (PRD 4.8).
+    await userEvent.click(within(chat).getByRole('button', { name: 'Why this answer' }));
+    expect(within(chat).getByText('return policy, “Posso cambiare taglia?”')).toBeInTheDocument();
+    expect(within(chat).getByText('search_knowledge')).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Test message'), 'Spedite in Sardegna?{Enter}');
     expect(
@@ -181,6 +209,37 @@ describe('Settings → AI', () => {
     await waitFor(() => expect(input).toBeEnabled());
     await userEvent.type(input, 'Ciao{Enter}');
     expect(await screen.findByText(/didn’t accept the API key \(401\)/)).toBeInTheDocument();
+  });
+
+  it('downloads the 👎 replies as eval cases', async () => {
+    const created = vi.fn(() => 'blob:feedback');
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: created, revokeObjectURL: vi.fn() }));
+    const fetchMock = aiApi('owner', {
+      routes: {
+        'GET /api/v1/ai/feedback/export': () =>
+          json({
+            notice: 'Contains customers’ words.',
+            cases: [
+              {
+                id: 'feedback-1a2b3c4d',
+                question: 'Avete la borsa nera?',
+                aiReply: 'Sì!',
+                expectedAnswer: null,
+                expectHandoff: null,
+                ratedAt: '2026-11-04T10:00:00Z',
+              },
+            ],
+          }),
+      },
+    });
+    await renderApp('/settings/ai');
+
+    expect(await screen.findByText(/remove names, phone numbers, emails and addresses/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Download 👎 replies' }));
+
+    expect(await screen.findByText('1 reply downloaded.')).toHaveAttribute('role', 'status');
+    expect(created).toHaveBeenCalledTimes(1);
+    expect(callsTo(fetchMock, '/api/v1/ai/feedback/export')).toHaveLength(1);
   });
 
   it('is only for Owners and Admins', async () => {
