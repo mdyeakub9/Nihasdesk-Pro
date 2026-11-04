@@ -4,7 +4,7 @@ using Nihasdesk.Modules.AiAgent.Llm;
 namespace Nihasdesk.Evals;
 
 /// <summary>The judge's view of one outcome: <c>correct</c>, <c>acceptable</c> or <c>wrong</c>.</summary>
-internal sealed record Verdict(string Grade, bool MadeUpFact, string Reason);
+internal sealed record Verdict(string Grade, bool MadeUpFact, string Reason, bool WrongLanguage = false);
 
 /// <summary>
 /// A stronger model grades each outcome against the case's expectation and the shop's facts (ADR
@@ -12,6 +12,9 @@ internal sealed record Verdict(string Grade, bool MadeUpFact, string Reason);
 /// </summary>
 internal sealed class Judge(ILlmProvider llm, string model)
 {
+    /// <summary>Raise when the rules below change: runs by different rules aren't strictly comparable.</summary>
+    public const int RulesVersion = 2;
+
     private const string System = """
         You grade the replies of a shop's AI assistant in a test. You get the shop's complete data (JSON),
         the conversation, what a correct outcome is, and what the assistant did.
@@ -25,7 +28,13 @@ internal sealed class Judge(ILlmProvider llm, string model)
         that is not in the shop data (rounding or a different currency format of a real amount is not made up).
         A handover to the team states no facts.
 
-        Answer with JSON only: {"grade":"correct|acceptable|wrong","madeUpFact":true|false,"reason":"one short sentence"}
+        "wrongLanguage" is true when the reply is not in the language of the customer's last message. Product names
+        from the shop data may stay as they are. A handover has no reply, so it is false. A reply in the wrong language
+        is never "correct": grade it "acceptable" at most.
+
+        Write "reason" in English.
+
+        Answer with JSON only: {"grade":"correct|acceptable|wrong","madeUpFact":true|false,"wrongLanguage":true|false,"reason":"one short sentence"}
         """;
 
     public async Task<Verdict> GradeAsync(EvalCase evalCase, string shopJson, string outcome, CancellationToken ct)
@@ -75,10 +84,13 @@ internal sealed class Judge(ILlmProvider llm, string model)
             using var document = JsonDocument.Parse(json[start..(end + 1)]);
             var root = document.RootElement;
             var grade = root.TryGetProperty("grade", out var g) ? g.GetString() : null;
+            var wrongLanguage = root.TryGetProperty("wrongLanguage", out var l) && l.ValueKind == JsonValueKind.True;
             return new Verdict(
-                grade is "correct" or "acceptable" or "wrong" ? grade : "error",
+                // The rule is enforced here too, so a lenient judge can't inflate "correct".
+                grade is "correct" && wrongLanguage ? "acceptable" : grade is "correct" or "acceptable" or "wrong" ? grade : "error",
                 root.TryGetProperty("madeUpFact", out var m) && m.ValueKind == JsonValueKind.True,
-                root.TryGetProperty("reason", out var r) ? r.GetString() ?? string.Empty : string.Empty);
+                root.TryGetProperty("reason", out var r) ? r.GetString() ?? string.Empty : string.Empty,
+                wrongLanguage);
         }
         catch (JsonException)
         {

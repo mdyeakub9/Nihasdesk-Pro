@@ -26,7 +26,12 @@ internal sealed record CaseResult(
     string Reason,
     IReadOnlyList<string> Tools,
     int Tokens,
-    int DurationMs);
+    int DurationMs,
+    bool WrongLanguage = false,
+    IReadOnlyList<ToolCallResult>? Calls = null);
+
+/// <summary>What a tool was asked and returned (trimmed), to see why a case went wrong. Made-up data only.</summary>
+internal sealed record ToolCallResult(string Name, string Arguments, string Result);
 
 /// <summary>RecallAt4 stays "n/a" until search returns ranked sections (ADR 0026 §3).</summary>
 internal sealed record RunTotals(
@@ -42,7 +47,8 @@ internal sealed record RunTotals(
     int ProviderFailures,
     int AverageTokens,
     double AverageSeconds,
-    string RecallAt4);
+    string RecallAt4,
+    int WrongLanguage = 0);
 
 internal sealed record RunFile(
     DateTimeOffset StartedAt,
@@ -51,7 +57,8 @@ internal sealed record RunFile(
     string? InstructionVersion,
     int SetVersion,
     RunTotals Totals,
-    IReadOnlyList<CaseResult> Cases);
+    IReadOnlyList<CaseResult> Cases,
+    int JudgeRules = 1);
 
 internal static class Report
 {
@@ -68,7 +75,8 @@ internal static class Report
         cases.Count(c => c.Outcome == "failed"),
         cases.Count == 0 ? 0 : (int)cases.Average(c => c.Tokens),
         cases.Count == 0 ? 0 : Math.Round(cases.Average(c => c.DurationMs) / 1000.0, 1),
-        "n/a");
+        "n/a",
+        cases.Count(c => c.WrongLanguage));
 
     /// <summary>The newest earlier run in <paramref name="runsDirectory"/>, to compare with.</summary>
     public static RunFile? Previous(string runsDirectory, string? except)
@@ -92,6 +100,12 @@ internal static class Report
             ? "No earlier run to compare with: this is the baseline."
             : string.Create(CultureInfo.InvariantCulture, $"Compared with the run of {previous.StartedAt:yyyy-MM-dd HH:mm} UTC (reply model `{previous.ReplyModel}`, prompt `{previous.InstructionVersion ?? "?"}`)."));
         md.AppendLine();
+        if (previous is not null && previous.JudgeRules != run.JudgeRules)
+        {
+            md.AppendLine(CultureInfo.InvariantCulture, $"**The judge's rules changed (v{previous.JudgeRules} → v{run.JudgeRules}), so grades are not strictly comparable with the run before.**");
+            md.AppendLine();
+        }
+
         md.AppendLine("| Measure | This run | Before | Change |");
         md.AppendLine("|---|---|---|---|");
         Row(md, "Correct", t.Correct, p?.Correct, t.Cases);
@@ -100,6 +114,7 @@ internal static class Report
         Row(md, "Handoff right (should / shouldn't)", t.HandoffCorrect, p?.HandoffCorrect, t.Cases);
         Row(md, "**Made-up prices reaching the customer (must be 0)**", t.MadeUpPricesReached, p?.MadeUpPricesReached, null);
         Row(md, "**Made-up facts per the judge (must be 0)**", t.MadeUpFacts, p?.MadeUpFacts, null);
+        md.AppendLine(CultureInfo.InvariantCulture, $"| Replies in the wrong language | {t.WrongLanguage} | {(previous is null || previous.JudgeRules < 2 ? "not measured" : p!.WrongLanguage.ToString(CultureInfo.InvariantCulture))} | {(previous is null || previous.JudgeRules < 2 ? "" : Delta(t.WrongLanguage, p!.WrongLanguage))} |");
         Row(md, "Drafts held back by the reply check", t.HeldBack, p?.HeldBack, null);
         Row(md, "Provider failures", t.ProviderFailures, p?.ProviderFailures, null);
         Row(md, "Judge errors", t.JudgeErrors, p?.JudgeErrors, null);
@@ -148,7 +163,7 @@ internal static class Report
 
         md.AppendLine("## To look at");
         md.AppendLine();
-        var look = run.Cases.Where(c => c.Grade is "wrong" or "error" || !c.HandoffOk || c.MadeUpFact || c.MadeUpPrices.Count > 0).ToList();
+        var look = run.Cases.Where(c => c.Grade is "wrong" or "error" || !c.HandoffOk || c.MadeUpFact || c.WrongLanguage || c.MadeUpPrices.Count > 0).ToList();
         if (look.Count == 0)
         {
             md.AppendLine("Nothing: every case was correct or acceptable with the right handoff.");
@@ -172,6 +187,11 @@ internal static class Report
             if (c.MadeUpFact)
             {
                 flags.Add("made-up fact");
+            }
+
+            if (c.WrongLanguage)
+            {
+                flags.Add("wrong language");
             }
 
             if (c.MadeUpPrices.Count > 0)
