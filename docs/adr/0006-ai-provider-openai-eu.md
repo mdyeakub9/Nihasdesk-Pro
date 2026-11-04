@@ -1,6 +1,6 @@
 # ADR 0006: AI provider — OpenAI with European data residency
 
-Date: 2026-10-26 · Status: Accepted
+Date: 2026-10-26 · Status: Accepted; the EU data residency part is replaced by ADR 0028
 
 ## Decision
 Phase 1 uses the **OpenAI API in a project with European data residency** as the only LLM provider. Two tiers as in `docs/ai-agent.md`: a cheap model for routing/classification/simple replies and a stronger model for complex replies; speech-to-text for voice notes and vision for images from the same provider. Conditions (SEC-40): EU data residency enabled, no training on our data, DPA signed, zero/limited data retention where available. Concrete model names live in configuration, not in code, and are chosen with the eval set.

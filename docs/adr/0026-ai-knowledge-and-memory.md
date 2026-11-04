@@ -33,7 +33,7 @@ Tables (names indicative, final in the migration PR):
   - Web page: **AngleSharp** + **SmartReader** (Readability port; menus, footers, cookie banners removed).
   - All are .NET, MIT/Apache licensed, run in-process; no Python service in Phase 1. **Docling** (Python container) and **Tesseract OCR** are the upgrade path for scans and complex layouts.
 - **Chunking:** follow headings; target 300–500 tokens, ~50 tokens overlap inside long sections only; never split a table, a list item or a FAQ pair; prefix each chunk with its title and heading path ("Shipping › Italy › Islands") for search, store the clean text separately for display.
-- **Embeddings:** OpenAI `text-embedding-3-small` (1536 dims) through `IEmbeddingProvider`, on the same EU data-residency project as replies (ADR 0006; confirm embeddings are covered before building). Batched, retried, model and version stored per section so a model change can re-embed in the background. Unchanged text (hash) is not embedded again.
+- **Embeddings:** OpenAI `text-embedding-3-small` (1536 dims) through `IEmbeddingProvider`, on the same OpenAI project as replies (ADR 0028). Batched, retried, model and version stored per section so a model change can re-embed in the background. Unchanged text (hash) is not embedded again.
 - **Untrusted content (SEC-35):** imported text is data. It is quoted to the model inside a clearly marked block and can never change instructions or tools.
 - **Conflict check:** after parsing, code (not the model) looks for amounts, day counts and shipping words and compares them with Layer 1 values (shipping zones, return days, payment). Matches that differ become review warnings. Prices in documents are never used for totals (rule 5, SEC-41).
 

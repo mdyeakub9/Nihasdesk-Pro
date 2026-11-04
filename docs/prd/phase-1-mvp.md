@@ -267,6 +267,6 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 1. ~~Order capture in Phase 1?~~ **Decided 2026-10-23:** AI collects the order and creates an order request; a human approves before an order exists (section 4.9).
 6. ~~Payment methods at launch?~~ **Decided 2026-10-23:** cash on delivery only in Phase 1; Stripe Connect is the first online method later (ADR 0004).
 2. ~~Billing in beta?~~ **Decided 2026-10-23:** see section 8 — internal testing first, then beta with manual invoices; no Stripe subscriptions in Phase 1.
-3. ~~Which AI provider(s) and EU hosting option?~~ **Decided 2026-10-26:** OpenAI API with European data residency (ADR 0006).
+3. ~~Which AI provider(s) and EU hosting option?~~ **Decided 2026-10-26:** OpenAI API with European data residency (ADR 0006); changed on 2026-11-05 to the global endpoint (ADR 0028).
 4. ~~Languages of the dashboard at launch?~~ **Decided 2026-10-26:** Italian + English (section 4.13).
 5. ~~Is the daily summary email enough?~~ **Decided 2026-10-26:** daily summary email + web push for urgent events; no WhatsApp alert to the owner in Phase 1 (section 4.10).

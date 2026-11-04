@@ -70,7 +70,7 @@ Threat model in one paragraph: Nihasdesk stores many businesses' customer conver
 - **SEC-37 No secrets or other tenants' data in prompts.** Prompts contain only what the reply needs (GDPR minimization). Never include API keys, internal notes not meant for the AI, or data from other conversations/tenants.
 - **SEC-38 Output checks.** Before sending: block replies that contain prices/totals not returned by tools in this turn, URLs not on the shop's allow-list, or internal identifiers. On failure → safe fallback or handoff.
 - **SEC-39 Cost & abuse limits.** Per conversation: max tool-call loop iterations, max tokens, max AI replies per time window; per tenant: daily/monthly caps; detection of spam/flooding contacts (auto-pause AI for that contact). Protects against "denial of wallet".
-- **SEC-40 AI logs are sensitive.** Stored prompts/responses are tenant-scoped personal data: access-controlled, retention-limited, and redacted in general logs. Use an AI provider project with EU data residency and no training on our data (DPA signed).
+- **SEC-40 AI logs are sensitive.** Stored prompts/responses are tenant-scoped personal data: access-controlled, retention-limited, and redacted in general logs. Use an AI provider project with no training on our data (DPA signed); the provider may process data outside the EU (ADR 0028).
 
 ## 6. Business logic & abuse
 

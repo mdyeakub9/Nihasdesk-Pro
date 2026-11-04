@@ -126,7 +126,7 @@ for (var i = 0; i < cases.Count; i++)
     {
         Console.Error.WriteLine(
             $"The AI provider failed for the first cases ({string.Join(", ", results.Select(r => r.Failed).Distinct())}). " +
-            "http_401/403: the key is wrong or not for this endpoint (Ai__OpenAi__BaseUrl; the default is the EU endpoint). Nothing was saved.");
+            "http_401/403: the key is wrong or not for this endpoint (Ai__OpenAi__BaseUrl). Nothing was saved.");
         return 3;
     }
 }

@@ -37,7 +37,7 @@ Module internal layout: `Domain/`, `Features/<UseCase>/` (Endpoint, Request, Res
 4. **Migrations:** never edit a migration that has been applied to staging/production; no destructive migration (drop/rename column/table) without the expand → migrate → contract process. Always show migration files for review.
 5. **AI agent:** prices, stock, order status and availability come only from tools, never from the model. The AI never creates a confirmed order — it creates an order request that a human approves. Tool code enforces permissions and tenant scope. Disclose AI to end customers (EU AI Act).
 6. **Secrets** never in the repo. `.env` is git-ignored; document variables in `.env.example`.
-7. **GDPR:** send the AI provider only the data needed for the reply; customer data stays in the EU.
+7. **GDPR:** send the AI provider only the data needed for the reply. Customer data is stored in the EU; calls to the AI provider may leave it (ADR 0028).
 8. **Security standard is mandatory.** Read `docs/standards/security.md` before any work on endpoints, auth, uploads, outbound HTTP, webhooks, AI tools, logging or infrastructure. Reference the `SEC-xx` rules you applied in the PR. If a rule can't be followed, stop and ask.
 
 ## How to work
