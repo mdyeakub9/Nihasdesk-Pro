@@ -1,5 +1,5 @@
 import { Badge, Button, Card, FieldError, Label, NativeSelect, Switch, Textarea } from '@nihasdesk/ui';
-import { MessageCircleQuestion, Sparkles } from 'lucide-react';
+import { Download, MessageCircleQuestion, Sparkles } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -8,6 +8,7 @@ import { useSession } from '../session/useSession';
 import {
   useAiSettings,
   useDismissQuestion,
+  useFeedbackExport,
   useSaveAiSettings,
   useTeach,
   useUnansweredQuestions,
@@ -189,6 +190,56 @@ function Questions() {
   );
 }
 
+/** Saves the export as a file in the browser; nothing leaves the dashboard otherwise. */
+function download(name: string, data: unknown) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/** 👎 replies as eval cases (PRD 4.8): the owner removes personal data before using them. */
+function FeedbackExport() {
+  const { t } = useTranslation();
+  const exporter = useFeedbackExport();
+
+  return (
+    <section aria-labelledby="feedback-heading" className="flex flex-col gap-2">
+      <h2 id="feedback-heading" className="text-sm font-semibold">
+        {t('aiSettings.feedback.title')}
+      </h2>
+      <p className="text-[13px] text-secondary-foreground">{t('aiSettings.feedback.intro')}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={exporter.isPending}
+          onClick={() =>
+            exporter.mutate(undefined, {
+              onSuccess: (data) => {
+                if (data.cases.length > 0) download('nihasdesk-ai-feedback.json', data);
+              },
+            })
+          }
+        >
+          <Download aria-hidden="true" />
+          {t('aiSettings.feedback.download')}
+        </Button>
+        {exporter.data && (
+          <p role="status" className="text-[13px] text-secondary-foreground">
+            {exporter.data.cases.length > 0
+              ? t('aiSettings.feedback.downloaded', { count: exporter.data.cases.length })
+              : t('aiSettings.feedback.none')}
+          </p>
+        )}
+      </div>
+      {exporter.error && <FieldError>{authErrorMessage(exporter.error, t)}</FieldError>}
+    </section>
+  );
+}
+
 /**
  * Settings → AI (PRD 4.8, ADR 0019): how the AI works, what it couldn't answer, test chat. What it
  * knows (policies, shipping, FAQ) is under Settings → Shop knowledge (ADR 0020).
@@ -211,6 +262,7 @@ export function AiSettingsPage() {
       <div className="flex min-w-0 flex-col gap-6">
         {settings && <SettingsForm key={String(settings.enabled) + settings.tone} settings={settings} />}
         <Questions />
+        <FeedbackExport />
         <p className="rounded-lg border bg-surface px-4 py-3 text-[13px] text-secondary-foreground">
           {t('aiSettings.knowledgeHint')}{' '}
           <Link to="/settings/knowledge" className="font-medium text-info-foreground hover:underline">

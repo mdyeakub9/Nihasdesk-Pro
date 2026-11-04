@@ -647,6 +647,14 @@
         "taught": "Insegnata",
         "added": "FAQ"
       }
+    },
+    "feedback": {
+      "title": "Risposte che al team non sono piaciute",
+      "intro": "Scarica come casi di test le risposte dell’IA che il team ha segnato con 👎. Contengono le parole dei clienti: togli nomi, numeri di telefono, email e indirizzi, poi scrivi la risposta attesa prima di aggiungerle all’eval set.",
+      "download": "Scarica le risposte 👎",
+      "downloaded_one": "{{count}} risposta scaricata.",
+      "downloaded_other": "{{count}} risposte scaricate.",
+      "none": "Ancora nessuna risposta con 👎."
     }
   },
   "aiTest": {
@@ -658,8 +666,6 @@
     "send": "Invia",
     "reset": "Ricomincia",
     "thinking": "L’IA sta pensando…",
-    "tools": "Ha consultato: {{tools}}",
-    "usedSources": "In base a: {{sources}}",
     "sources": {
       "zones": "zone di spedizione",
       "shipping": "note sulla spedizione",
@@ -881,5 +887,27 @@
       "dismiss": "Chiudi"
     },
     "new": "Nuovo ordine"
+  },
+  "trace": {
+    "why": "Perché questa risposta",
+    "feedback": "Valuta questa risposta dell’IA",
+    "good": "Risposta buona",
+    "bad": "Risposta non buona",
+    "loading": "Caricamento…",
+    "error": "Impossibile caricare i dettagli. Riprova.",
+    "basedOn": "In base a",
+    "noSources": "Nessuna conoscenza del negozio",
+    "catalog": "catalogo",
+    "check": "Controllo della risposta",
+    "passed": "Superato: prezzi solo dal tuo catalogo, nessun link",
+    "heldBack": "Trattenuta: {{reason}}",
+    "noCheck": "Nessuna risposta da controllare",
+    "tools": "Ha consultato",
+    "noTools": "Niente; ha risposto dalla conversazione.",
+    "arguments": "Richiesta",
+    "result": "Risultato",
+    "removed": "I dettagli vengono eliminati dopo 90 giorni.",
+    "meta": "{{model}} · {{tokens}} token · {{seconds}} s",
+    "prompt": "prompt {{version}}"
   }
 }

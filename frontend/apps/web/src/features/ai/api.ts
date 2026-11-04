@@ -46,6 +46,8 @@ export type TestReply = {
   tools: string[];
   /** What the answer was based on: shipping zones, a policy (label = topic) or an answer (label = its question). */
   sources: { kind: 'shipping' | 'policy' | 'answer'; label: string | null }[];
+  /** "Why this answer" for this test reply. */
+  trace: Trace;
 };
 
 const keys = {
@@ -112,4 +114,87 @@ export function useTestChat() {
   return useMutation({
     mutationFn: (messages: TestMessage[]) => apiPost<TestReply>('/api/v1/ai/test', { messages }),
   });
+}
+
+/* "Why this answer", 👍/👎 and the 👎 export (PRD 4.8, ADR 0026 §6). */
+
+export type Rating = 'up' | 'down';
+
+export type TraceSource = { kind: 'shipping' | 'policy' | 'answer' | 'catalog'; label: string | null };
+
+export type ToolTrace = { name: string; arguments: string; result: string };
+
+export type Trace = {
+  outcome: string;
+  detail: string | null;
+  model: string;
+  instructionVersion: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  durationMs: number;
+  sources: TraceSource[];
+  toolNames: string[];
+  /** Empty when the details were removed after the retention period (or the reply is older than traces). */
+  tools: ToolTrace[];
+  /** `passed`, or why the draft was held back. */
+  check: string | null;
+  hasDetails: boolean;
+  createdAt: string;
+  myRating: Rating | null;
+};
+
+/** An AI reply of a conversation that has a trace, with the current member's rating. */
+export type RatedReply = { messageId: string; rating: Rating | null };
+
+export type EvalCaseExport = {
+  id: string;
+  question: string | null;
+  aiReply: string | null;
+  expectedAnswer: string | null;
+  expectHandoff: boolean | null;
+  ratedAt: string;
+};
+
+export type FeedbackExport = { notice: string; cases: EvalCaseExport[] };
+
+// Under the inbox's key, so the inbox's live updates refresh the ratings too.
+const repliesKey = (conversationId: string) => ['inbox', 'aiReplies', conversationId] as const;
+const traceKey = (messageId: string) => ['ai', 'trace', messageId] as const;
+
+export function useAiReplies(conversationId: string) {
+  return useQuery({
+    queryKey: repliesKey(conversationId),
+    queryFn: () =>
+      apiGet<RatedReply[]>(`/api/v1/ai/conversations/${encodeURIComponent(conversationId)}/replies`),
+  });
+}
+
+/** Loaded only when the team opens "Why this answer". */
+export function useTrace(messageId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: traceKey(messageId),
+    queryFn: () => apiGet<Trace>(`/api/v1/ai/messages/${encodeURIComponent(messageId)}/trace`),
+    enabled,
+  });
+}
+
+export function useRateReply(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, rating }: { messageId: string; rating: Rating | null }) =>
+      apiPut<RatedReply>(`/api/v1/ai/messages/${encodeURIComponent(messageId)}/feedback`, { rating }),
+    onSuccess: (saved) => {
+      queryClient.setQueryData<RatedReply[]>(repliesKey(conversationId), (current) =>
+        current?.map((r) => (r.messageId === saved.messageId ? saved : r)),
+      );
+      queryClient.setQueryData<Trace>(traceKey(saved.messageId), (current) =>
+        current ? { ...current, myRating: saved.rating } : current,
+      );
+    },
+  });
+}
+
+/** Owner/Admin: 👎 replies as eval cases, to clean of personal data before use. */
+export function useFeedbackExport() {
+  return useMutation({ mutationFn: () => apiGet<FeedbackExport>('/api/v1/ai/feedback/export') });
 }

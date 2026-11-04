@@ -647,6 +647,14 @@
         "taught": "Taught",
         "added": "FAQ"
       }
+    },
+    "feedback": {
+      "title": "Replies your team disliked",
+      "intro": "Download the AI replies your team marked 👎 as test cases. They contain customers’ words: remove names, phone numbers, emails and addresses, then write the expected answer before adding them to the eval set.",
+      "download": "Download 👎 replies",
+      "downloaded_one": "{{count}} reply downloaded.",
+      "downloaded_other": "{{count}} replies downloaded.",
+      "none": "No 👎 replies yet."
     }
   },
   "aiTest": {
@@ -658,8 +666,6 @@
     "send": "Send",
     "reset": "Start over",
     "thinking": "The AI is thinking…",
-    "tools": "Looked up: {{tools}}",
-    "usedSources": "Based on: {{sources}}",
     "sources": {
       "zones": "shipping zones",
       "shipping": "shipping notes",
@@ -881,5 +887,27 @@
       "dismiss": "Dismiss"
     },
     "new": "New order"
+  },
+  "trace": {
+    "why": "Why this answer",
+    "feedback": "Rate this AI reply",
+    "good": "Good reply",
+    "bad": "Bad reply",
+    "loading": "Loading…",
+    "error": "Couldn’t load the details. Please try again.",
+    "basedOn": "Based on",
+    "noSources": "No shop knowledge",
+    "catalog": "catalog",
+    "check": "Reply check",
+    "passed": "Passed: prices only from your catalog, no links",
+    "heldBack": "Held back: {{reason}}",
+    "noCheck": "No reply to check",
+    "tools": "Looked up",
+    "noTools": "Nothing; answered from the conversation.",
+    "arguments": "Asked",
+    "result": "Got",
+    "removed": "Details are removed after 90 days.",
+    "meta": "{{model}} · {{tokens}} tokens · {{seconds}} s",
+    "prompt": "prompt {{version}}"
   }
 }
