@@ -45,7 +45,7 @@ Web app first, mobile app later.
 
 ## 7. Differentiation
 - vs **AiPraktor** (Bangladesh, Meta-only, unofficial WhatsApp, pay-as-you-go): Nihasdesk adds website/Shopify/WooCommerce, official WhatsApp API (broadcast-capable, no ban risk), inventory/order sync, EU focus.
-- vs big global tools: simpler onboarding (live in ~10 minutes), strong UX, EU data residency and GDPR by default, local languages and integrations.
+- vs big global tools: simpler onboarding (live in ~10 minutes), strong UX, EU data storage and GDPR by default, local languages and integrations.
 - Note: Meta now offers its own "Business Agent" AI — position Nihasdesk on multichannel + commerce + team workflow, not on "AI replies" alone.
 
 ## 8. Architecture summary
@@ -66,7 +66,7 @@ See `docs/ai-agent.md`. Key points:
 - Draft plans: Starter €39 (500 AI conversations), Pro €99 (2,000), Business €249 (6,000); extra AI credits sold separately. Target AI cost ≤ 15–25% of plan price.
 
 ## 11. Compliance
-GDPR (DPA, data minimization, export/delete), EU data residency, EU AI Act disclosure, Meta platform policies (24-hour window, templates, App Review, Business Verification).
+GDPR (DPA, data minimization, export/delete), data stored in the EU (AI provider calls may leave it, ADR 0028), EU AI Act disclosure, Meta platform policies (24-hour window, templates, App Review, Business Verification).
 
 ## 12. Non-technical prerequisites (start early)
 - Meta Business Verification + App Review, WhatsApp Cloud API setup
@@ -75,6 +75,6 @@ GDPR (DPA, data minimization, export/delete), EU data residency, EU AI Act discl
 - Talk to 5–10 target customers in Italy before building Phase 1 features
 
 ## 13. Open decisions
-- ~~AI provider(s) and EU-region hosting choice~~ Decided: OpenAI with European data residency (ADR 0006)
+- ~~AI provider(s) and EU-region hosting choice~~ Decided: OpenAI (ADR 0006), global endpoint (ADR 0028); hosting on Hetzner EU
 - Final pricing and trial model
 - Shipping aggregator (AfterShip / 17TRACK / other)

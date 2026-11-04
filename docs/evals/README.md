@@ -11,7 +11,7 @@ Measures the AI agent before every prompt, model or search change (PRD 4.8, ADR 
 
 ## Running it
 
-Needs Docker (Docker Desktop locally) and an OpenAI key for the EU project. The key is read only from the environment; it is never printed or saved.
+Needs Docker (Docker Desktop locally) and an OpenAI key. The key is read only from the environment; it is never printed or saved.
 
 ```bash
 Ai__OpenAi__ApiKey=sk-... dotnet run --project backend/tests/Evals -c Release
@@ -25,7 +25,7 @@ Options:
 
 The reply model is the API's own setting (`Ai:ReplyModel`, by default `gpt-5-mini`). Change it with `Ai__ReplyModel=...` to compare models.
 
-The endpoint is the API's default, the EU one (`https://eu.api.openai.com/v1/`, ADR 0006). It needs a key from an OpenAI project with EU data residency. A key from another project gets `http_401`/`http_403`. The runner then stops after three cases and saves nothing. For this test only, where every chat is made up, `Ai__OpenAi__BaseUrl=https://api.openai.com/v1/` can point it elsewhere. Real customer chats must stay on the EU endpoint.
+The endpoint is the API's default (`Ai:OpenAi:BaseUrl`, ADR 0028). A key that doesn't work with it gets `http_401`/`http_403`: the runner then stops after three cases and saves nothing.
 
 A full run of 50 cases costs a few cents. It sends only the made-up shop and chats to the provider, never customer data.
 

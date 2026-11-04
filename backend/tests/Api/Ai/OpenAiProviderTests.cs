@@ -48,7 +48,7 @@ public sealed class OpenAiProviderTests
 
         var response = await provider.CompleteAsync(Request(), CancellationToken.None);
 
-        Assert.Equal("https://eu.api.openai.com/v1/chat/completions", handler.Url!.ToString());
+        Assert.Equal("https://api.openai.com/v1/chat/completions", handler.Url!.ToString());
         Assert.Equal("Bearer sk-test-only", handler.Authorization);
         using var sent = JsonDocument.Parse(handler.Sent!);
         Assert.Equal("low", sent.RootElement.GetProperty("reasoning_effort").GetString());

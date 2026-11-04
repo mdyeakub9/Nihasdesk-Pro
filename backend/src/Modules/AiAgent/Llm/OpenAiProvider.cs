@@ -7,8 +7,8 @@ using Microsoft.Extensions.Options;
 namespace Nihasdesk.Modules.AiAgent.Llm;
 
 /// <summary>
-/// OpenAI Chat Completions with function tools (ADR 0006). The default base URL is the EU data
-/// residency endpoint. The key lives in user secrets or the secret store, never in the repo or in
+/// OpenAI Chat Completions with function tools (ADR 0006). The default base URL is the global
+/// endpoint (ADR 0028). The key lives in user secrets or the secret store, never in the repo or in
 /// logs (SEC-13); request logging is off for this client.
 /// </summary>
 internal sealed class OpenAiProvider(HttpClient http, IOptions<AiOptions> options) : ILlmProvider
@@ -171,7 +171,7 @@ internal sealed class AiOptions
     {
         public string ApiKey { get; set; } = string.Empty;
 
-        /// <summary>EU data residency endpoint by default (ADR 0006).</summary>
-        public string BaseUrl { get; set; } = "https://eu.api.openai.com/v1/";
+        /// <summary>The global endpoint by default (ADR 0028).</summary>
+        public string BaseUrl { get; set; } = "https://api.openai.com/v1/";
     }
 }
