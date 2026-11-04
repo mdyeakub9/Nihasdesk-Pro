@@ -3,13 +3,16 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Infrastructure.Storage;
 using Nihasdesk.Modules.AiAgent.Agent;
 using Nihasdesk.Modules.AiAgent.Features.Assistant;
 using Nihasdesk.Modules.AiAgent.Features.Knowledge;
 using Nihasdesk.Modules.AiAgent.Features.Policies;
 using Nihasdesk.Modules.AiAgent.Features.Settings;
+using Nihasdesk.Modules.AiAgent.Features.Sources;
 using Nihasdesk.Modules.AiAgent.Features.Trace;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Llm;
@@ -46,6 +49,9 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<IValidator<PoliciesRequest>, PoliciesValidator>();
         services.AddScoped<IValidator<AssistRequest>, AssistValidator>();
         services.AddScoped<IValidator<FeedbackRequest>, FeedbackValidator>();
+        services.AddScoped<IValidator<WebPageRequest>, WebPageValidator>();
+        services.AddFileStore(configuration);
+        services.AddSingleton<SafeHttpClient>();
 
         services.AddSingleton<TraceRetention>();
         services.AddSingleton<AiReplyProcessor>();
@@ -63,5 +69,6 @@ public sealed class AiAgentModule : IModule
         PolicyEndpoints.Map(endpoints);
         AssistantEndpoints.Map(endpoints);
         TraceEndpoints.Map(endpoints);
+        SourceEndpoints.Map(endpoints);
     }
 }

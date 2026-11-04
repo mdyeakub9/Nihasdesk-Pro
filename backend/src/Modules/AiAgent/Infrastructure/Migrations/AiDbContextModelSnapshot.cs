@@ -212,6 +212,171 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                     b.ToTable("knowledge_gaps", "ai");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EmbeddingModel")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("embedding_model");
+
+                    b.Property<bool>("Excluded")
+                        .HasColumnType("boolean")
+                        .HasColumnName("excluded");
+
+                    b.Property<string>("HeadingPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("heading_path");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("language");
+
+                    b.Property<int?>("Page")
+                        .HasColumnType("integer")
+                        .HasColumnName("page");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("text");
+
+                    b.Property<int>("TokenCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("token_count");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_knowledge_sections");
+
+                    b.HasIndex("SourceId")
+                        .HasDatabaseName("ix_knowledge_sections_source_id");
+
+                    b.HasIndex("TenantId", "SourceId", "Position")
+                        .HasDatabaseName("ix_knowledge_sections_tenant_id_source_id_position");
+
+                    b.ToTable("knowledge_sections", "ai");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("content_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset?>("LastReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_read_at");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("origin");
+
+                    b.Property<long?>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StorageKey")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("storage_key");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_knowledge_sources");
+
+                    b.HasIndex("TenantId", "ContentHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_knowledge_sources_tenant_id_content_hash")
+                        .HasFilter("content_hash IS NOT NULL");
+
+                    b.HasIndex("TenantId", "CreatedAt")
+                        .HasDatabaseName("ix_knowledge_sources_tenant_id_created_at");
+
+                    b.HasIndex("TenantId", "Origin")
+                        .IsUnique()
+                        .HasDatabaseName("ix_knowledge_sources_tenant_id_origin")
+                        .HasFilter("kind = 'webpage'");
+
+                    b.ToTable("knowledge_sources", "ai");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.ReplyFeedback", b =>
                 {
                     b.Property<Guid>("Id")
@@ -376,6 +541,16 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasDatabaseName("ix_taught_answers_tenant_id_active");
 
                     b.ToTable("taught_answers", "ai");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSection", b =>
+                {
+                    b.HasOne("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSource", null)
+                        .WithMany()
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_knowledge_sections_knowledge_sources_source_id");
                 });
 #pragma warning restore 612, 618
         }
