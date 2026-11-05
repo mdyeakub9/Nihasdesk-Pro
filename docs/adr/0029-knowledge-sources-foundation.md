@@ -24,6 +24,7 @@ SEC-04 asks for a malware scan (ClamAV) before documents are processed. The owne
 - Web pages: the `<main>` or `<article>` the page declares is read as it is. Otherwise SmartReader finds the content, and tables it dropped are added back at the end of the source, because SmartReader removes short tables, which often hold the facts.
 - A table, list or FAQ pair is always its own section.
 - Tokens are estimated (characters / 4): no tokenizer dependency for a size target.
-- PDF tables have no structure, so they come out as text. Reading them properly waits for the Docling upgrade path (ADR 0026).
+- PDF layout, from the first real PDF: paragraphs by the document's usual line spacing, running headers and footers removed (same text in the top or bottom 12% of at least half the pages, 3 pages or more), a sentence or a question and answer cut by a page break stays together, and a section's page is where it starts.
+- PDF tables have no structure, so they are found by wide gaps between columns (rows with ` | `). Cells that wrap over several lines come out mixed up. Reading them properly waits for the Docling upgrade path (ADR 0026).
 - Without an API key sources are still read and found by keywords, with the warning `no_embeddings`.
 - **Limit of SEC-04:** parsing has a time limit, but parsers run in process and can't be cancelled, so a stuck one stays on its thread until the Workers host restarts, and there is no per-file memory limit. Input size is limited (20 MB, 5 MB per page, 300 pages). Separate parser processes are for before launch, with the malware scan.
