@@ -188,7 +188,8 @@ internal static partial class LanguageGuess
             en += English.Contains(word.Value) ? 1 : 0;
         }
 
-        if (it + en >= 3 && it != en)
+        // Clear evidence only: one Italian word in an English sentence doesn't make it Italian.
+        if (it + en >= 3 && (it >= en * 2 || en >= it * 2))
         {
             return it > en ? "it" : "en";
         }

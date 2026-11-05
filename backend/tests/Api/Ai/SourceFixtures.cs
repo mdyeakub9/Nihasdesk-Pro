@@ -55,6 +55,50 @@ internal static class SourceFixtures
         return builder.Build();
     }
 
+    /// <summary>
+    /// The shape of a real shop's PDF: a header and footer on every page, wrapped lines at normal
+    /// spacing, a sentence and a question with its answer cut by a page break.
+    /// </summary>
+    public static byte[] RealisticPdf()
+    {
+        using var builder = new PdfDocumentBuilder();
+        var font = builder.AddStandard14Font(Standard14Font.Helvetica);
+
+        PdfPageBuilder Page(int number)
+        {
+            var page = builder.AddPage(PdfPageSize.A4);
+            page.AddText("NEGOZIO DEMO", 9, new PdfPoint(50, 810), font);
+            page.AddText($"Documento interno v1.0 - pagina {number}", 9, new PdfPoint(50, 30), font);
+            return page;
+        }
+
+        var first = Page(1);
+        first.AddText("Domande frequenti", 20, new PdfPoint(50, 760), font);
+        first.AddText("Q: Spedite fuori dall'Italia?", 11, new PdfPoint(50, 730), font);
+        first.AddText("A: Non ancora. Spediamo solo agli indirizzi in Italia, secondo la copertura", 11, new PdfPoint(50, 716), font);
+        first.AddText("del corriere e la disponibilita.", 11, new PdfPoint(50, 702), font);
+        first.AddText("Q: Avete un negozio fisico?", 11, new PdfPoint(50, 90), font);
+
+        var second = Page(2);
+        second.AddText("A: No, solo online.", 11, new PdfPoint(50, 780), font);
+        second.AddText("Il negozio lavora solo online e consegna con corriere tracciato in tutta", 11, new PdfPoint(50, 104), font);
+        second.AddText("la penisola e nelle isole, con tempi che dipendono dalla zona e", 11, new PdfPoint(50, 90), font);
+
+        var third = Page(3);
+        third.AddText("dal periodo dell'anno.", 11, new PdfPoint(50, 780), font);
+        third.AddText("Resi", 20, new PdfPoint(50, 740), font);
+        third.AddText("Il reso e gratuito entro quattordici giorni.", 11, new PdfPoint(50, 710), font);
+        third.AddText("Consegna", 11, new PdfPoint(50, 670), font);
+        third.AddText("Costo", 11, new PdfPoint(300, 670), font);
+        third.AddText("Standard", 11, new PdfPoint(50, 656), font);
+        third.AddText("5,90 euro", 11, new PdfPoint(300, 656), font);
+        third.AddText("Corriere rapido", 11, new PdfPoint(50, 642), font);
+        third.AddText("9,90 euro", 11, new PdfPoint(300, 642), font);
+        third.AddText("Le consegne partono dal lunedi al venerdi.", 11, new PdfPoint(50, 600), font);
+
+        return builder.Build();
+    }
+
     /// <summary>Pages with no text at all: what a scan looks like to a text reader.</summary>
     public static byte[] ScannedPdf()
     {

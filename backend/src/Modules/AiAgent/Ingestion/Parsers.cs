@@ -109,16 +109,22 @@ internal sealed class SectionBuilder
 }
 
 /// <summary>
-/// PDF with selectable text (PdfPig): headings by font size. Tables have no structure in a PDF, so
-/// they come out as text; pages without text are reported, scans can't be read (no OCR, PRD 4.7).
+/// PDF with selectable text (PdfPig): headings by font size; tables by the wide gaps between their
+/// columns, as a PDF has no table structure. Pages without text are reported; scans can't be read
+/// (no OCR, PRD 4.7).
 /// </summary>
 internal sealed partial class PdfParser : IDocumentParser
 {
     public const int MaxPages = 300;
     private const double HeadingRatio = 1.15;
     private const int HeadingMaxLength = 120;
+    private const double ParagraphGapRatio = 1.3;
+    private const int MinPagesForRepeats = 3;
+    private const double MarginShare = 0.12;
+    private const double ColumnGapRatio = 1.5;
+    private const string ColumnSeparator = " | ";
 
-    private sealed record Line(int Page, string Text, double Size, double Top, double Height);
+    private sealed record Line(int Page, string Text, double Size, double Baseline, double PageHeight);
 
     public ParsedDocument Parse(byte[] content, string origin)
     {
@@ -143,44 +149,88 @@ internal sealed partial class PdfParser : IDocumentParser
                 throw new SourceReadException(FailureCodes.TooManyPages);
             }
 
-            var empty = new List<int>();
-            var lines = new List<Line>();
-            foreach (var page in document.GetPages())
-            {
-                var pageLines = LinesOf(page);
-                if (pageLines.Count == 0)
-                {
-                    empty.Add(page.Number);
-                }
-
-                lines.AddRange(pageLines);
-            }
-
+            var all = document.GetPages().SelectMany(LinesOf).ToList();
+            var lines = WithoutRepeatedLines(all, document.NumberOfPages);
             if (lines.Count == 0)
             {
                 throw new SourceReadException(FailureCodes.Scanned);
             }
 
+            var withText = lines.Select(l => l.Page).ToHashSet();
+            var empty = Enumerable.Range(1, document.NumberOfPages).Where(p => !withText.Contains(p)).ToList();
             return new ParsedDocument(document.Information.Title, null, Build(lines), document.NumberOfPages, empty);
         }
     }
 
     private static List<Line> LinesOf(Page page)
     {
-        var words = page.GetWords().Where(w => !string.IsNullOrWhiteSpace(w.Text)).ToList();
+        var words = page.GetWords().Where(w => !string.IsNullOrWhiteSpace(w.Text) && w.Letters.Count > 0).ToList();
         var lines = new List<Line>();
-        foreach (var row in words.GroupBy(w => Math.Round(w.BoundingBox.Bottom / 3)).OrderByDescending(g => g.Key))
+        // By baseline, so letters that hang below it ("g", "p") stay on their line.
+        foreach (var row in words.GroupBy(w => Math.Round(w.Letters[0].StartBaseLine.Y)).OrderByDescending(g => g.Key))
         {
             var ordered = row.OrderBy(w => w.BoundingBox.Left).ToList();
             lines.Add(new Line(
                 page.Number,
-                string.Join(' ', ordered.Select(w => w.Text)),
-                ordered.Max(w => w.Letters.Count == 0 ? 0 : w.Letters.Max(l => l.PointSize)),
-                ordered.Max(w => w.BoundingBox.Top),
-                ordered.Max(w => w.BoundingBox.Height)));
+                Join(ordered),
+                ordered.Max(w => w.Letters.Max(l => l.PointSize)),
+                row.Key,
+                page.Height));
         }
 
         return lines;
+    }
+
+    /// <summary>A gap much wider than a space is a new column.</summary>
+    private static string Join(List<Word> words)
+    {
+        var text = new StringBuilder(words[0].Text);
+        for (var i = 1; i < words.Count; i++)
+        {
+            var size = words[i].Letters.Max(l => l.PointSize);
+            var gap = words[i].BoundingBox.Left - words[i - 1].BoundingBox.Right;
+            text.Append(gap > size * ColumnGapRatio ? ColumnSeparator : " ").Append(words[i].Text);
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>
+    /// Running headers and footers: the same text (page numbers aside) near the top or bottom of
+    /// most pages. They say nothing about the content and would land inside sections.
+    /// </summary>
+    private static List<Line> WithoutRepeatedLines(List<Line> lines, int pages)
+    {
+        if (pages < MinPagesForRepeats)
+        {
+            return lines;
+        }
+
+        static string Key(Line line) => Digits().Replace(line.Text, "#").ToUpperInvariant();
+        static bool InMargin(Line line) =>
+            line.Baseline > line.PageHeight * (1 - MarginShare) || line.Baseline < line.PageHeight * MarginShare;
+
+        var repeated = lines
+            .Where(InMargin)
+            .GroupBy(Key)
+            .Where(g => g.Select(l => l.Page).Distinct().Count() >= Math.Max(MinPagesForRepeats, pages / 2))
+            .Select(g => g.Key)
+            .ToHashSet();
+        return lines.Where(l => !(InMargin(l) && repeated.Contains(Key(l)))).ToList();
+    }
+
+    /// <summary>The usual distance between lines of a paragraph; a clearly larger one starts a new paragraph.</summary>
+    private static double LineSpacing(List<Line> lines, double body)
+    {
+        var gaps = lines
+            .Zip(lines.Skip(1))
+            .Where(p => p.First.Page == p.Second.Page && !IsHeading(p.First, body) && !IsHeading(p.Second, body))
+            .Select(p => p.First.Baseline - p.Second.Baseline)
+            .Where(g => g > 0)
+            .Order()
+            .ToList();
+        // Low in the sorted list: paragraph breaks are the larger gaps, and in a short document they can be half.
+        return gaps.Count == 0 ? body * 1.6 : gaps[gaps.Count / 3];
     }
 
     private static List<DocumentSection> Build(List<Line> lines)
@@ -193,39 +243,94 @@ internal sealed partial class PdfParser : IDocumentParser
             .Distinct()
             .OrderDescending()
             .ToList();
+        var newParagraphGap = LineSpacing(lines, body) * ParagraphGapRatio;
 
         var builder = new SectionBuilder();
         var paragraph = new StringBuilder();
+        var rows = new List<string>();
         var page = 0;
+        int? nextPage = null;
+        var lastBlock = string.Empty;
         Line? previous = null;
+
+        // A new page starts a new section with its number, but not between a question and its answer.
+        void SwitchPage()
+        {
+            if (nextPage is { } number && !lastBlock.EndsWith('?'))
+            {
+                builder.Page(number);
+                nextPage = null;
+            }
+        }
 
         void EndParagraph()
         {
+            if (rows.Count > 0)
+            {
+                builder.Add(SectionKind.Table, string.Join('\n', rows));
+                lastBlock = rows[^1];
+                rows.Clear();
+            }
+
             var text = paragraph.ToString();
             paragraph.Clear();
-            builder.Add(ListItem().IsMatch(text) ? SectionKind.List : SectionKind.Text, text);
+            if (text.Length > 0)
+            {
+                builder.Add(ListItem().IsMatch(text) ? SectionKind.List : SectionKind.Text, text);
+                lastBlock = text;
+            }
+
+            SwitchPage();
         }
 
         foreach (var line in lines)
         {
             if (line.Page != page)
             {
-                EndParagraph();
                 page = line.Page;
-                builder.Page(page);
+                nextPage = page;
                 previous = null;
+                if (!ContinuesOnNextPage(paragraph, line))
+                {
+                    EndParagraph();
+                }
             }
 
             if (IsHeading(line, body))
             {
                 EndParagraph();
+                lastBlock = string.Empty;
+                SwitchPage();
                 builder.Heading(headingSizes.IndexOf(Math.Round(line.Size, 1)) + 1, line.Text);
                 previous = null;
                 continue;
             }
 
-            var gap = previous is null ? 0 : previous.Top - line.Top;
-            if (previous is not null && (gap > line.Height * 2 || ListItem().IsMatch(line.Text)))
+            var gap = previous is null ? 0 : previous.Baseline - line.Baseline;
+
+            // Rows of a table stay rows. A line without columns right under one is a cell that wrapped.
+            if (line.Text.Contains(ColumnSeparator, StringComparison.Ordinal) || (rows.Count > 0 && gap <= newParagraphGap))
+            {
+                if (paragraph.Length > 0)
+                {
+                    EndParagraph();
+                }
+
+                if (line.Text.Contains(ColumnSeparator, StringComparison.Ordinal))
+                {
+                    rows.Add(line.Text);
+                }
+                else
+                {
+                    rows[^1] += " " + line.Text;
+                }
+
+                previous = line;
+                continue;
+            }
+
+            if (previous is not null
+                && (gap > newParagraphGap || ListItem().IsMatch(line.Text) || QuestionOrAnswer().IsMatch(line.Text) || previous.Text.EndsWith('?')))
             {
                 EndParagraph();
             }
@@ -238,11 +343,29 @@ internal sealed partial class PdfParser : IDocumentParser
         return [.. builder.Sections];
     }
 
+    /// <summary>A sentence cut by the page break goes on: no end mark, and the next line starts in lower case, or it's a Q or A.</summary>
+    private static bool ContinuesOnNextPage(StringBuilder paragraph, Line next)
+    {
+        if (paragraph.Length == 0 || next.Text.Contains(ColumnSeparator, StringComparison.Ordinal) || ".!?:;".Contains(paragraph[^1], StringComparison.Ordinal)
+            || ListItem().IsMatch(next.Text) || QuestionOrAnswer().IsMatch(next.Text))
+        {
+            return false;
+        }
+
+        return char.IsLower(next.Text[0]) || QuestionOrAnswer().IsMatch(paragraph.ToString());
+    }
+
     private static bool IsHeading(Line line, double body) =>
         line.Size >= body * HeadingRatio && line.Text.Length <= HeadingMaxLength && !line.Text.EndsWith('.');
 
     [GeneratedRegex(@"^\s*(?:[-•–·]|\d{1,3}[.)])\s")]
     private static partial Regex ListItem();
+
+    [GeneratedRegex(@"^\s*(?:Q|D|A|R):\s")]
+    private static partial Regex QuestionOrAnswer();
+
+    [GeneratedRegex(@"\d+")]
+    private static partial Regex Digits();
 }
 
 /// <summary>DOCX (Open XML SDK): heading styles, lists and tables. Only the document's text is read.</summary>

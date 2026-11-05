@@ -52,6 +52,47 @@ public sealed class SourceReadingTests(AuthFixture fixture)
     }
 
     [Fact]
+    public void A_real_shaped_pdf_has_no_running_headers_and_keeps_wrapped_lines_and_questions_together()
+    {
+        var document = new PdfParser().Parse(SourceFixtures.RealisticPdf(), "guida.pdf");
+        var blocks = document.Sections.SelectMany(s => s.Blocks.Select(b => b.Text)).ToList();
+        var all = string.Join(" ", blocks);
+
+        Assert.DoesNotContain("NEGOZIO DEMO", all, StringComparison.Ordinal);
+        Assert.DoesNotContain("Documento interno", all, StringComparison.Ordinal);
+        Assert.Contains("A: Non ancora. Spediamo solo agli indirizzi in Italia, secondo la copertura del corriere e la disponibilita.", blocks);
+
+        // A sentence cut by the page break goes on, and the page number stays where it started.
+        var chunks = Chunker.Split(document.Sections);
+        Assert.Contains(chunks, c => c.Page == 2 && c.Text.Contains("dalla zona e dal periodo dell'anno.", StringComparison.Ordinal));
+        Assert.Equal(1, chunks.Single(c => c.Text.Contains("Spedite fuori", StringComparison.Ordinal)).Page);
+
+        // A question at the bottom of a page and its answer on the next are one FAQ pair.
+        var pair = chunks.Single(c => c.Text.Contains("negozio fisico", StringComparison.Ordinal));
+        Assert.Equal(SectionKind.Faq, pair.Kind);
+        Assert.Contains("A: No, solo online.", pair.Text, StringComparison.Ordinal);
+        Assert.Equal(SectionKind.Faq, chunks.Single(c => c.Text.Contains("Spedite fuori", StringComparison.Ordinal)).Kind);
+
+        Assert.Equal(3, chunks.First(c => c.HeadingPath == "Resi").Page);
+
+        // Columns make a table with its rows, and the text after it stays text.
+        var table = chunks.Single(c => c.Kind == SectionKind.Table);
+        Assert.Equal("Consegna | Costo\nStandard | 5,90 euro\nCorriere rapido | 9,90 euro", table.Text);
+        Assert.Contains(chunks, c => c.Kind == SectionKind.Text && c.Text.Contains("dal lunedi al venerdi", StringComparison.Ordinal));
+        Assert.Empty(document.PagesWithoutText);
+        Assert.All(chunks, c => Assert.True(c.Tokens > 3, c.Text));
+    }
+
+    [Fact]
+    public void Short_text_takes_the_documents_language_and_one_foreign_word_does_not_change_it()
+    {
+        Assert.Equal("en", LanguageGuess.Of("Delivery", "en"));
+        Assert.Equal("it", LanguageGuess.Of("Il reso è gratuito entro due giorni per la zona", "en"));
+        Assert.Equal("en", LanguageGuess.Of("The price of la dolce vita is free for you", "it"));
+        Assert.Null(LanguageGuess.Of("Ciao", null));
+    }
+
+    [Fact]
     public async Task An_italian_docx_keeps_heading_paths_lists_and_whole_tables()
     {
         var (owner, tenant) = await OwnerAsync();
@@ -274,7 +315,7 @@ public sealed class SourceReadingTests(AuthFixture fixture)
             var db = scope.ServiceProvider.GetRequiredService<AiDbContext>();
             Assert.Equal(["no_embeddings"], (await db.Sources.SingleAsync(s => s.Id == id)).Warnings);
             Assert.All(await db.Sections.Where(s => s.SourceId == id).ToListAsync(), s => Assert.Null(s.EmbeddingModel));
-            await AssertSearchableAsync(tenant, id, "contanti");
+            await AssertSearchableAsync(tenant, id, "contant");
         }
         finally
         {

@@ -88,11 +88,13 @@ internal sealed partial class SourceReader(
         // Read again from the start after a retry: the old sections of this source go.
         await db.Sections.Where(s => s.SourceId == source.Id).ExecuteDeleteAsync(ct);
         var sections = new List<KnowledgeSection>();
+        // Short sections have too few words to tell: they get the language of the whole document.
+        var documentLanguage = LanguageGuess.Of(string.Join(' ', chunks.Select(c => c.Text)), document.Language);
         foreach (var (chunk, position) in chunks.Select((c, i) => (c, i)))
         {
             var section = KnowledgeSection.Create(
                 source.TenantId, source.Id, position, chunk.HeadingPath, chunk.Page, chunk.Kind, chunk.Text, chunk.Tokens,
-                LanguageGuess.Of(chunk.Text, document.Language));
+                LanguageGuess.Of(chunk.Text, documentLanguage));
             section.Hashed(Hash(EmbeddingText(source, document.Title, section)));
             sections.Add(section);
         }
