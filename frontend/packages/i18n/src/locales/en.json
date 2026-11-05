@@ -909,5 +909,69 @@
     "removed": "Details are removed after 90 days.",
     "meta": "{{model}} · {{tokens}} tokens · {{seconds}} s",
     "prompt": "prompt {{version}}"
+  },
+  "sources": {
+    "title": "Documents and web pages",
+    "intro": "Give the AI your own documents: PDF with selectable text, Word (.docx), text files or one web page. Up to 20 MB and 300 pages per file, and 100 sources. They are read and split into sections.",
+    "notUsedYet": "The AI doesn’t use them yet: reviewing and publishing come next.",
+    "file": "Upload a file",
+    "uploading": "Uploading…",
+    "url": "Web page address",
+    "urlPlaceholder": "https://www.yourshop.com/shipping",
+    "addPage": "Add page",
+    "list": "Sources",
+    "empty": "Nothing added yet.",
+    "kinds": {
+      "pdf": "PDF",
+      "docx": "Word",
+      "txt": "Text",
+      "webpage": "Web page"
+    },
+    "status": {
+      "reading": "Reading…",
+      "review": "Ready to review",
+      "live": "Live",
+      "failed": "Failed",
+      "archived": "Archived"
+    },
+    "sections_one": "{{count}} section",
+    "sections_other": "{{count}} sections",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "warnings": {
+      "pagesWithoutText": "No text found on pages {{pages}}: they may be scans or images.",
+      "noEmbeddings": "The AI key isn’t set for background work, so this can only be found by exact words."
+    },
+    "failures": {
+      "scanned": "This PDF is a scan. We can’t read text from images yet.",
+      "encrypted": "This file is protected with a password. Remove the password and upload it again.",
+      "too_many_pages": "This file has more than 300 pages.",
+      "unreadable": "This file is damaged or can’t be read.",
+      "no_text": "No text was found.",
+      "too_complex": "This file took too long to read.",
+      "duplicate": "The same content was already added.",
+      "not_a_page": "This address isn’t a web page. Download the file and upload it instead.",
+      "blocked_url": "This address leads to a place that isn’t a public web page.",
+      "invalid_url": "This address can’t be opened (too many redirects or not a normal web address).",
+      "page_too_large": "This page is too large (more than 5 MB).",
+      "page_unavailable": "The site couldn’t be reached after three tries. Check the address and add it again.",
+      "embedding_failed": "The AI service couldn’t process this after three tries. Delete it and add it again later.",
+      "read_failed": "Something went wrong while reading. Delete it and add it again."
+    },
+    "delete": "Delete",
+    "deleteLabel": "Delete {{title}}",
+    "deleteConfirm": "Delete this source and all its sections?",
+    "cancel": "Cancel",
+    "errors": {
+      "noFile": "Choose a file.",
+      "tooLarge": "The file is larger than 20 MB.",
+      "unsupported": "Upload a PDF, Word (.docx) or text file.",
+      "limit": "This workspace has reached 100 sources. Delete one to add another.",
+      "duplicate": "This file or page was already added.",
+      "invalidUrl": "Enter a full web address, starting with https://.",
+      "blockedUrl": "This address isn’t a public web page.",
+      "unreachableUrl": "This address can’t be found. Check it for typos.",
+      "notFound": "This source no longer exists."
+    }
   }
 }

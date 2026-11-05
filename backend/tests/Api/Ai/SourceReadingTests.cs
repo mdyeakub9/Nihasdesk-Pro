@@ -153,11 +153,11 @@ public sealed class SourceReadingTests(AuthFixture fixture)
         var id = await UploadAsync(owner, SourceFixtures.Pdf(emptyPages: 2), "misto.pdf");
         await Api.ReadSourcesAsync();
 
-        Assert.Equal("review", (await SourceAsync(owner, id)).GetProperty("status").GetString());
-        await using var scope = Scope(tenant);
-        var source = await scope.ServiceProvider.GetRequiredService<AiDbContext>().Sources.SingleAsync(s => s.Id == id);
-        Assert.Equal(["pages_without_text:3,4"], source.Warnings);
-        Assert.Equal(4, source.PageCount);
+        var source = await SourceAsync(owner, id);
+        Assert.Equal("review", source.GetProperty("status").GetString());
+        Assert.Equal("pages_without_text:3,4", Assert.Single(source.GetProperty("warnings").EnumerateArray()).GetString());
+        Assert.Equal(4, source.GetProperty("pageCount").GetInt32());
+        Assert.NotEmpty(await SectionsAsync(tenant, id));
     }
 
     [Fact]

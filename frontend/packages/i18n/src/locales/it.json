@@ -909,5 +909,69 @@
     "removed": "I dettagli vengono eliminati dopo 90 giorni.",
     "meta": "{{model}} · {{tokens}} token · {{seconds}} s",
     "prompt": "prompt {{version}}"
+  },
+  "sources": {
+    "title": "Documenti e pagine web",
+    "intro": "Dai all’IA i tuoi documenti: PDF con testo selezionabile, Word (.docx), file di testo o una pagina web. Fino a 20 MB e 300 pagine per file, e 100 fonti. Vengono letti e divisi in sezioni.",
+    "notUsedYet": "L’IA non li usa ancora: revisione e pubblicazione arrivano dopo.",
+    "file": "Carica un file",
+    "uploading": "Caricamento…",
+    "url": "Indirizzo della pagina web",
+    "urlPlaceholder": "https://www.iltuonegozio.it/spedizioni",
+    "addPage": "Aggiungi pagina",
+    "list": "Fonti",
+    "empty": "Ancora nessuna fonte.",
+    "kinds": {
+      "pdf": "PDF",
+      "docx": "Word",
+      "txt": "Testo",
+      "webpage": "Pagina web"
+    },
+    "status": {
+      "reading": "Lettura…",
+      "review": "Da rivedere",
+      "live": "Attiva",
+      "failed": "Non riuscita",
+      "archived": "Archiviata"
+    },
+    "sections_one": "{{count}} sezione",
+    "sections_other": "{{count}} sezioni",
+    "pages_one": "{{count}} pagina",
+    "pages_other": "{{count}} pagine",
+    "warnings": {
+      "pagesWithoutText": "Nessun testo trovato nelle pagine {{pages}}: potrebbero essere scansioni o immagini.",
+      "noEmbeddings": "La chiave dell’IA non è impostata per il lavoro in background, quindi si trova solo con le parole esatte."
+    },
+    "failures": {
+      "scanned": "Questo PDF è una scansione. Non possiamo ancora leggere il testo dalle immagini.",
+      "encrypted": "Questo file è protetto da password. Togli la password e caricalo di nuovo.",
+      "too_many_pages": "Questo file ha più di 300 pagine.",
+      "unreadable": "Questo file è danneggiato o non si può leggere.",
+      "no_text": "Non è stato trovato testo.",
+      "too_complex": "La lettura di questo file ha richiesto troppo tempo.",
+      "duplicate": "Lo stesso contenuto è già stato aggiunto.",
+      "not_a_page": "Questo indirizzo non è una pagina web. Scarica il file e caricalo.",
+      "blocked_url": "Questo indirizzo non porta a una pagina web pubblica.",
+      "invalid_url": "Questo indirizzo non si può aprire (troppi reindirizzamenti o indirizzo non valido).",
+      "page_too_large": "Questa pagina è troppo grande (più di 5 MB).",
+      "page_unavailable": "Il sito non è raggiungibile dopo tre tentativi. Controlla l’indirizzo e aggiungilo di nuovo.",
+      "embedding_failed": "Il servizio IA non è riuscito a elaborarlo dopo tre tentativi. Eliminalo e riaggiungilo più tardi.",
+      "read_failed": "Qualcosa è andato storto durante la lettura. Eliminalo e aggiungilo di nuovo."
+    },
+    "delete": "Elimina",
+    "deleteLabel": "Elimina {{title}}",
+    "deleteConfirm": "Eliminare questa fonte e tutte le sue sezioni?",
+    "cancel": "Annulla",
+    "errors": {
+      "noFile": "Scegli un file.",
+      "tooLarge": "Il file supera i 20 MB.",
+      "unsupported": "Carica un PDF, un file Word (.docx) o di testo.",
+      "limit": "Questo spazio di lavoro ha raggiunto 100 fonti. Eliminane una per aggiungerne un’altra.",
+      "duplicate": "Questo file o pagina è già stato aggiunto.",
+      "invalidUrl": "Inserisci un indirizzo completo, che inizia con https://.",
+      "blockedUrl": "Questo indirizzo non è una pagina web pubblica.",
+      "unreachableUrl": "Questo indirizzo non si trova. Controlla che sia scritto bene.",
+      "notFound": "Questa fonte non esiste più."
+    }
   }
 }
