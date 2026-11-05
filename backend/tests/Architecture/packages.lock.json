@@ -43,6 +43,14 @@
         "resolved": "2.7.0",
         "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
       },
+      "DocumentFormat.OpenXml.Framework": {
+        "type": "Transitive",
+        "resolved": "3.5.1",
+        "contentHash": "U5txtc3ORno73xQx9Lf2gWzfaSZnZwKHfLkTAslhlew9lxe5XbUiCt0dY1fHeAf8yRqszUAe5i/+xLC9R/Xfsw==",
+        "dependencies": {
+          "System.IO.Packaging": "10.0.2"
+        }
+      },
       "Microsoft.AspNetCore.Cryptography.Internal": {
         "type": "Transitive",
         "resolved": "10.0.14",
@@ -326,6 +334,11 @@
           "Pipelines.Sockets.Unofficial": "2.2.8"
         }
       },
+      "System.IO.Packaging": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "JTpM4z0wpoIHHDvlCU27HsXo+zVnpWib94HXQpzzr+jc/P9NYf4w353AK4MXyGq/grm1mbLi7eXsOsDU8sGmNg=="
+      },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
         "resolved": "10.0.14",
@@ -401,13 +414,17 @@
       "nihasdesk.modules.aiagent": {
         "type": "Project",
         "dependencies": {
+          "AngleSharp": "[1.9.1, )",
+          "DocumentFormat.OpenXml": "[3.5.1, )",
           "Nihasdesk.Infrastructure": "[1.0.0, )",
           "Nihasdesk.Modules.Commerce": "[1.0.0, )",
           "Nihasdesk.Modules.Contacts": "[1.0.0, )",
           "Nihasdesk.Modules.Identity": "[1.0.0, )",
           "Nihasdesk.Modules.Inbox": "[1.0.0, )",
           "Nihasdesk.Modules.Shipping": "[1.0.0, )",
-          "Nihasdesk.SharedKernel": "[1.0.0, )"
+          "Nihasdesk.SharedKernel": "[1.0.0, )",
+          "PdfPig": "[0.1.16, )",
+          "SmartReader": "[0.11.1, )"
         }
       },
       "nihasdesk.modules.billing": {
@@ -474,6 +491,12 @@
       "nihasdesk.sharedkernel": {
         "type": "Project"
       },
+      "AngleSharp": {
+        "type": "CentralTransitive",
+        "requested": "[1.9.1, )",
+        "resolved": "1.9.1",
+        "contentHash": "QgOLaoPvDofo66KBOHlI9WLH+L/3xGDDd1joM4CrsFsxm0knRu/6ZoiWU0DUOhBZzSCa13zYKAeVPS/CxnF12Q=="
+      },
       "AspNetCore.HealthChecks.NpgSql": {
         "type": "CentralTransitive",
         "requested": "[9.0.0, )",
@@ -502,6 +525,15 @@
         "dependencies": {
           "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11",
           "StackExchange.Redis": "2.7.4"
+        }
+      },
+      "DocumentFormat.OpenXml": {
+        "type": "CentralTransitive",
+        "requested": "[3.5.1, )",
+        "resolved": "3.5.1",
+        "contentHash": "zxdOf5VVCe/uNklbRhj8dVBzQGj3DoqkUuqOp9cAZVuN8mNYDjof1lvSQA2OQNr8Ptc9d7pbA7Azq/ReaI3FpA==",
+        "dependencies": {
+          "DocumentFormat.OpenXml.Framework": "3.5.1"
         }
       },
       "EFCore.NamingConventions": {
@@ -583,6 +615,21 @@
           "Microsoft.EntityFrameworkCore": "[10.0.4, 11.0.0)",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.4, 11.0.0)",
           "Npgsql": "10.0.3"
+        }
+      },
+      "PdfPig": {
+        "type": "CentralTransitive",
+        "requested": "[0.1.16, )",
+        "resolved": "0.1.16",
+        "contentHash": "qQcbsNMYVY+K5ELptax2S8thNMk0+rSQq3H/KdYj3LLcko8yTCz8y5KIvsKxIyAuTN0ZYNnfsZkM+0EvxTwHVA=="
+      },
+      "SmartReader": {
+        "type": "CentralTransitive",
+        "requested": "[0.11.1, )",
+        "resolved": "0.11.1",
+        "contentHash": "hzhS0IVfSDuf0IghJ4+ODSuTZXSjwS+4NXSBiy5yH/FXdBkl4q3yMDAt7rkPHdLyBlealsk7aL2CcG+kPP5Ocg==",
+        "dependencies": {
+          "AngleSharp": "1.5.2"
         }
       }
     }

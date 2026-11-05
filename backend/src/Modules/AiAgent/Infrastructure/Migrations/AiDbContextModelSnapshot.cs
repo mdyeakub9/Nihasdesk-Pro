@@ -269,6 +269,11 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("character varying(20000)")
                         .HasColumnName("text");
 
+                    b.Property<string>("TextHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("text_hash");
+
                     b.Property<int>("TokenCount")
                         .HasColumnType("integer")
                         .HasColumnName("token_count");
@@ -282,6 +287,9 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
 
                     b.HasIndex("SourceId")
                         .HasDatabaseName("ix_knowledge_sections_source_id");
+
+                    b.HasIndex("TenantId", "TextHash")
+                        .HasDatabaseName("ix_knowledge_sections_tenant_id_text_hash");
 
                     b.HasIndex("TenantId", "SourceId", "Position")
                         .HasDatabaseName("ix_knowledge_sections_tenant_id_source_id_position");
@@ -329,6 +337,18 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("character varying(2048)")
                         .HasColumnName("origin");
 
+                    b.Property<int?>("PageCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("page_count");
+
+                    b.Property<int>("ReadAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("read_attempts");
+
+                    b.Property<DateTimeOffset?>("ReadLockUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_lock_until");
+
                     b.Property<long?>("SizeBytes")
                         .HasColumnType("bigint")
                         .HasColumnName("size_bytes");
@@ -357,6 +377,11 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.PrimitiveCollection<List<string>>("Warnings")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("warnings");
 
                     b.HasKey("Id")
                         .HasName("pk_knowledge_sources");

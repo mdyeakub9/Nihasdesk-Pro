@@ -50,7 +50,7 @@ Requirements: Docker, .NET SDK (version in `backend/global.json`).
    ```
    - https://localhost:5080/health — liveness (process is up)
    - https://localhost:5080/health/ready — readiness (PostgreSQL, Redis, RabbitMQ reachable)
-6. Run the Workers host as well — it delivers queued email (ADR 0013); without it nothing reaches Mailpit. Give it the same app connection string once:
+6. Run the Workers host as well — it delivers queued email (ADR 0013) and reads knowledge sources (ADR 0029); without it nothing reaches Mailpit and sources stay in "reading". Give it the same app connection string once, and for embeddings the AI key with `dotnet user-secrets set "Ai:OpenAi:ApiKey" "<your key>"` (without a key sources are found by keywords only):
    ```bash
    cd backend/src/Nihasdesk.Workers
    dotnet user-secrets set "ConnectionStrings:Postgres" "Host=localhost;Port=5432;Database=nihasdesk;Username=nihasdesk_app;Password=<APP_DB_PASSWORD>"

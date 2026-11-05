@@ -138,6 +138,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             section.Property(s => s.Text).HasMaxLength(KnowledgeSection.TextMaxLength);
             section.Property(s => s.Language).HasMaxLength(KnowledgeSection.LanguageMaxLength);
             section.Property(s => s.EmbeddingModel).HasMaxLength(KnowledgeSection.ModelMaxLength);
+            section.Property(s => s.TextHash).HasMaxLength(KnowledgeSource.HashLength);
+            section.HasIndex(s => new { s.TenantId, s.TextHash });
             LowerCaseText(section.Property(s => s.Kind));
             section.HasIndex(s => new { s.TenantId, s.SourceId, s.Position });
             // Deleting a source deletes its sections and search data (SEC-45).
