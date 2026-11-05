@@ -30,6 +30,15 @@ const messages: Record<string, string> = {
   'catalog.import_no_file': 'products.import.errors.noFile',
   'catalog.import_too_large': 'products.import.tooLarge',
   'catalog.import_not_csv': 'products.import.errors.notCsv',
+  'source.no_file': 'sources.errors.noFile',
+  'source.too_large': 'sources.errors.tooLarge',
+  'source.unsupported_type': 'sources.errors.unsupported',
+  'source.limit_reached': 'sources.errors.limit',
+  'source.duplicate': 'sources.errors.duplicate',
+  'source.invalid_url': 'sources.errors.invalidUrl',
+  'source.blocked_url': 'sources.errors.blockedUrl',
+  'source.unreachable_url': 'sources.errors.unreachableUrl',
+  'source.not_found': 'sources.errors.notFound',
 };
 
 export function authErrorMessage(error: unknown, t: TFunction): string {

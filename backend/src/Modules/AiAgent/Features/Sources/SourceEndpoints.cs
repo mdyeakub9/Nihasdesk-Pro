@@ -27,6 +27,8 @@ internal sealed record SourceResponse(
     string? FailureReason,
     long? SizeBytes,
     int SectionCount,
+    int? PageCount,
+    IReadOnlyList<string> Warnings,
     DateTimeOffset? LastReadAt,
     DateTimeOffset CreatedAt);
 
@@ -292,6 +294,8 @@ internal static class SourceEndpoints
         s.FailureReason,
         s.SizeBytes,
         sections,
+        s.PageCount,
+        s.Warnings,
         s.LastReadAt,
         s.CreatedAt);
 }

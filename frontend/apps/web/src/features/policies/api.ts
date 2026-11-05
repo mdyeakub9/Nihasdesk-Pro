@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiGet, apiPut } from '../../lib/api';
+import { apiDelete, apiGet, apiPost, apiPostForm, apiPut } from '../../lib/api';
 
 /* Shop policies and shipping zones (PRD 4.7, ADR 0020). Money is integer cents. */
 
@@ -60,3 +60,58 @@ export function useSaveShippingZones() {
     onSuccess: (saved) => queryClient.setQueryData(keys.zones, saved),
   });
 }
+
+/* Knowledge sources: documents and web pages the shop gives the AI (PRD 4.7, ADR 0029). */
+
+export type SourceStatus = 'reading' | 'review' | 'live' | 'failed' | 'archived';
+
+export type KnowledgeSource = {
+  id: string;
+  kind: 'pdf' | 'docx' | 'txt' | 'webpage';
+  title: string;
+  origin: string;
+  status: SourceStatus;
+  /** A code, e.g. `scanned`; the screen says it in plain words. */
+  failureReason: string | null;
+  sizeBytes: number | null;
+  sectionCount: number;
+  pageCount: number | null;
+  /** Codes, e.g. `pages_without_text:3,4`, `no_embeddings`. */
+  warnings: string[];
+  lastReadAt: string | null;
+  createdAt: string;
+};
+
+const sourcesKey = ['knowledge', 'sources'] as const;
+const sourcesPath = '/api/v1/ai/sources';
+/** While something is being read, the list refreshes itself: the Workers host can't push updates (ADR 0029). */
+const readingRefreshMs = 3000;
+
+export function useSources() {
+  return useQuery({
+    queryKey: sourcesKey,
+    queryFn: () => apiGet<KnowledgeSource[]>(sourcesPath),
+    refetchInterval: (query) =>
+      query.state.data?.some((source) => source.status === 'reading') ? readingRefreshMs : false,
+  });
+}
+
+function useSourceMutation<TArgs>(mutationFn: (args: TArgs) => Promise<unknown>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: sourcesKey }),
+  });
+}
+
+export const useUploadSource = () =>
+  useSourceMutation((file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return apiPostForm(`${sourcesPath}/files`, form);
+  });
+
+export const useAddWebPage = () => useSourceMutation((url: string) => apiPost(`${sourcesPath}/web`, { url }));
+
+export const useDeleteSource = () =>
+  useSourceMutation((id: string) => apiDelete(`${sourcesPath}/${encodeURIComponent(id)}`));

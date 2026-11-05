@@ -15,6 +15,7 @@ import {
   type ShopPolicies,
   type ZoneInput,
 } from './api';
+import { Sources } from './Sources';
 
 const maxZones = 30;
 
@@ -446,6 +447,7 @@ export function PoliciesPage() {
       {zones && <ShippingZones zones={zones} canEdit={canEdit} />}
       {policies && <PoliciesForm policies={policies} canEdit={canEdit} />}
       <Answers canEdit={canEdit} />
+      <Sources canEdit={canEdit} />
     </div>
   );
 }
