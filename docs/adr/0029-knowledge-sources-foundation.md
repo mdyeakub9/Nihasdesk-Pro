@@ -28,3 +28,9 @@ SEC-04 asks for a malware scan (ClamAV) before documents are processed. The owne
 - PDF tables have no structure, so they are found by wide gaps between columns (rows with ` | `). Cells that wrap over several lines come out mixed up. Reading them properly waits for the Docling upgrade path (ADR 0026).
 - Without an API key sources are still read and found by keywords, with the warning `no_embeddings`.
 - **Limit of SEC-04:** parsing has a time limit, but parsers run in process and can't be cancelled, so a stuck one stays on its thread until the Workers host restarts, and there is no per-file memory limit. Input size is limited (20 MB, 5 MB per page, 300 pages). Separate parser processes are for before launch, with the malware scan.
+
+## Review (Issue #52)
+- Conflicts and price lists are computed by code **each time a source is opened**, from the settings as they are then, so fixing a setting clears its warning. Nothing is stored. A sentence is judged with its section's heading, so a table row under "Shipping" counts as shipping. It's a heuristic: it warns, never blocks, and will sometimes be wrong either way. There is no "ignore" yet.
+- Edits, exclusions and merges are saved directly on the section until draft and publish exist (#55): there is no undo yet. The AI doesn't read sections yet, so customers aren't affected.
+- After an edit or merge the old embedding is removed first, then a new one is made in the request. If the provider fails, the text stays and the section is marked as found by keywords only.
+- "Test a question" moved to #53, because it needs the search built there.
