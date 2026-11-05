@@ -3,6 +3,7 @@
 Weekly, 3–5 lines: done, blocked, decisions.
 
 ## 2026-W45
+- Knowledge review backend (Issue #52 PR 1, ADR 0029): source detail with conflicts against shipping zones, delivery days, return days and payment method, and price-list warnings, all by code from the current settings; sections in pages; edit, exclude and merge for Owner/Admin. "Test a question" moved to #53.
 - PDF reading fixed after the first real PDF (9 pages): sections 99 → 62, none under 10 tokens, no running headers or footers, 38 FAQ pairs whole, and 6 tables found by their columns; short sections take the document's language. Real OpenAI embeddings verified (99/99). Wrapped table cells still come out mixed up (ADR 0029).
 - Sources screen (Issue #51 PR 3): Settings → Shop knowledge → Documents and web pages: upload, add a page, status and plain-language failures, warnings, delete with confirmation; refreshes every 3 s while something is being read. Issue #51 done; sources wait in "Ready to review" for #52.
 - Source reading (Issue #51 PR 2, ADR 0029): a Workers job reads PDF (PdfPig), DOCX (Open XML SDK), web pages (AngleSharp + SmartReader) and text into sections, about 500 tokens, tables/lists/FAQ whole, with heading paths, pages, full-text index and OpenAI embeddings (same text embedded once); sources end in `review` or `failed` with a code. The AI doesn't use them yet (#52, #53, #55).

@@ -285,7 +285,7 @@ internal static class SourceEndpoints
         return clean.Length == 0 ? "file" : clean;
     }
 
-    private static SourceResponse ToResponse(KnowledgeSource s, int sections) => new(
+    internal static SourceResponse ToResponse(KnowledgeSource s, int sections) => new(
         s.Id,
         s.Kind.ToString().ToLowerInvariant(),
         s.Title,

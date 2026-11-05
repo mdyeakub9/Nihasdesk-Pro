@@ -1,6 +1,4 @@
-using System.Globalization;
 using System.Security.Cryptography;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,11 +22,11 @@ internal sealed partial class SourceReader(
     IFileStore files,
     SafeHttpClient web,
     IEmbeddingProvider embeddings,
+    SectionIndex index,
     TimeProvider time,
     ILogger<SourceReader> logger)
 {
     public const int MaxAttempts = 3;
-    public const int EmbeddingBatch = 64;
     public const long MaxPageBytes = 5 * 1024 * 1024;
 
     /// <summary>A crashed job's source is free again after this; also the most one read may take.</summary>
@@ -95,13 +93,13 @@ internal sealed partial class SourceReader(
             var section = KnowledgeSection.Create(
                 source.TenantId, source.Id, position, chunk.HeadingPath, chunk.Page, chunk.Kind, chunk.Text, chunk.Tokens,
                 LanguageGuess.Of(chunk.Text, documentLanguage));
-            section.Hashed(Hash(EmbeddingText(source, document.Title, section)));
+            section.Hashed(SectionIndex.Hash(SectionIndex.EmbeddingText(document.Title ?? source.Title, section)));
             sections.Add(section);
         }
 
         db.Sections.AddRange(sections);
         await db.SaveChangesAsync(ct);
-        await IndexKeywordsAsync(source.Id, ct);
+        await index.IndexKeywordsAsync(source.Id, ct);
 
         var warnings = new List<string>();
         if (document.PagesWithoutText.Count > 0)
@@ -111,7 +109,7 @@ internal sealed partial class SourceReader(
 
         if (embeddings.IsConfigured)
         {
-            await EmbedAsync(source, document.Title, sections, ct);
+            await index.EmbedAsync(source.Id, document.Title ?? source.Title, sections, ct);
         }
         else
         {
@@ -174,56 +172,6 @@ internal sealed partial class SourceReader(
             throw new SourceReadException(FailureCodes.TooComplex);
         }
     }
-
-    /// <summary>Full-text search, in the section's language (ADR 0026 §3).</summary>
-    private Task<int> IndexKeywordsAsync(Guid sourceId, CancellationToken ct) => db.Database.ExecuteSqlAsync(
-        $"""
-        UPDATE ai.knowledge_sections
-        SET search_vector = to_tsvector(
-            CASE language WHEN 'it' THEN 'italian'::regconfig WHEN 'en' THEN 'english'::regconfig ELSE 'simple'::regconfig END,
-            coalesce(heading_path, '') || ' ' || text)
-        WHERE source_id = {sourceId}
-        """,
-        ct);
-
-    /// <summary>The same text with the same model is copied from where it was already embedded, not paid for again.</summary>
-    private async Task EmbedAsync(KnowledgeSource source, string? title, List<KnowledgeSection> sections, CancellationToken ct)
-    {
-        var model = embeddings.Model;
-        await db.Database.ExecuteSqlAsync(
-            $"""
-            UPDATE ai.knowledge_sections s
-            SET embedding = o.embedding, embedding_model = o.embedding_model
-            FROM ai.knowledge_sections o
-            WHERE s.source_id = {source.Id} AND o.source_id <> {source.Id}
-              AND o.text_hash = s.text_hash AND o.embedding_model = {model} AND o.embedding IS NOT NULL
-            """,
-            ct);
-        var done = await db.Sections.AsNoTracking()
-            .Where(s => s.SourceId == source.Id && s.EmbeddingModel == model)
-            .Select(s => s.Id)
-            .ToListAsync(ct);
-
-        var missing = sections.Where(s => !done.Contains(s.Id)).GroupBy(s => s.TextHash!).ToList();
-        foreach (var batch in missing.Chunk(EmbeddingBatch))
-        {
-            var vectors = await embeddings.EmbedAsync([.. batch.Select(g => EmbeddingText(source, title, g.First()))], ct);
-            for (var i = 0; i < batch.Length; i++)
-            {
-                var vector = "[" + string.Join(',', vectors[i].Select(v => v.ToString("R", CultureInfo.InvariantCulture))) + "]";
-                var ids = batch[i].Select(s => s.Id).ToList();
-                await db.Database.ExecuteSqlAsync(
-                    $"UPDATE ai.knowledge_sections SET embedding = CAST({vector} AS vector), embedding_model = {model} WHERE id = ANY({ids})",
-                    ct);
-            }
-        }
-    }
-
-    /// <summary>Title and heading path in front, so a passage still makes sense on its own (ADR 0026 §2).</summary>
-    private static string EmbeddingText(KnowledgeSource source, string? title, KnowledgeSection section) =>
-        $"{title ?? source.Title}{(section.HeadingPath is null ? string.Empty : " › " + section.HeadingPath)}\n\n{section.Text}";
-
-    private static string Hash(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
     private Task WebFailureAsync(KnowledgeSource source, SafeHttpException ex, CancellationToken ct) => ex.Failure switch
     {

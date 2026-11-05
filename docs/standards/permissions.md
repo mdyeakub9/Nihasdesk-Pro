@@ -22,7 +22,7 @@ The API checks every permission on the server, reading the member's **current** 
 | `ai.trace` — "Why this answer" for an AI reply, and 👍/👎 on AI replies (own rating; ADR 0026 §6) | ✅ | ✅ | ✅ |
 | `ai.feedback.export` — download 👎 replies as eval cases (they contain customers' words) | ✅ | ✅ | ❌ |
 | `knowledge.view` — see shipping zones, shop policies, the FAQ and knowledge sources (Settings → Shop knowledge) | ✅ | ✅ | ✅ |
-| `knowledge.manage` — change shipping zones and shop policies (ADR 0020), add and delete knowledge sources (ADR 0029); the FAQ follows `ai.teach` | ✅ | ✅ | ❌ |
+| `knowledge.manage` — change shipping zones and shop policies (ADR 0020), add, delete and review knowledge sources (ADR 0029); the FAQ follows `ai.teach` | ✅ | ✅ | ❌ |
 | `inbox.saved_replies.manage` — create, edit and delete saved replies (ADR 0022); every member uses them with `/` | ✅ | ✅ | ❌ |
 | Delete a team note — own notes for everyone; any note for Owner and Admin (ADR 0021) | ✅ | ✅ | own |
 | Settings, AI settings _(with those modules)_ | ✅ | ✅ | ❌ |

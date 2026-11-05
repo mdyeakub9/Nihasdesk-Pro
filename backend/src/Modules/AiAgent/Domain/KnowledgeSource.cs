@@ -182,7 +182,25 @@ internal sealed class KnowledgeSection : TenantEntity
 
     public void Hashed(string textHash) => TextHash = textHash;
 
-    public void Embedded(string model) => EmbeddingModel = model;
+    /// <summary>The owner corrected the text. Its search data is made again by the caller.</summary>
+    public void Edit(string text, int tokenCount, string? language)
+    {
+        Text = text;
+        TokenCount = tokenCount;
+        Language = language;
+        EmbeddingModel = null;
+    }
+
+    public void SetExcluded(bool excluded) => Excluded = excluded;
+
+    /// <summary>Takes in the next section's text; the kind is plain text when the two differ.</summary>
+    public void Merge(KnowledgeSection next, int tokenCount)
+    {
+        Text = Text + "\n\n" + next.Text;
+        TokenCount = tokenCount;
+        Kind = Kind == next.Kind ? Kind : SectionKind.Text;
+        EmbeddingModel = null;
+    }
 
     public static KnowledgeSection Create(Guid tenantId, Guid sourceId, int position, string? headingPath, int? page, SectionKind kind, string text, int tokenCount, string? language) =>
         new(tenantId, sourceId, position, text)

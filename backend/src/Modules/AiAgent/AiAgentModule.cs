@@ -51,6 +51,7 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<IValidator<AssistRequest>, AssistValidator>();
         services.AddScoped<IValidator<FeedbackRequest>, FeedbackValidator>();
         services.AddScoped<IValidator<WebPageRequest>, WebPageValidator>();
+        services.AddScoped<IValidator<SectionTextRequest>, SectionTextValidator>();
         AddSourceReading(services, configuration);
 
         services.AddSingleton<TraceRetention>();
@@ -86,6 +87,7 @@ public sealed class AiAgentModule : IModule
             })
             // Requests carry the API key header and the shop's text; never logged (SEC-13, SEC-19).
             .RemoveAllLoggers();
+        services.AddScoped<SectionIndex>();
         services.AddScoped<SourceReader>();
         services.AddSingleton<SourceReadProcessor>();
     }
@@ -98,5 +100,6 @@ public sealed class AiAgentModule : IModule
         AssistantEndpoints.Map(endpoints);
         TraceEndpoints.Map(endpoints);
         SourceEndpoints.Map(endpoints);
+        ReviewEndpoints.Map(endpoints);
     }
 }
