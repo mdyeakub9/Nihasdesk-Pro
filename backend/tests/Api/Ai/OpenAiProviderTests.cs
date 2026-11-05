@@ -39,7 +39,7 @@ public sealed class OpenAiProviderTests
         new("gpt-5-mini", [LlmMessage.System("rules"), LlmMessage.User("Avete la borsa nera?")], AgentTools.Definitions, maxOutputTokens);
 
     [Fact]
-    public async Task Sends_model_tools_reasoning_effort_and_room_for_the_answer_to_the_eu_endpoint()
+    public async Task Sends_model_tools_reasoning_effort_and_room_for_the_answer_to_the_default_endpoint()
     {
         var (provider, handler) = Create(HttpStatusCode.OK, """
             {"choices":[{"message":{"content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"search_products","arguments":"{\"query\":\"borsa\"}"}}]},"finish_reason":"tool_calls"}],

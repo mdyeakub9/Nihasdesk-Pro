@@ -149,6 +149,9 @@ internal sealed class AiOptions
 
     public int HistorySize { get; set; } = 20;
 
+    /// <summary>1536 dimensions, the size of <c>ai.knowledge_sections.embedding</c> (ADR 0026 §2).</summary>
+    public string EmbeddingModel { get; set; } = "text-embedding-3-small";
+
     /// <summary>Tool rounds per reply before giving up and handing over (SEC-39).</summary>
     public int MaxToolRounds { get; set; } = 4;
 

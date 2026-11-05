@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nihasdesk.Infrastructure.Email;
 using Nihasdesk.Infrastructure.Email.Outbox;
+using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.AiAgent.Agent;
+using Nihasdesk.Modules.AiAgent.Ingestion;
 using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Channels.Infrastructure.Meta;
 using Nihasdesk.Modules.Identity.Infrastructure;
@@ -32,6 +34,20 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
     public FakeAi Ai { get; } = new();
 
     public const string MetaVerifyToken = "tests-only-verify-token";
+
+    internal FakeEmbeddings Embeddings { get; } = new();
+
+    /// <summary>Web pages a source may fetch: no test reaches the real internet.</summary>
+    public FakeWebHandler Web { get; } = new();
+
+    /// <summary>Reads waiting sources like the Workers job, until none is due now.</summary>
+    public async Task ReadSourcesAsync()
+    {
+        var processor = Services.GetRequiredService<SourceReadProcessor>();
+        while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+    }
 
     /// <summary>Uploaded files of this test run; nothing lands in the developer's own folder.</summary>
     public string FilesFolder { get; } = Path.Combine(Path.GetTempPath(), "nihasdesk-tests", Guid.NewGuid().ToString("N"));
@@ -85,7 +101,14 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
             {
                 services.RemoveAll<ILlmProvider>();
                 services.AddSingleton(Ai.Provider);
+                services.RemoveAll<IEmbeddingProvider>();
+                services.AddSingleton<IEmbeddingProvider>(Embeddings);
             }
+
+            services.RemoveAll<SafeHttpClient>();
+            services.AddSingleton(_ => new SafeHttpClient(
+                Web,
+                (host, _) => Task.FromResult(new[] { host == "localhost" ? System.Net.IPAddress.Loopback : System.Net.IPAddress.Parse("93.184.216.34") })));
         });
     }
 

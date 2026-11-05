@@ -68,6 +68,50 @@ internal sealed class KnowledgeSource : TenantEntity
 
     public Guid CreatedByUserId { get; private set; }
 
+    /// <summary>How often the reading job started on this source.</summary>
+    public int ReadAttempts { get; private set; }
+
+    /// <summary>A job holds the source until then; after a failure, the next attempt's time.</summary>
+    public DateTimeOffset? ReadLockUntil { get; private set; }
+
+    public int? PageCount { get; private set; }
+
+    /// <summary>What the owner should know, as codes: <c>pages_without_text:4,5</c>, <c>no_embeddings</c>.</summary>
+    public List<string> Warnings { get; private set; } = [];
+
+    public void ReadDone(string? title, int? pageCount, IEnumerable<string> warnings, DateTimeOffset now)
+    {
+        // A page's address is only a stand-in for its title; a file keeps the name the owner knows.
+        if (Kind == SourceKind.WebPage && !string.IsNullOrWhiteSpace(title))
+        {
+            Title = Shorten(title, TitleMaxLength);
+        }
+
+        PageCount = pageCount;
+        Warnings = [.. warnings];
+        Status = SourceStatus.Review;
+        FailureReason = null;
+        LastReadAt = now;
+        ReadLockUntil = null;
+    }
+
+    public void ReadFailed(string reason, DateTimeOffset now)
+    {
+        Status = SourceStatus.Failed;
+        FailureReason = Shorten(reason, FailureMaxLength);
+        LastReadAt = now;
+        ReadLockUntil = null;
+    }
+
+    /// <summary>A failure that may pass (network, provider): tried again from then on.</summary>
+    public void RetryAt(DateTimeOffset at) => ReadLockUntil = at;
+
+    public void PageContent(string contentHash, long sizeBytes)
+    {
+        ContentHash = contentHash;
+        SizeBytes = sizeBytes;
+    }
+
     public static KnowledgeSource FromFile(Guid tenantId, SourceKind kind, string fileName, string storageKey, string contentHash, long sizeBytes, Guid userId) =>
         new(tenantId, kind, Shorten(fileName, TitleMaxLength), Shorten(fileName, OriginMaxLength), userId)
         {
@@ -132,6 +176,13 @@ internal sealed class KnowledgeSection : TenantEntity
 
     /// <summary>Which model made the embedding, so a model change can re-embed in the background.</summary>
     public string? EmbeddingModel { get; private set; }
+
+    /// <summary>SHA-256 of what is embedded: the same text isn't embedded (and paid for) twice.</summary>
+    public string? TextHash { get; private set; }
+
+    public void Hashed(string textHash) => TextHash = textHash;
+
+    public void Embedded(string model) => EmbeddingModel = model;
 
     public static KnowledgeSection Create(Guid tenantId, Guid sourceId, int position, string? headingPath, int? page, SectionKind kind, string text, int tokenCount, string? language) =>
         new(tenantId, sourceId, position, text)

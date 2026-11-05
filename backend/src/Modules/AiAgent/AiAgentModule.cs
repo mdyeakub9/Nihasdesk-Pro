@@ -15,6 +15,7 @@ using Nihasdesk.Modules.AiAgent.Features.Settings;
 using Nihasdesk.Modules.AiAgent.Features.Sources;
 using Nihasdesk.Modules.AiAgent.Features.Trace;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
+using Nihasdesk.Modules.AiAgent.Ingestion;
 using Nihasdesk.Modules.AiAgent.Llm;
 
 namespace Nihasdesk.Modules.AiAgent;
@@ -50,8 +51,7 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<IValidator<AssistRequest>, AssistValidator>();
         services.AddScoped<IValidator<FeedbackRequest>, FeedbackValidator>();
         services.AddScoped<IValidator<WebPageRequest>, WebPageValidator>();
-        services.AddFileStore(configuration);
-        services.AddSingleton<SafeHttpClient>();
+        AddSourceReading(services, configuration);
 
         services.AddSingleton<TraceRetention>();
         services.AddSingleton<AiReplyProcessor>();
@@ -60,6 +60,34 @@ public sealed class AiAgentModule : IModule
             services.AddHostedService(sp => sp.GetRequiredService<AiReplyProcessor>());
             services.AddHostedService(sp => sp.GetRequiredService<TraceRetention>());
         }
+    }
+
+    /// <summary>Workers: reads knowledge sources (ADR 0026 §2). The API only adds them, and tests run the job step by step.</summary>
+    public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddModuleDbContext<AiDbContext>(configuration, AiDbContext.Schema);
+        services.AddOptions<AiOptions>().Bind(configuration.GetSection(AiOptions.SectionName));
+        AddSourceReading(services, configuration);
+        if (configuration.GetValue($"{AiOptions.SectionName}:{nameof(AiOptions.BackgroundProcessing)}", true))
+        {
+            services.AddHostedService(sp => sp.GetRequiredService<SourceReadProcessor>());
+        }
+    }
+
+    private static void AddSourceReading(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddFileStore(configuration);
+        services.AddSingleton<SafeHttpClient>();
+        services.AddHttpClient<IEmbeddingProvider, OpenAiEmbeddingProvider>(OpenAiEmbeddingProvider.HttpClientName, (sp, client) =>
+            {
+                var baseUrl = sp.GetRequiredService<IOptions<AiOptions>>().Value.OpenAi.BaseUrl;
+                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : baseUrl + "/");
+                client.Timeout = TimeSpan.FromSeconds(60);
+            })
+            // Requests carry the API key header and the shop's text; never logged (SEC-13, SEC-19).
+            .RemoveAllLoggers();
+        services.AddScoped<SourceReader>();
+        services.AddSingleton<SourceReadProcessor>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
