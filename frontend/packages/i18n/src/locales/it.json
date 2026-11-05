@@ -971,7 +971,48 @@
       "invalidUrl": "Inserisci un indirizzo completo, che inizia con https://.",
       "blockedUrl": "Questo indirizzo non è una pagina web pubblica.",
       "unreachableUrl": "Questo indirizzo non si trova. Controlla che sia scritto bene.",
-      "notFound": "Questa fonte non esiste più."
+      "notFound": "Questa fonte non esiste più.",
+      "noNextSection": "Questa è l’ultima sezione.",
+      "sectionTooLong": "Insieme queste sezioni sono troppo lunghe."
+    },
+    "review": {
+      "back": "Torna a Conoscenza del negozio",
+      "loading": "Caricamento…",
+      "intro": "Questo è ciò che l’IA potrà trovare in questa fonte. Correggi ciò che è stato letto male ed escludi ciò che l’IA non deve usare.",
+      "savedDirectly": "Le modifiche si salvano subito e per ora non si possono annullare.",
+      "warnings": "Avvisi",
+      "priceList": "Una parte sembra un listino prezzi. I prezzi per i clienti arrivano sempre da Prodotti, mai dai documenti.",
+      "conflictsTitle_one": "Diverso dalle tue impostazioni ({{count}})",
+      "conflictsTitle_other": "Diverso dalle tue impostazioni ({{count}})",
+      "conflictsIntro": "I clienti ricevono sempre il valore delle tue impostazioni. Questo controllo legge il testo con regole semplici, quindi può sbagliare.",
+      "conflicts": {
+        "shipping_cost": "Qui c’è scritto {{found}}, ma le tue zone di spedizione dicono {{expected}}.",
+        "delivery_days": "Qui c’è scritto {{found}}, ma le tue zone di spedizione dicono {{expected}} giorni.",
+        "return_days": "Qui c’è scritto {{found}}, ma la tua politica di reso dice {{expected}} giorni.",
+        "payment_method": "Qui si parla di {{found}}, ma il negozio accetta solo il contrassegno."
+      },
+      "onPage": "(pagina {{page}})",
+      "fixSettings": "Correggi le impostazioni",
+      "fixSection": "Correggi la sezione",
+      "exclude": "Escludi",
+      "include": "Usa di nuovo",
+      "excluded": "Esclusa",
+      "edit": "Modifica",
+      "save": "Salva",
+      "merge": "Unisci alla successiva",
+      "sectionText": "Testo della sezione",
+      "keywordsOnly": "Per ora si trova solo con le parole esatte.",
+      "noHeading": "Senza titolo",
+      "page": "Pagina {{page}}",
+      "kinds": {
+        "text": "Testo",
+        "list": "Elenco",
+        "table": "Tabella",
+        "faq": "Domanda"
+      },
+      "sectionsTitle_one": "{{count}} sezione",
+      "sectionsTitle_other": "{{count}} sezioni",
+      "loadMore": "Carica altre"
     }
   }
 }

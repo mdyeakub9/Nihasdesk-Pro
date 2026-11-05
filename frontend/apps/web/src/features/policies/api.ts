@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiDelete, apiGet, apiPost, apiPostForm, apiPut } from '../../lib/api';
 
 /* Shop policies and shipping zones (PRD 4.7, ADR 0020). Money is integer cents. */
@@ -115,3 +115,85 @@ export const useAddWebPage = () => useSourceMutation((url: string) => apiPost(`$
 
 export const useDeleteSource = () =>
   useSourceMutation((id: string) => apiDelete(`${sourcesPath}/${encodeURIComponent(id)}`));
+
+/* Reviewing a source: what the AI will be able to find, and where it differs from the settings. */
+
+export type ReviewConflict = {
+  kind: 'shipping_cost' | 'delivery_days' | 'return_days' | 'payment_method';
+  sectionId: string;
+  page: number | null;
+  found: string;
+  expected: string;
+};
+
+export type SourceReview = {
+  source: KnowledgeSource;
+  conflicts: ReviewConflict[];
+  priceListSections: string[];
+};
+
+export type ReviewSection = {
+  id: string;
+  position: number;
+  headingPath: string | null;
+  page: number | null;
+  kind: 'text' | 'list' | 'table' | 'faq';
+  text: string;
+  excluded: boolean;
+  /** False when the embedding is missing: only exact words find it. */
+  searchable: boolean;
+};
+
+type SectionPage = { items: ReviewSection[]; nextAfter: number | null };
+
+const sourceKey = (id: string) => ['knowledge', 'source', id] as const;
+const sectionPath = (sourceId: string, sectionId: string) =>
+  `${sourcesPath}/${encodeURIComponent(sourceId)}/sections/${encodeURIComponent(sectionId)}`;
+
+export function useSourceReview(id: string) {
+  return useQuery({
+    queryKey: sourceKey(id),
+    queryFn: () => apiGet<SourceReview>(`${sourcesPath}/${encodeURIComponent(id)}`),
+    refetchInterval: (query) => (query.state.data?.source.status === 'reading' ? readingRefreshMs : false),
+  });
+}
+
+export function useSourceSections(id: string) {
+  return useInfiniteQuery({
+    queryKey: [...sourceKey(id), 'sections'],
+    initialPageParam: null as number | null,
+    queryFn: ({ pageParam }) =>
+      apiGet<SectionPage>(
+        `${sourcesPath}/${encodeURIComponent(id)}/sections${pageParam === null ? '' : `?after=${pageParam}`}`,
+      ),
+    getNextPageParam: (last) => last.nextAfter,
+  });
+}
+
+/** A change can clear or add warnings and change the count in the list, so all of it refreshes. */
+function useReviewMutation<TArgs>(sourceId: string, mutationFn: (args: TArgs) => Promise<unknown>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sourceKey(sourceId) }),
+        queryClient.invalidateQueries({ queryKey: sourcesKey }),
+      ]),
+  });
+}
+
+export const useEditSection = (sourceId: string) =>
+  useReviewMutation(sourceId, ({ sectionId, text }: { sectionId: string; text: string }) =>
+    apiPut(sectionPath(sourceId, sectionId), { text }),
+  );
+
+export const useSetSectionExcluded = (sourceId: string) =>
+  useReviewMutation(sourceId, ({ sectionId, excluded }: { sectionId: string; excluded: boolean }) =>
+    apiPost(`${sectionPath(sourceId, sectionId)}/${excluded ? 'exclude' : 'include'}`),
+  );
+
+export const useMergeNextSection = (sourceId: string) =>
+  useReviewMutation(sourceId, (sectionId: string) =>
+    apiPost(`${sectionPath(sourceId, sectionId)}/merge-next`),
+  );
