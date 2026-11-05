@@ -3,6 +3,7 @@
 Weekly, 3–5 lines: done, blocked, decisions.
 
 ## 2026-W45
+- Knowledge sources foundation (Issue #51 PR 1, ADR 0029): tables `ai.knowledge_sources` and `ai.knowledge_sections` with RLS and pgvector, `IFileStore`, `SafeHttpClient` (SEC-05), API to upload PDF/DOCX/TXT, add a web page, list and delete; checks by content, 20 MB, 100 sources, duplicates noticed. Nothing reads the sources yet (next PR). Malware scan decided for before launch.
 - Decided (ADR 0028): the AI provider uses OpenAI's global endpoint instead of EU data residency, because the product will be sold globally later; data stays stored in the EU. Before the first real EU customer: OpenAI DPA, transfer basis, privacy policy. Set aside for later (Issue #63): product type in catalog search, live refresh of 👍/👎 buttons, reply language.
 - Requirements (PRD v0.8, ADR 0026 proposed): AI brain v2 — document and web page import (PDF, DOCX, one page) with a review screen showing what the AI will read and warnings for conflicts with shop settings; hybrid search with sources and "unknown → hand off"; conversation memory (token budget, rolling summary, customer profile); temporary notes with an end date; weekly web page re-read with failure alerts; eval set and "why this answer" trace; cost controls (prompt cache order, debounce, cheap-model routing). Based on a competitor review (Intercom Fin, respond.io, Tidio Lyro, AiPraktor).
 - Build order: Critical isolation tests for all modules → evals and trace → ingestion → review → retrieval → memory → draft/publish → cost.

@@ -33,6 +33,9 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
 
     public const string MetaVerifyToken = "tests-only-verify-token";
 
+    /// <summary>Uploaded files of this test run; nothing lands in the developer's own folder.</summary>
+    public string FilesFolder { get; } = Path.Combine(Path.GetTempPath(), "nihasdesk-tests", Guid.NewGuid().ToString("N"));
+
     protected override void ConfigureClient(HttpClient client)
     {
         base.ConfigureClient(client);
@@ -51,6 +54,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         // Tests run the webhook processor and the sender step by step.
         builder.UseSetting("Channels:BackgroundProcessing", "false");
         builder.UseSetting("Ai:BackgroundProcessing", "false");
+        builder.UseSetting("Storage:LocalPath", FilesFolder);
         // Low enough for the limit test to reach.
         builder.UseSetting("Ai:MaxRepliesPerConversationPerHour", "3");
         builder.UseSetting("Ai:MaxSuggestionsPerWorkspacePerDay", "4");

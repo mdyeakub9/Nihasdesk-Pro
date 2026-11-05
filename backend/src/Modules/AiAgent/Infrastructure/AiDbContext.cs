@@ -31,6 +31,10 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 
     public DbSet<ReplyFeedback> Feedback => Set<ReplyFeedback>();
 
+    public DbSet<KnowledgeSource> Sources => Set<KnowledgeSource>();
+
+    public DbSet<KnowledgeSection> Sections => Set<KnowledgeSection>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -107,6 +111,37 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             LowerCaseText(feedback.Property(f => f.Rating));
             feedback.HasIndex(f => new { f.TenantId, f.MessageId, f.UserId }).IsUnique();
             feedback.HasIndex(f => new { f.TenantId, f.Rating, f.CreatedAt });
+        });
+
+        modelBuilder.Entity<KnowledgeSource>(source =>
+        {
+            source.ToTable("knowledge_sources");
+            source.Property(s => s.Id).ValueGeneratedNever();
+            source.Property(s => s.Title).HasMaxLength(KnowledgeSource.TitleMaxLength);
+            source.Property(s => s.Origin).HasMaxLength(KnowledgeSource.OriginMaxLength);
+            source.Property(s => s.StorageKey).HasMaxLength(KnowledgeSource.StorageKeyMaxLength);
+            source.Property(s => s.ContentHash).HasMaxLength(KnowledgeSource.HashLength);
+            source.Property(s => s.FailureReason).HasMaxLength(KnowledgeSource.FailureMaxLength);
+            LowerCaseText(source.Property(s => s.Kind));
+            LowerCaseText(source.Property(s => s.Status));
+            source.HasIndex(s => new { s.TenantId, s.CreatedAt });
+            // The same file or page twice in a workspace is noticed, not stored again (PRD 4.7).
+            source.HasIndex(s => new { s.TenantId, s.ContentHash }).IsUnique().HasFilter("content_hash IS NOT NULL");
+            source.HasIndex(s => new { s.TenantId, s.Origin }).IsUnique().HasFilter("kind = 'webpage'");
+        });
+
+        modelBuilder.Entity<KnowledgeSection>(section =>
+        {
+            section.ToTable("knowledge_sections");
+            section.Property(s => s.Id).ValueGeneratedNever();
+            section.Property(s => s.HeadingPath).HasMaxLength(KnowledgeSection.HeadingMaxLength);
+            section.Property(s => s.Text).HasMaxLength(KnowledgeSection.TextMaxLength);
+            section.Property(s => s.Language).HasMaxLength(KnowledgeSection.LanguageMaxLength);
+            section.Property(s => s.EmbeddingModel).HasMaxLength(KnowledgeSection.ModelMaxLength);
+            LowerCaseText(section.Property(s => s.Kind));
+            section.HasIndex(s => new { s.TenantId, s.SourceId, s.Position });
+            // Deleting a source deletes its sections and search data (SEC-45).
+            section.HasOne<KnowledgeSource>().WithMany().HasForeignKey(s => s.SourceId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);
