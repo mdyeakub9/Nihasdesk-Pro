@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Infrastructure.Http;
+using Nihasdesk.Infrastructure.Security;
 using Nihasdesk.Modules.AiAgent.Domain;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Ingestion;
@@ -25,6 +26,17 @@ internal sealed record SectionPageResponse(IReadOnlyList<SectionResponse> Items,
 
 internal sealed record SectionTextRequest(string? Text);
 
+/// <summary>"Test a question": <see cref="SourceId"/> limits it to one source; otherwise all sources being reviewed or used.</summary>
+internal sealed record SearchTestRequest(string? Query, Guid? SourceId);
+
+internal sealed record PassageResponse(Guid SectionId, Guid SourceId, string SourceTitle, string? HeadingPath, int? Page, string Text, double? Similarity);
+
+internal sealed class SearchTestValidator : AbstractValidator<SearchTestRequest>
+{
+    public SearchTestValidator() =>
+        RuleFor(r => r.Query).NotEmpty().Must(q => !string.IsNullOrWhiteSpace(q)).MaximumLength(300);
+}
+
 internal sealed class SectionTextValidator : AbstractValidator<SectionTextRequest>
 {
     public SectionTextValidator() =>
@@ -34,6 +46,8 @@ internal sealed class SectionTextValidator : AbstractValidator<SectionTextReques
 internal static class ReviewErrors
 {
     public static readonly Error NoNextSection = Error.Conflict("source.no_next_section", "This is the last section.");
+
+    public static readonly Error NotReady = Error.Conflict("source.not_ready", "This source hasn't been read.");
 
     public static readonly Error TooLong = Error.Validation("source.section_too_long", "Together these sections are too long.");
 }
@@ -55,6 +69,28 @@ internal static class ReviewEndpoints
     {
         var sources = endpoints.MapGroup("/api/v1/ai/sources/{sourceId:guid}").RequireAuthorization().AddEndpointFilter<RequireTeamMember>();
         var manage = new RequireTeamRole("owner", "admin");
+
+        // Costs an embedding per call, so limited and for those who manage knowledge, like the test chat.
+        endpoints.MapPost("/api/v1/ai/sources/search", async (SearchTestRequest request, KnowledgeSearch search, CancellationToken ct) =>
+            {
+                var passages = await search.SearchAsync(request.Query!.Trim(), SearchScope.LiveAndReview, request.SourceId, ct);
+                return Results.Ok(passages
+                    .Select(p => new PassageResponse(p.SectionId, p.SourceId, p.SourceTitle, p.HeadingPath, p.Page, p.Text, p.Similarity))
+                    .ToList());
+            })
+            .RequireAuthorization()
+            .AddEndpointFilter<RequireTeamMember>()
+            .AddEndpointFilter(manage)
+            .AddEndpointFilter<ValidationFilter<SearchTestRequest>>()
+            .RequireRateLimiting(RatePolicies.Messages);
+
+        sources.MapPost("/use", (Guid sourceId, AiDbContext db, IAuditTrail audit, CancellationToken ct) =>
+                SetUsedAsync(sourceId, true, db, audit, ct))
+            .AddEndpointFilter(manage);
+
+        sources.MapPost("/stop", (Guid sourceId, AiDbContext db, IAuditTrail audit, CancellationToken ct) =>
+                SetUsedAsync(sourceId, false, db, audit, ct))
+            .AddEndpointFilter(manage);
 
         sources.MapGet("/", async (Guid sourceId, AiDbContext db, IShippingRates shipping, CancellationToken ct) =>
         {
@@ -155,6 +191,25 @@ internal static class ReviewEndpoints
                 return Results.Ok(ToResponse(section) with { Searchable = searchable });
             })
             .AddEndpointFilter(manage);
+    }
+
+    private static async Task<IResult> SetUsedAsync(Guid sourceId, bool used, AiDbContext db, IAuditTrail audit, CancellationToken ct)
+    {
+        var source = await db.Sources.SingleOrDefaultAsync(s => s.Id == sourceId, ct);
+        if (source is null)
+        {
+            return SourceErrors.NotFound.ToProblem();
+        }
+
+        if (!(used ? source.Use() : source.StopUsing()))
+        {
+            return ReviewErrors.NotReady.ToProblem();
+        }
+
+        await db.SaveChangesAsync(ct);
+        await audit.RecordAsync(used ? "knowledge.source_used" : "knowledge.source_stopped", ct);
+        var sections = await db.Sections.CountAsync(s => s.SourceId == sourceId, ct);
+        return Results.Ok(SourceEndpoints.ToResponse(source, sections));
     }
 
     private static async Task<IResult> SetExcludedAsync(Guid sourceId, Guid id, bool excluded, AiDbContext db, IAuditTrail audit, CancellationToken ct)

@@ -79,6 +79,24 @@ internal sealed class TestShop(JsonElement root, string json)
         }
     }
 
+    /// <summary>Uploads the shop's document; the caller reads it like the Workers job, then calls <see cref="UseDocumentAsync"/>.</summary>
+    public static async Task<Guid> UploadDocumentAsync(ApiClient owner, string path)
+    {
+        await owner.RefreshCsrfAsync();
+        using var form = new MultipartFormDataContent();
+        using var file = new ByteArrayContent(File.ReadAllBytes(path));
+        form.Add(file, "file", Path.GetFileName(path));
+        using var response = await owner.Http.PostAsync("/api/v1/ai/sources/files", form);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+    }
+
+    public static async Task UseDocumentAsync(ApiClient owner, Guid id)
+    {
+        using var response = await owner.PostAsync($"/api/v1/ai/sources/{id}/use");
+        response.EnsureSuccessStatusCode();
+    }
+
     private static async Task SendAsync(ApiClient client, HttpMethod method, string path, JsonElement body)
     {
         await client.RefreshCsrfAsync();

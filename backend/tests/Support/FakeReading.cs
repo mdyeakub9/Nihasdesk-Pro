@@ -21,6 +21,9 @@ internal sealed class FakeEmbeddings : IEmbeddingProvider
 
     public string Model => "fake-embedding";
 
+    /// <summary>Words that mean the same in a test: any text with one of them gets that topic's vector, so meaning can be tested.</summary>
+    public ConcurrentDictionary<string, int> Topics { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     public int Calls => _calls;
 
     public Task<IReadOnlyList<float[]>> EmbedAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken)
@@ -39,7 +42,8 @@ internal sealed class FakeEmbeddings : IEmbeddingProvider
         return Task.FromResult<IReadOnlyList<float[]>>([.. texts.Select(t =>
         {
             var vector = new float[Dimensions];
-            vector[Math.Abs(t.GetHashCode(StringComparison.Ordinal)) % Dimensions] = 1;
+            var topic = Topics.Where(p => t.Contains(p.Key, StringComparison.OrdinalIgnoreCase)).Select(p => (int?)p.Value).FirstOrDefault();
+            vector[topic ?? Math.Abs(t.GetHashCode(StringComparison.Ordinal)) % Dimensions] = 1;
             return vector;
         })]);
     }

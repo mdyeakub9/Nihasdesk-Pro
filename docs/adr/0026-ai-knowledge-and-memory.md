@@ -48,6 +48,8 @@ Tables (names indicative, final in the migration PR):
 - **Context budget:** at most ~1,500 tokens of knowledge per reply; each passage keeps its source id, section id and version; the run stores them (`ai.runs.sources`), and the test box and AI assistant show them.
 - The existing policy and FAQ answers become sections of the same index, so one search covers all of Layer 3. Layer 1 facts are never answered from Layer 3.
 
+- _Built (Issue #53):_ one SQL query as above (HNSW and GIN indexes, `unaccent`, RRF k = 60), top 4 within about 1,500 tokens, for sources the owner put in use with "Use for AI" until draft and publish exist (#55). A section counts when it is close in meaning (`Ai:KnowledgeMinSimilarity`) or has every word of the question. Not built, to be added only if the eval set asks for it: query rewrite, and moving policies and FAQ answers into sections (they are searched as before, next to documents). Amounts in documents may not be quoted: the reply check holds them back. `Ai:KnowledgeMinSimilarity` is 0.3, measured with `--search-only` on the eval set: the right section scored 0.32–0.73, the closest wrong one for questions the shop can't answer 0.17–0.47. They overlap, so the threshold only drops what is clearly unrelated and the agent decides from what it reads; the 8 unknown cases still hand off. Measured on one short Italian document (10 questions), to check again with real documents.
+
 ### 4. Memory and context assembly
 Per reply, a **context builder** fills a token budget in a fixed order, so the stable part stays cacheable:
 1. system rules + tool definitions (static),

@@ -383,6 +383,19 @@ public sealed class SourceReadingTests(AuthFixture fixture)
         Assert.Null(chunks[0].HeadingPath);
     }
 
+    [Fact]
+    public void A_text_file_with_questions_over_their_answers_gives_one_section_per_question()
+    {
+        var text = "Guida del negozio.\r\n\r\nSi possono unire due ordini?\r\nNo, vengono spediti separatamente.\r\n\r\nQuanto dura la garanzia?\r\nVentiquattro mesi.\r\nSolo per i difetti.\r\n\r\nDue righe\r\nsenza domanda.";
+
+        var document = new TextParser().Parse(System.Text.Encoding.UTF8.GetBytes(text), "guida.txt");
+        var chunks = Chunker.Split(document.Sections);
+
+        Assert.Equal("Si possono unire due ordini?\nNo, vengono spediti separatamente.", Assert.Single(chunks, c => c.Text.StartsWith("Si possono", StringComparison.Ordinal)).Text);
+        Assert.Equal("Quanto dura la garanzia?\nVentiquattro mesi.\nSolo per i difetti.", Assert.Single(chunks, c => c.Text.StartsWith("Quanto", StringComparison.Ordinal)).Text);
+        Assert.Equal(2, chunks.Count(c => c.Kind == SectionKind.Faq));
+    }
+
     private async Task AssertSearchableAsync(Guid tenant, Guid id, string word)
     {
         await using var scope = Scope(tenant);
