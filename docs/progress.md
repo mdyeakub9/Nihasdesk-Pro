@@ -3,6 +3,7 @@
 Weekly, 3–5 lines: done, blocked, decisions.
 
 ## 2026-W45
+- Knowledge review screen (Issue #52 PR 2): Settings → Shop knowledge → a source shows its warnings, conflicts with the settings (fix settings, fix section, exclude) and all sections (edit, exclude, merge); imported text only as plain text. The AI still doesn't use sources (#53).
 - Knowledge review backend (Issue #52 PR 1, ADR 0029): source detail with conflicts against shipping zones, delivery days, return days and payment method, and price-list warnings, all by code from the current settings; sections in pages; edit, exclude and merge for Owner/Admin. "Test a question" moved to #53.
 - PDF reading fixed after the first real PDF (9 pages): sections 99 → 62, none under 10 tokens, no running headers or footers, 38 FAQ pairs whole, and 6 tables found by their columns; short sections take the document's language. Real OpenAI embeddings verified (99/99). Wrapped table cells still come out mixed up (ADR 0029).
 - Sources screen (Issue #51 PR 3): Settings → Shop knowledge → Documents and web pages: upload, add a page, status and plain-language failures, warnings, delete with confirmation; refreshes every 3 s while something is being read. Issue #51 done; sources wait in "Ready to review" for #52.

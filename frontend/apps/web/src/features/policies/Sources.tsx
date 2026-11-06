@@ -1,38 +1,13 @@
-import { Badge, Button, Card, FieldError, Input, Label, type BadgeProps } from '@nihasdesk/ui';
+import { Badge, Button, Card, FieldError, Input, Label } from '@nihasdesk/ui';
 import { FileText, Globe, Trash2 } from 'lucide-react';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { authErrorMessage } from '../auth/errors';
-import {
-  useAddWebPage,
-  useDeleteSource,
-  useSources,
-  useUploadSource,
-  type KnowledgeSource,
-  type SourceStatus,
-} from './api';
+import { useAddWebPage, useDeleteSource, useSources, useUploadSource, type KnowledgeSource } from './api';
+import { statusTone, useWarningText } from './sourceDisplay';
 
 const maxFileBytes = 20 * 1024 * 1024;
-
-const statusTone: Record<SourceStatus, BadgeProps['tone']> = {
-  reading: 'neutral',
-  review: 'info',
-  live: 'success',
-  failed: 'warning',
-  archived: 'neutral',
-};
-
-/** A warning code in plain words: `pages_without_text:3,4`, `no_embeddings`. */
-function useWarningText() {
-  const { t } = useTranslation();
-  return (code: string) => {
-    const [name, detail] = code.split(':');
-    if (name === 'pages_without_text')
-      return t('sources.warnings.pagesWithoutText', { pages: (detail ?? '').replaceAll(',', ', ') });
-    if (name === 'no_embeddings') return t('sources.warnings.noEmbeddings');
-    return code;
-  };
-}
 
 function SourceItem({ source, canEdit }: { source: KnowledgeSource; canEdit: boolean }) {
   const { t } = useTranslation();
@@ -52,7 +27,18 @@ function SourceItem({ source, canEdit }: { source: KnowledgeSource; canEdit: boo
     <li className="flex flex-col gap-1 border-b px-4 py-3 last:border-b-0">
       <div className="flex items-start gap-2">
         <Icon className="mt-0.5 size-4 shrink-0 text-secondary-foreground" aria-hidden="true" />
-        <p className="min-w-0 flex-1 text-sm font-medium break-words">{source.title}</p>
+        <p className="min-w-0 flex-1 text-sm font-medium break-words">
+          {source.sectionCount > 0 ? (
+            <Link
+              to={`/settings/knowledge/sources/${source.id}`}
+              className="text-info-foreground hover:underline"
+            >
+              {source.title}
+            </Link>
+          ) : (
+            source.title
+          )}
+        </p>
         <Badge tone={statusTone[source.status]}>{t(`sources.status.${source.status}`)}</Badge>
       </div>
       <p className="text-xs text-muted-foreground">{details.join(' · ')}</p>

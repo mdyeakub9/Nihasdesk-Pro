@@ -19,6 +19,7 @@ import { AiSettingsPage } from './features/ai/AiSettingsPage';
 import { OrderDetailPage } from './features/orders/OrderDetailPage';
 import { OrdersPage } from './features/orders/OrdersPage';
 import { PoliciesPage } from './features/policies/PoliciesPage';
+import { SourceReviewPage } from './features/policies/SourceReviewPage';
 import { SavedRepliesPage } from './features/saved-replies/SavedRepliesPage';
 import { AcceptInvitationPage } from './features/team/AcceptInvitationPage';
 import { TeamPage } from './features/team/TeamPage';
@@ -85,6 +86,7 @@ export const routes: RouteObject[] = [
           { path: 'channels', element: <ChannelsPage /> },
           { path: 'ai', element: <AiSettingsPage /> },
           { path: 'knowledge', element: <PoliciesPage /> },
+          { path: 'knowledge/sources/:sourceId', element: <SourceReviewPage /> },
           { path: 'saved-replies', element: <SavedRepliesPage /> },
           { path: 'security', element: <SecurityPage /> },
         ],

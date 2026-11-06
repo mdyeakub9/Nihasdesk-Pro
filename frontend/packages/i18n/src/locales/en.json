@@ -971,7 +971,48 @@
       "invalidUrl": "Enter a full web address, starting with https://.",
       "blockedUrl": "This address isn’t a public web page.",
       "unreachableUrl": "This address can’t be found. Check it for typos.",
-      "notFound": "This source no longer exists."
+      "notFound": "This source no longer exists.",
+      "noNextSection": "This is the last section.",
+      "sectionTooLong": "Together these sections are too long."
+    },
+    "review": {
+      "back": "Back to Shop knowledge",
+      "loading": "Loading…",
+      "intro": "This is what the AI will be able to find in this source. Correct what was read wrongly, and exclude what the AI should not use.",
+      "savedDirectly": "Changes are saved at once and can’t be undone yet.",
+      "warnings": "Warnings",
+      "priceList": "Part of this looks like a price list. Prices for customers always come from Products, never from documents.",
+      "conflictsTitle_one": "Differs from your settings ({{count}})",
+      "conflictsTitle_other": "Differs from your settings ({{count}})",
+      "conflictsIntro": "Customers always get the value from your settings. This check reads the text by simple rules, so it can be wrong.",
+      "conflicts": {
+        "shipping_cost": "This says {{found}}, but your shipping zones say {{expected}}.",
+        "delivery_days": "This says {{found}}, but your shipping zones say {{expected}} days.",
+        "return_days": "This says {{found}}, but your return policy says {{expected}} days.",
+        "payment_method": "This mentions {{found}}, but the shop takes only cash on delivery."
+      },
+      "onPage": "(page {{page}})",
+      "fixSettings": "Fix settings",
+      "fixSection": "Fix section",
+      "exclude": "Exclude",
+      "include": "Use again",
+      "excluded": "Excluded",
+      "edit": "Edit",
+      "save": "Save",
+      "merge": "Merge with next",
+      "sectionText": "Section text",
+      "keywordsOnly": "For now this can be found only by exact words.",
+      "noHeading": "No heading",
+      "page": "Page {{page}}",
+      "kinds": {
+        "text": "Text",
+        "list": "List",
+        "table": "Table",
+        "faq": "Question"
+      },
+      "sectionsTitle_one": "{{count}} section",
+      "sectionsTitle_other": "{{count}} sections",
+      "loadMore": "Load more"
     }
   }
 }
