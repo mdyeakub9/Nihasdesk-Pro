@@ -753,6 +753,7 @@
     "assistant": "Assistente IA"
   },
   "assistant": {
+    "memory": "La conversazione finora",
     "intro": "Un riepilogo e una risposta suggerita dall’IA. La modifichi e la invii con il normale Invia.",
     "suggest": "Suggerisci una risposta",
     "thinking": "Sto pensando…",

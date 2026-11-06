@@ -21,6 +21,7 @@ Ai__OpenAi__ApiKey=sk-... dotnet run --project backend/tests/Evals -c Release
 Options:
 - `--dry-run`: scripted AI, no judge, nothing saved. It checks the files, the seeding and the runner without a key.
 - `--limit 10`: only the first cases.
+- `--summary-check`: one made-up conversation through the summary prompt and `Ai:SummaryModel`, printed with its tokens. No judge, nothing saved.
 - `--search-only`: only the search, with the similarity of each hit, to tune `Ai:KnowledgeMinSimilarity` (set it to 0 for this, so nothing is cut). No reply model, no judge, nothing saved.
 - `--judge-model gpt-5`: the grading model. The default is `gpt-5`, a stronger model than the reply model.
 - `--set <path>` / `--shop <path>`: other files.

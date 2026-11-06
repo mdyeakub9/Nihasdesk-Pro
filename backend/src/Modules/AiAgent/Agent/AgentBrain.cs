@@ -35,10 +35,18 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
 {
     private AiOptions Options => options.Value;
 
-    /// <summary><paramref name="readOnly"/>: the team's assistant (ADR 0023) gets only the tools that read.</summary>
-    public async Task<Thought> ThinkAsync(string systemPrompt, IReadOnlyList<AiHistoryMessage> history, CancellationToken ct, bool readOnly = false)
+    /// <summary>
+    /// <paramref name="readOnly"/>: the team's assistant (ADR 0023) gets only the tools that read.
+    /// <paramref name="summary"/>: the conversation's older part; <paramref name="history"/> is the part within the budget.
+    /// </summary>
+    public async Task<Thought> ThinkAsync(string systemPrompt, IReadOnlyList<AiHistoryMessage> history, CancellationToken ct, bool readOnly = false, string? summary = null)
     {
         var messages = new List<LlmMessage> { LlmMessage.System(systemPrompt) };
+        if (summary is not null)
+        {
+            messages.Add(LlmMessage.System(Prompt.Memory(summary)));
+        }
+
         messages.AddRange(history.Select(m => m.Author == "customer" ? LlmMessage.User(m.Text) : LlmMessage.Assistant(m.Text)));
         var offered = readOnly ? AgentTools.ReadOnlyDefinitions : AgentTools.Definitions;
         var usedTools = new List<string>();

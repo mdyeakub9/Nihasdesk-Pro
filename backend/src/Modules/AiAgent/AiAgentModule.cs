@@ -8,6 +8,7 @@ using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Infrastructure.Storage;
 using Nihasdesk.Modules.AiAgent.Agent;
+using Nihasdesk.Modules.AiAgent.Contracts;
 using Nihasdesk.Modules.AiAgent.Features.Assistant;
 using Nihasdesk.Modules.AiAgent.Features.Knowledge;
 using Nihasdesk.Modules.AiAgent.Features.Policies;
@@ -29,15 +30,7 @@ public sealed class AiAgentModule : IModule
         services.AddModuleDbContext<AiDbContext>(configuration, AiDbContext.Schema);
         services.AddOptions<AiOptions>().Bind(configuration.GetSection(AiOptions.SectionName));
 
-        services.AddHttpClient<ILlmProvider, OpenAiProvider>(OpenAiProvider.HttpClientName, (sp, client) =>
-            {
-                var baseUrl = sp.GetRequiredService<IOptions<AiOptions>>().Value.OpenAi.BaseUrl;
-                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : baseUrl + "/");
-                client.Timeout = TimeSpan.FromSeconds(60);
-            })
-            // Requests carry the API key header and customer text; never logged (SEC-13, SEC-19).
-            .RemoveAllLoggers();
-
+        AddSummaries(services);
         services.AddScoped<AgentTools>();
         services.AddScoped<AgentBrain>();
         services.AddScoped<AiSettingsStore>();
@@ -64,16 +57,33 @@ public sealed class AiAgentModule : IModule
         }
     }
 
-    /// <summary>Workers: reads knowledge sources (ADR 0026 §2). The API only adds them, and tests run the job step by step.</summary>
+    /// <summary>Workers: reads knowledge sources and writes summaries (ADR 0026 §2, §4). Tests run the jobs step by step.</summary>
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddModuleDbContext<AiDbContext>(configuration, AiDbContext.Schema);
         services.AddOptions<AiOptions>().Bind(configuration.GetSection(AiOptions.SectionName));
         AddSourceReading(services, configuration);
+        AddSummaries(services);
         if (configuration.GetValue($"{AiOptions.SectionName}:{nameof(AiOptions.BackgroundProcessing)}", true))
         {
             services.AddHostedService(sp => sp.GetRequiredService<SourceReadProcessor>());
+            services.AddHostedService(sp => sp.GetRequiredService<ConversationSummaryProcessor>());
         }
+    }
+
+    private static void AddSummaries(IServiceCollection services)
+    {
+        services.AddHttpClient<ILlmProvider, OpenAiProvider>(OpenAiProvider.HttpClientName, (sp, client) =>
+            {
+                var baseUrl = sp.GetRequiredService<IOptions<AiOptions>>().Value.OpenAi.BaseUrl;
+                client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : baseUrl + "/");
+                client.Timeout = TimeSpan.FromSeconds(60);
+            })
+            // Requests carry the API key header and customer text; never logged (SEC-13, SEC-19).
+            .RemoveAllLoggers();
+        services.AddScoped<IAiCustomerData, AiCustomerData>();
+        services.AddScoped<ConversationSummarizer>();
+        services.AddSingleton<ConversationSummaryProcessor>();
     }
 
     private static void AddSourceReading(IServiceCollection services, IConfiguration configuration)

@@ -753,6 +753,7 @@
     "assistant": "AI assistant"
   },
   "assistant": {
+    "memory": "Conversation so far",
     "intro": "A summary and a suggested reply from the AI. You edit and send it with the normal Send.",
     "suggest": "Suggest a reply",
     "thinking": "Thinking…",

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Nihasdesk.Api.Tests.Auth;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Nihasdesk.Api.Tests.Inbox;
 using Nihasdesk.Infrastructure.Tenancy;
@@ -57,6 +58,53 @@ public sealed class OrderRequestTests(AuthFixture fixture)
         // Nothing is taken until a person approves (CLAUDE.md rule 5).
         Assert.Equal(5, await StockAsync(shop));
         Assert.Contains(await AiTextsAsync(shop.Owner, id), t => t.Contains("€185.00", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task The_customer_profile_has_their_orders_and_no_contact_details_and_the_trace_keeps_no_name()
+    {
+        var shop = await ShopAsync();
+        var order = Marker();
+        var question = Marker();
+        Api.Ai.Respond = call =>
+            Mine(call, question)
+                ? call.ToolResults.Count == 0
+                    ? FakeAiAnswer.Call("get_customer_profile", "{}")
+                    : FakeAiAnswer.Say("Il tuo ordine #1001 è in attesa di conferma.")
+                : Mine(call, order)
+                    ? call.ToolResults.Count == 0
+                        ? FakeAiAnswer.Call("create_order_request", Request(shop))
+                        : FakeAiAnswer.Say("Richiesta ricevuta!")
+                    : FakeAiAnswer.Say("ok");
+
+        var id = await ReceiveAsync(shop, $"Vorrei una borsa nera {order}");
+        await RunAiUntilAsync(order);
+        var conversation = await shop.Owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}");
+        var contactId = conversation.GetProperty("contact").GetProperty("id").GetString();
+        (await shop.Owner.Http.PutAsJsonAsync($"/api/v1/contacts/{contactId}", new
+        {
+            name = "Giulia Rossi",
+            phone = "+393331234567",
+            email = "giulia.rossi@example.com",
+            language = "it",
+        })).EnsureSuccessStatusCode();
+
+        Api.Clock.Advance(TimeSpan.FromSeconds(1));
+        await shop.Inbox.ReceiveAsync(shop.Workspace, shop.Visitor, $"A che punto è il mio ordine? {question}");
+        await RunAiUntilAsync(question);
+
+        var profile = Api.Ai.Calls.Last(c => Mine(c, question)).ToolResults.Single();
+        Assert.Equal(
+            """{"firstName":"Giulia","language":"it","orders":[{"number":1001,"status":"pending","date":"DATE"}]}""",
+            System.Text.RegularExpressions.Regex.Replace(profile, @"\d{4}-\d{2}-\d{2}", "DATE"));
+
+        await using var scope = Api.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TenantContext>().SetTenant(Guid.Parse(shop.Workspace));
+        var runs = await scope.ServiceProvider.GetRequiredService<Nihasdesk.Modules.AiAgent.Infrastructure.AiDbContext>().Runs
+            .AsNoTracking().Where(r => r.ConversationId == id).ToListAsync();
+        var traced = runs.SelectMany(r => r.Trace?.Tools ?? []).Single(t => t.Name == "get_customer_profile");
+        Assert.Contains("1001", traced.Result, StringComparison.Ordinal);
+        Assert.DoesNotContain("Giulia", traced.Result, StringComparison.Ordinal);
     }
 
     [Fact]

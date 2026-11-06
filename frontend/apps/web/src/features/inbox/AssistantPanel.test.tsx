@@ -33,6 +33,27 @@ describe('AI assistant', () => {
     expect(within(side).getByText('giulia.rossi@example.com')).toBeVisible();
   });
 
+  it('shows the stored summary of a long conversation as plain text, without asking the AI', async () => {
+    const { fetchMock } = fakeInboxApi({ memorySummary: 'Vuole la <b>borsa nera</b>, taglia M.' });
+    await renderApp('/inbox/c-giulia');
+
+    const side = await openAssistant();
+
+    const memory = await within(side).findByRole('region', { name: 'Conversation so far' });
+    expect(memory).toHaveTextContent('Vuole la <b>borsa nera</b>, taglia M.');
+    expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/assist')).toEqual([]);
+  });
+
+  it('shows no summary when a conversation has none yet', async () => {
+    fakeInboxApi();
+    await renderApp('/inbox/c-giulia');
+
+    const side = await openAssistant();
+
+    await within(side).findByRole('button', { name: 'Suggest a reply' });
+    expect(within(side).queryByRole('region', { name: 'Conversation so far' })).not.toBeInTheDocument();
+  });
+
   it('shows the summary, the suggested reply and its sources; insert fills the composer and sends nothing', async () => {
     const { fetchMock } = fakeInboxApi();
     await renderApp('/inbox/c-giulia');

@@ -18,7 +18,19 @@ internal static class RunTraces
     private static readonly string[] PersonalFields = ["customer_name", "phone", "street", "postal_code", "city", "province", "country", "notes"];
 
     public static ToolTrace Of(LlmToolCall call, ToolOutcome outcome) =>
-        new(call.Name.Length <= 40 ? call.Name : call.Name[..40], Arguments(call), Shorten(outcome.Json));
+        new(call.Name.Length <= 40 ? call.Name : call.Name[..40], Arguments(call), Shorten(Result(call, outcome)));
+
+    /// <summary>The profile's orders explain the answer; the customer's name isn't needed for that.</summary>
+    private static string Result(LlmToolCall call, ToolOutcome outcome)
+    {
+        if (call.Name != "get_customer_profile" || JsonNode.Parse(outcome.Json) is not JsonObject result)
+        {
+            return outcome.Json;
+        }
+
+        result.Remove("firstName");
+        return result.ToJsonString();
+    }
 
     private static string Arguments(LlmToolCall call)
     {

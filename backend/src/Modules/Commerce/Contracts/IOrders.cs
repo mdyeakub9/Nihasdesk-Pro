@@ -36,6 +36,9 @@ public sealed record OrderQuoteLine(Guid ProductId, Guid VariantId, string Title
 /// <summary>What an order would cost (catalog + shipping zone, by code); nothing is saved.</summary>
 public sealed record OrderQuote(IReadOnlyList<OrderQuoteLine> Lines, string ShippingZoneName, long Subtotal, long ShippingCost, long Total, string Currency);
 
+/// <summary>An earlier order or request of a contact, for the AI: no address, phone or amounts. <see cref="Status"/>: pending, confirmed or rejected.</summary>
+public sealed record ContactOrder(int Number, string Status, DateTimeOffset CreatedAt);
+
 /// <summary>
 /// How the AI agent creates an <b>order request</b> — never a confirmed order (CLAUDE.md rule 5).
 /// Validation and prices are done by code here; errors say which field to ask the customer again.
@@ -47,6 +50,13 @@ public interface IOrderRequests
 
     /// <summary>At most one pending request per conversation (SEC-42): a second one answers <c>order.pending_exists</c>.</summary>
     Task<Result<OrderRequestCreated>> CreateAsync(Guid conversationId, IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken);
+}
+
+/// <summary>Read only and apart from <see cref="IOrderRequests"/>, which stays the AI's only way to touch an order.</summary>
+public interface IContactOrders
+{
+    /// <summary>The contact's newest orders and requests in the current workspace (ADR 0026 §4).</summary>
+    Task<IReadOnlyList<ContactOrder>> RecentAsync(Guid contactId, int limit, CancellationToken cancellationToken);
 }
 
 /// <summary>One line of a confirmed order, as the customer sees it. Amounts in cents.</summary>

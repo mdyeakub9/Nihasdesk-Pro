@@ -137,6 +137,15 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         return await Services.GetRequiredService<AiReplyProcessor>().ProcessOnceAsync(CancellationToken.None);
     }
 
+    /// <summary>Updates due summaries like the Workers job.</summary>
+    public async Task RunSummariesAsync()
+    {
+        var processor = Services.GetRequiredService<ConversationSummaryProcessor>();
+        while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+    }
+
     /// <summary>Sends due team replies like the background sender would.</summary>
     public Task<int> SendRepliesAsync() => Services.GetRequiredService<MessengerSender>().SendOnceAsync(CancellationToken.None);
 

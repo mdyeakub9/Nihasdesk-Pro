@@ -108,6 +108,9 @@ internal enum RunOutcome
 
     /// <summary>A draft for the team from the AI assistant (ADR 0023); nothing was sent.</summary>
     Suggested,
+
+    /// <summary>The running summary was updated (ADR 0026 §4); metering only.</summary>
+    Summarized,
 }
 
 /// <summary>

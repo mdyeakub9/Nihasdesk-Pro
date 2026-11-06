@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -6,6 +7,7 @@ using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Security;
 using Nihasdesk.Modules.AiAgent.Agent;
 using Nihasdesk.Modules.AiAgent.Features.Settings;
+using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.Identity.Contracts;
 
 namespace Nihasdesk.Modules.AiAgent.Features.Assistant;
@@ -20,6 +22,9 @@ internal sealed record AssistResponse(
     // price_not_from_tool, link_in_reply, … (SEC-38) or no_reply; null when Reply is set.
     string? Blocked,
     string? Failed);
+
+/// <summary>The running summary of a long conversation; null while there is none (ADR 0026 §4).</summary>
+internal sealed record ConversationMemoryResponse(string? Summary, DateTimeOffset? UpdatedAt);
 
 internal sealed class AssistValidator : AbstractValidator<AssistRequest>
 {
@@ -57,5 +62,16 @@ internal static class AssistantEndpoints
             .AddEndpointFilter<RequireTeamMember>()
             .AddEndpointFilter<ValidationFilter<AssistRequest>>()
             .RequireRateLimiting(RatePolicies.Messages);
+
+        // Another workspace's conversation simply has no summary here: the row isn't visible (rule 1).
+        endpoints.MapGet("/api/v1/conversations/{id:guid}/memory", async (Guid id, AiDbContext db, CancellationToken ct) =>
+            {
+                var memory = await db.Memory.AsNoTracking().SingleOrDefaultAsync(m => m.ConversationId == id, ct);
+                return Results.Ok(memory?.Summary is null
+                    ? new ConversationMemoryResponse(null, null)
+                    : new ConversationMemoryResponse(memory.Summary, memory.UpdatedAt));
+            })
+            .RequireAuthorization()
+            .AddEndpointFilter<RequireTeamMember>();
     }
 }
