@@ -120,6 +120,8 @@ function SourceName(source: AssistSource, t: TFunction) {
       return t('assistant.catalog');
     case 'answer':
       return `“${source.label ?? t('aiTest.sources.answer')}”`;
+    case 'document':
+      return source.label ?? t('aiTest.sources.document');
     case 'policy':
       return t(`aiTest.sources.${source.label ?? 'other'}`, { defaultValue: source.label ?? '' });
     default:

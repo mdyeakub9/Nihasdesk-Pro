@@ -44,8 +44,8 @@ export type TestReply = {
   /** Why the AI provider failed, e.g. http_401 (key rejected). */
   failed: string | null;
   tools: string[];
-  /** What the answer was based on: shipping zones, a policy (label = topic) or an answer (label = its question). */
-  sources: { kind: 'shipping' | 'policy' | 'answer'; label: string | null }[];
+  /** What the answer was based on: shipping zones, a policy (label = topic), an answer (label = its question) or a document (label = title › heading). */
+  sources: { kind: 'shipping' | 'policy' | 'answer' | 'document'; label: string | null }[];
   /** "Why this answer" for this test reply. */
   trace: Trace;
 };
@@ -120,7 +120,10 @@ export function useTestChat() {
 
 export type Rating = 'up' | 'down';
 
-export type TraceSource = { kind: 'shipping' | 'policy' | 'answer' | 'catalog'; label: string | null };
+export type TraceSource = {
+  kind: 'shipping' | 'policy' | 'answer' | 'catalog' | 'document';
+  label: string | null;
+};
 
 export type ToolTrace = { name: string; arguments: string; result: string };
 

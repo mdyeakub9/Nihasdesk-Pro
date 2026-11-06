@@ -15,6 +15,7 @@ import {
   type ReviewSection,
 } from './api';
 import { statusTone, useWarningText } from './sourceDisplay';
+import { SourceUse, TestQuestion } from './SourceUse';
 
 const maxSectionLength = 20000;
 const sectionAnchor = (id: string) => `section-${id}`;
@@ -244,6 +245,7 @@ export function SourceReviewPage() {
   }
 
   const { source, conflicts, priceListSections } = review.data;
+  const canUse = canEdit && (source.status === 'review' || source.status === 'live');
   const warnings = source.warnings.map(warningText);
   if (priceListSections.length > 0) warnings.push(t('sources.review.priceList'));
 
@@ -264,7 +266,10 @@ export function SourceReviewPage() {
             })}
           </p>
         )}
+        {canUse && <SourceUse source={source} conflicts={conflicts.length} />}
       </Card>
+
+      {canUse && <TestQuestion sourceId={sourceId} />}
 
       {warnings.length > 0 && (
         <section

@@ -12,13 +12,15 @@ import { useRateReply, useTrace, type Rating, type Trace, type TraceSource } fro
 function useSourceName() {
   const { t } = useTranslation();
   return (source: TraceSource) =>
-    source.kind === 'answer'
-      ? `“${source.label ?? t('aiTest.sources.answer')}”`
-      : source.kind === 'policy'
-        ? t(`aiTest.sources.${source.label ?? 'other'}`, { defaultValue: source.label ?? '' })
-        : source.kind === 'catalog'
-          ? t('trace.catalog')
-          : t('aiTest.sources.zones');
+    source.kind === 'document'
+      ? (source.label ?? t('aiTest.sources.document'))
+      : source.kind === 'answer'
+        ? `“${source.label ?? t('aiTest.sources.answer')}”`
+        : source.kind === 'policy'
+          ? t(`aiTest.sources.${source.label ?? 'other'}`, { defaultValue: source.label ?? '' })
+          : source.kind === 'catalog'
+            ? t('trace.catalog')
+            : t('aiTest.sources.zones');
 }
 
 /** The trace itself; the same view for inbox replies and test chat replies. */

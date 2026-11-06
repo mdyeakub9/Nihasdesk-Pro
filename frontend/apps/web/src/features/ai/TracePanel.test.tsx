@@ -94,6 +94,22 @@ describe('Why this answer', () => {
     expect(within(list).queryByText('return policy')).not.toBeInTheDocument();
   });
 
+  it('names the document an answer came from', async () => {
+    chatWithAiAnswer(
+      trace({
+        sources: [
+          { kind: 'document', label: 'Guida.pdf › Ordini' },
+          { kind: 'document', label: null },
+        ],
+      }),
+    );
+    await renderApp('/inbox/c-giulia');
+
+    const list = await history();
+    await userEvent.click(await within(list).findByRole('button', { name: 'Why this answer' }));
+    expect(await within(list).findByText('Guida.pdf › Ordini, a document')).toBeInTheDocument();
+  });
+
   it('says when the details were removed after the retention period', async () => {
     chatWithAiAnswer(trace({ hasDetails: false, tools: [], check: null }));
     await renderApp('/inbox/c-giulia');

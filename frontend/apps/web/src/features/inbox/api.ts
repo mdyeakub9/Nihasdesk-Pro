@@ -290,7 +290,10 @@ export function useResolveNote(id: string) {
 }
 
 /** What the AI assistant knew the reply from (ADR 0023). */
-export type AssistSource = { kind: 'catalog' | 'shipping' | 'policy' | 'answer'; label: string | null };
+export type AssistSource = {
+  kind: 'catalog' | 'shipping' | 'policy' | 'answer' | 'document';
+  label: string | null;
+};
 
 /** A draft for the team: never sent by itself. `reply` is null when it was held back (`blocked`). */
 export type AssistResult = {
