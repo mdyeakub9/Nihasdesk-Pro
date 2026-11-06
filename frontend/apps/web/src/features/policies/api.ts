@@ -197,3 +197,24 @@ export const useMergeNextSection = (sourceId: string) =>
   useReviewMutation(sourceId, (sectionId: string) =>
     apiPost(`${sectionPath(sourceId, sectionId)}/merge-next`),
   );
+
+/** Only sources in use reach customers (Issue #53). */
+export const useSetSourceUsed = (sourceId: string) =>
+  useReviewMutation(sourceId, (used: boolean) =>
+    apiPost(`${sourcesPath}/${encodeURIComponent(sourceId)}/${used ? 'use' : 'stop'}`),
+  );
+
+export type FoundPassage = {
+  sectionId: string;
+  sourceId: string;
+  sourceTitle: string;
+  headingPath: string | null;
+  page: number | null;
+  text: string;
+  similarity: number | null;
+};
+
+export const useTestQuestion = (sourceId: string) =>
+  useMutation({
+    mutationFn: (query: string) => apiPost<FoundPassage[]>(`${sourcesPath}/search`, { query, sourceId }),
+  });

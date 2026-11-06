@@ -41,6 +41,7 @@ const messages: Record<string, string> = {
   'source.not_found': 'sources.errors.notFound',
   'source.no_next_section': 'sources.errors.noNextSection',
   'source.section_too_long': 'sources.errors.sectionTooLong',
+  'source.not_ready': 'sources.errors.notReady',
 };
 
 export function authErrorMessage(error: unknown, t: TFunction): string {

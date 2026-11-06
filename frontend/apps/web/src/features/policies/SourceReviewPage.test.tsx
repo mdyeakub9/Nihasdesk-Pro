@@ -282,4 +282,116 @@ describe('Reviewing a source', () => {
       '/settings/knowledge',
     );
   });
+
+  it('puts a source in use and takes it out again', async () => {
+    let status: KnowledgeSource['status'] = 'review';
+    const api = reviewApi(
+      () => reviewOf({ source: source({ status }), conflicts: [shippingConflict] }),
+      () => [section()],
+      'owner',
+      {
+        routes: {
+          'POST /api/v1/ai/sources/s-1/use': () => {
+            status = 'live';
+            return json(source({ status }));
+          },
+          'POST /api/v1/ai/sources/s-1/stop': () => {
+            status = 'review';
+            return json(source({ status }));
+          },
+        },
+      },
+    );
+    await open();
+
+    expect(await screen.findByText(/1 difference with your settings/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Use for AI' }));
+    const stop = await screen.findByRole('button', { name: 'Stop using' });
+    expect(callsTo(api, '/api/v1/ai/sources/s-1/use')).toHaveLength(1);
+    expect(screen.getByText('The AI answers customers from this source.')).toBeInTheDocument();
+    expect(screen.queryByText(/1 difference with your settings/)).not.toBeInTheDocument();
+
+    await userEvent.click(stop);
+    expect(await screen.findByRole('button', { name: 'Use for AI' })).toBeInTheDocument();
+    expect(callsTo(api, '/api/v1/ai/sources/s-1/stop')).toHaveLength(1);
+  });
+
+  it('tests a question against this source and shows what it finds as plain text', async () => {
+    const api = reviewApi(
+      () => reviewOf(),
+      () => [section()],
+      'admin',
+      {
+        routes: {
+          'POST /api/v1/ai/sources/search': () =>
+            json([
+              {
+                sectionId: 'x-1',
+                sourceId: 's-1',
+                sourceTitle: 'Guida.pdf',
+                headingPath: 'Guida › Ordini',
+                page: 4,
+                text: '<b>No</b>, due ordini restano separati.',
+                similarity: 0.6,
+              },
+            ]),
+        },
+      },
+    );
+    await open();
+
+    await userEvent.type(await screen.findByLabelText('Customer’s question'), '  can i combine two orders ');
+    await userEvent.click(screen.getByRole('button', { name: 'Test' }));
+
+    const found = await screen.findByRole('list', { name: 'Sections found' });
+    expect(within(found).getByText('<b>No</b>, due ordini restano separati.')).toBeInTheDocument();
+    expect(within(found).getByText(/Guida › Ordini/)).toBeInTheDocument();
+    expect(callsTo(api, '/api/v1/ai/sources/search')[0]?.body).toEqual({
+      query: 'can i combine two orders',
+      sourceId: 's-1',
+    });
+  });
+
+  it('says so when a question finds nothing', async () => {
+    reviewApi(
+      () => reviewOf(),
+      () => [section()],
+      'owner',
+      {
+        routes: { 'POST /api/v1/ai/sources/search': () => json([]) },
+      },
+    );
+    await open();
+
+    await userEvent.type(await screen.findByLabelText('Customer’s question'), 'orari');
+    await userEvent.click(screen.getByRole('button', { name: 'Test' }));
+
+    expect(await screen.findByText(/Nothing close enough was found/)).toBeInTheDocument();
+  });
+
+  it.each(['member'] as Role[])('hides using and testing from a %s', async (role) => {
+    reviewApi(
+      () => reviewOf(),
+      () => [section()],
+      role,
+    );
+    await open();
+
+    await sectionsList();
+    expect(screen.queryByRole('button', { name: 'Use for AI' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Customer’s question')).not.toBeInTheDocument();
+  });
+
+  it('offers neither for a source that could not be read', async () => {
+    reviewApi(
+      () => reviewOf({ source: source({ status: 'failed', failureReason: 'scanned' }) }),
+      () => [],
+      'owner',
+    );
+    await open();
+
+    await screen.findByRole('heading', { name: 'Guida.pdf', level: 1 });
+    expect(screen.queryByRole('button', { name: 'Use for AI' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Customer’s question')).not.toBeInTheDocument();
+  });
 });
