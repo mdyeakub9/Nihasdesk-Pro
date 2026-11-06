@@ -22,13 +22,17 @@ internal sealed class SectionIndex(AiDbContext db, IEmbeddingProvider embeddings
 
     public static string Hash(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
-    /// <summary>Full-text search, in the section's language (ADR 0026 §3).</summary>
+    /// <summary>The form pgvector reads.</summary>
+    public static string VectorText(float[] vector) =>
+        "[" + string.Join(',', vector.Select(v => v.ToString("R", CultureInfo.InvariantCulture))) + "]";
+
+    /// <summary>Full-text search, in the section's language, without accents: customers often leave them out (ADR 0026 §3).</summary>
     public Task<int> IndexKeywordsAsync(Guid sourceId, CancellationToken ct) => db.Database.ExecuteSqlAsync(
         $"""
         UPDATE ai.knowledge_sections
         SET search_vector = to_tsvector(
             CASE language WHEN 'it' THEN 'italian'::regconfig WHEN 'en' THEN 'english'::regconfig ELSE 'simple'::regconfig END,
-            coalesce(heading_path, '') || ' ' || text)
+            unaccent(coalesce(heading_path, '') || ' ' || text))
         WHERE source_id = {sourceId}
         """,
         ct);
@@ -58,7 +62,7 @@ internal sealed class SectionIndex(AiDbContext db, IEmbeddingProvider embeddings
             var vectors = await embeddings.EmbedAsync([.. batch.Select(g => EmbeddingText(title, g.First()))], ct);
             for (var i = 0; i < batch.Length; i++)
             {
-                var vector = "[" + string.Join(',', vectors[i].Select(v => v.ToString("R", CultureInfo.InvariantCulture))) + "]";
+                var vector = VectorText(vectors[i]);
                 var same = batch[i].Select(s => s.Id).ToList();
                 await db.Database.ExecuteSqlAsync(
                     $"UPDATE ai.knowledge_sections SET embedding = CAST({vector} AS vector), embedding_model = {model} WHERE id = ANY({same})",
@@ -75,15 +79,7 @@ internal sealed class SectionIndex(AiDbContext db, IEmbeddingProvider embeddings
     {
         var id = section.Id;
         await db.Database.ExecuteSqlAsync($"UPDATE ai.knowledge_sections SET embedding = NULL, embedding_model = NULL WHERE id = {id}", ct);
-        await db.Database.ExecuteSqlAsync(
-            $"""
-            UPDATE ai.knowledge_sections
-            SET search_vector = to_tsvector(
-                CASE language WHEN 'it' THEN 'italian'::regconfig WHEN 'en' THEN 'english'::regconfig ELSE 'simple'::regconfig END,
-                coalesce(heading_path, '') || ' ' || text)
-            WHERE id = {id}
-            """,
-            ct);
+        await IndexKeywordsAsync(source.Id, ct);
         if (!embeddings.IsConfigured)
         {
             return false;

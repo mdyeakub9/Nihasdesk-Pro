@@ -37,7 +37,28 @@ await using var api = new NihasdeskApiFactory(database, settings, useRealAi: !op
 using var owner = api.CreateApiClient();
 (await owner.SignupAndVerifyAsync(api.Emails, "eval-owner@example.com", shop.Name)).EnsureSuccessStatusCode();
 await shop.SeedAsync(owner);
+var guidePath = Path.Combine(evals, "test-shop-guide.txt");
+var document = await TestShop.UploadDocumentAsync(owner, guidePath);
+await api.ReadSourcesAsync();
+await TestShop.UseDocumentAsync(owner, document);
+var shopFacts = $"{shop.Json}\n\nThe shop's document, which the assistant can search:\n{await File.ReadAllTextAsync(guidePath)}";
 var shopPrices = shop.Prices();
+
+// To tune Ai:KnowledgeMinSimilarity (set it to 0 for this): how close the right section and the best wrong one are. No model, no judge, nothing saved.
+if (options.SearchOnly)
+{
+    foreach (var evalCase in cases.Where(c => c.Expect.DocumentPhrase is not null || c.Topic == "unknown"))
+    {
+        var searched = await owner.PostAsync("/api/v1/ai/sources/search", new { query = evalCase.Messages[^1].Text });
+        searched.EnsureSuccessStatusCode();
+        var hits = (await searched.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().ToList();
+        var similarities = string.Join(" ", hits.Select(h => h.TryGetProperty("similarity", out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble().ToString("0.00", CultureInfo.InvariantCulture) : "-"));
+        var rank = evalCase.Expect.DocumentPhrase is { } wanted ? hits.FindIndex(h => h.GetProperty("text").GetString()!.Contains(wanted, StringComparison.OrdinalIgnoreCase)) + 1 : -1;
+        Console.WriteLine($"SEARCH {evalCase.Id} rank={rank} sims={similarities}");
+    }
+
+    return 0;
+}
 
 var llm = api.Services.GetRequiredService<ILlmProvider>();
 var judge = options.DryRun ? null : new Judge(llm, options.JudgeModel);
@@ -87,7 +108,7 @@ for (var i = 0; i < cases.Count; i++)
         ? new Verdict(outcome == "failed" ? "error" : "skipped", false, outcome == "failed" ? "the AI provider failed" : "dry run")
         : await judge.GradeAsync(
             evalCase,
-            shop.Json,
+            shopFacts,
             outcome switch
             {
                 "reply" => $"Replied to the customer: {reply}",
@@ -95,6 +116,16 @@ for (var i = 0; i < cases.Count; i++)
                 _ => $"Its draft was held back by the reply check ({blocked}); the team answers instead.",
             },
             CancellationToken.None);
+
+    // What the search itself finds, whatever the model then does with it.
+    bool? foundInTop4 = null;
+    if (evalCase.Expect.DocumentPhrase is { } phrase)
+    {
+        var searched = await owner.PostAsync("/api/v1/ai/sources/search", new { query = evalCase.Messages[^1].Text });
+        searched.EnsureSuccessStatusCode();
+        foundInTop4 = (await searched.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray()
+            .Any(p => p.GetProperty("text").GetString()!.Contains(phrase, StringComparison.OrdinalIgnoreCase));
+    }
 
     results.Add(new CaseResult(
         evalCase.Id,
@@ -118,8 +149,9 @@ for (var i = 0; i < cases.Count; i++)
         [.. trace.GetProperty("tools").EnumerateArray().Select(c => new ToolCallResult(
             c.GetProperty("name").GetString()!,
             c.GetProperty("arguments").GetString()!,
-            c.GetProperty("result").GetString()!))]));
-    Console.WriteLine($"[{i + 1}/{cases.Count}] {evalCase.Id}: {outcome}{(failed is null ? "" : $" ({failed})")}, {verdict.Grade}{(handoffOk ? "" : ", handoff wrong")}{(madeUp.Count > 0 ? ", MADE-UP PRICE" : "")}{(verdict.MadeUpFact ? ", MADE-UP FACT" : "")}");
+            c.GetProperty("result").GetString()!))],
+        foundInTop4));
+    Console.WriteLine($"[{i + 1}/{cases.Count}] {evalCase.Id}: {outcome}{(failed is null ? "" : $" ({failed})")}, {verdict.Grade}{(handoffOk ? "" : ", handoff wrong")}{(foundInTop4 == false ? ", SEARCH MISSED" : "")}{(madeUp.Count > 0 ? ", MADE-UP PRICE" : "")}{(verdict.MadeUpFact ? ", MADE-UP FACT" : "")}");
 
     // A rejected key or endpoint fails every case: stop instead of saving a run that measures nothing.
     if (i == 2 && results.All(r => r.Outcome == "failed"))
@@ -139,7 +171,7 @@ if (!options.DryRun && results.Any(r => r.Outcome == "failed"))
 
 var run = new RunFile(started, replyModel ?? "?", judge is null ? "none" : options.JudgeModel, instructionVersion, set.Version, Report.Totals(results), results, Judge.RulesVersion);
 var t = run.Totals;
-Console.WriteLine($"Correct {t.Correct}, acceptable {t.Acceptable}, wrong {t.Wrong}, handoff right {t.HandoffCorrect}/{t.Cases}, made-up prices {t.MadeUpPricesReached}, made-up facts {t.MadeUpFacts}, wrong language {t.WrongLanguage}.");
+Console.WriteLine($"Correct {t.Correct}, acceptable {t.Acceptable}, wrong {t.Wrong}, handoff right {t.HandoffCorrect}/{t.Cases}, made-up prices {t.MadeUpPricesReached}, made-up facts {t.MadeUpFacts}, wrong language {t.WrongLanguage}, recall@4 {t.RecallAt4}.");
 
 if (!options.DryRun)
 {
@@ -159,7 +191,7 @@ return t.MadeUpPricesReached > 0 || t.MadeUpFacts > 0 ? 1 : 0;
 static string? Text(JsonElement turn, string name) =>
     turn.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
-internal sealed record Options(string? Set, string? Shop, int? Limit, string JudgeModel, bool DryRun)
+internal sealed record Options(string? Set, string? Shop, int? Limit, string JudgeModel, bool DryRun, bool SearchOnly)
 {
     public static Options Parse(string[] args)
     {
@@ -169,7 +201,8 @@ internal sealed record Options(string? Set, string? Shop, int? Limit, string Jud
             Value("--shop"),
             Value("--limit") is { } limit ? int.Parse(limit, CultureInfo.InvariantCulture) : null,
             Value("--judge-model") ?? "gpt-5",
-            args.Contains("--dry-run"));
+            args.Contains("--dry-run"),
+            args.Contains("--search-only"));
     }
 
     /// <summary>The checkout this runs in: the folder that has <c>docs/evals</c>.</summary>

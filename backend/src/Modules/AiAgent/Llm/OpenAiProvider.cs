@@ -152,6 +152,9 @@ internal sealed class AiOptions
     /// <summary>1536 dimensions, the size of <c>ai.knowledge_sections.embedding</c> (ADR 0026 §2).</summary>
     public string EmbeddingModel { get; set; } = "text-embedding-3-small";
 
+    /// <summary>How close in meaning a section must be to count as an answer; below it the AI hands over. Tuned with the eval set.</summary>
+    public double KnowledgeMinSimilarity { get; set; } = 0.3;
+
     /// <summary>Tool rounds per reply before giving up and handing over (SEC-39).</summary>
     public int MaxToolRounds { get; set; } = 4;
 

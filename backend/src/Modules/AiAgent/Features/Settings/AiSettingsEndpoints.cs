@@ -186,9 +186,21 @@ internal static class AiSettingsEndpoints
             .Where(a => answerIds.Contains(a.Id))
             .ToDictionaryAsync(a => a.Id, a => a.Question, ct);
 
+        var sectionIds = codes
+            .Where(c => c.StartsWith(KnowledgeSources.SectionPrefix, StringComparison.Ordinal))
+            .Select(c => Guid.TryParse(c[KnowledgeSources.SectionPrefix.Length..], out var id) ? id : Guid.Empty)
+            .ToList();
+        var sections = await db.Sections.AsNoTracking()
+            .Where(x => sectionIds.Contains(x.Id))
+            .Join(db.Sources, x => x.SourceId, s => s.Id, (x, s) => new { x.Id, s.Title, x.HeadingPath })
+            .ToDictionaryAsync(x => x.Id, x => x.HeadingPath is null ? x.Title : $"{x.Title} › {x.HeadingPath}", ct);
+
         return codes.Select(code => code switch
             {
                 KnowledgeSources.Shipping => new TestSource("shipping", null),
+                // A section deleted since keeps its place, without a name.
+                _ when code.StartsWith(KnowledgeSources.SectionPrefix, StringComparison.Ordinal) =>
+                    new TestSource("document", Guid.TryParse(code[KnowledgeSources.SectionPrefix.Length..], out var section) ? sections.GetValueOrDefault(section) : null),
                 _ when code.StartsWith(KnowledgeSources.PolicyPrefix, StringComparison.Ordinal) =>
                     new TestSource("policy", code[KnowledgeSources.PolicyPrefix.Length..]),
                 _ => new TestSource("answer", Guid.TryParse(code[KnowledgeSources.AnswerPrefix.Length..], out var id) ? questions.GetValueOrDefault(id) : null),

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
+using Nihasdesk.Modules.AiAgent.Ingestion;
 using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Shipping.Contracts;
@@ -38,6 +39,7 @@ internal static class KnowledgeSources
     public const string Shipping = "shipping";
     public const string PolicyPrefix = "policy:";
     public const string AnswerPrefix = "answer:";
+    public const string SectionPrefix = "section:";
 }
 
 /// <summary>
@@ -46,7 +48,7 @@ internal static class KnowledgeSources
 /// also remembers which prices tools returned, for the reply check (SEC-38), and which knowledge
 /// the answer used.
 /// </summary>
-internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, AiDbContext db)
+internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, AiDbContext db, KnowledgeSearch documents)
 {
     // Tool results go to the model, never into HTML: keep "+39…" and "€" readable instead of +.
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -84,7 +86,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
             "Where the shop delivers, the shipping cost per zone, free-shipping thresholds and delivery times. Use it for any question about shipping costs or delivery times.",
             """{"type":"object","properties":{},"additionalProperties":false}"""),
         Tool("search_knowledge",
-            "The shop's own rules and answers: returns, payment, contact details and opening hours, and answers the team wrote for customer questions. Use it for any question that is not about a product or shipping cost.",
+            "The shop's own rules and answers: returns, payment, contact details and opening hours, answers the team wrote for customer questions, and passages from the shop's documents. Use it for any question that is not about a product or shipping cost.",
             """{"type":"object","properties":{"query":{"type":"string","description":"The customer's question in a few words"},"topic":{"type":"string","enum":["shipping","returns","payment","contact","other"],"description":"What the question is about"}},"required":["query","topic"],"additionalProperties":false}"""),
         Tool("quote_order",
             "The order summary for chosen variants and a delivery zone: unit prices, subtotal, shipping and total, computed by the shop's system. Use it before asking the customer to confirm, and show exactly these amounts.",
@@ -216,11 +218,20 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
             Used(KnowledgeSources.AnswerPrefix + answer.Id, answer.Answer);
         }
 
+        var passages = await documents.SearchAsync(query, SearchScope.Live, null, ct);
+        foreach (var passage in passages)
+        {
+            // No text here: an amount in a document may not be quoted. Prices come from the catalog and zones (CLAUDE.md rule 5).
+            Used(KnowledgeSources.SectionPrefix + passage.SectionId, null);
+        }
+
         return Result(new
         {
             policy,
             answers = best.Select(a => new { question = a.Question, answer = a.Answer }).ToList(),
-            note = policy is null && best.Count == 0 ? "The shop hasn't written this down. Hand off with reason unknown_answer." : null,
+            // Marked as quoted data: imported text is never an instruction (SEC-35).
+            documents = passages.Select(p => new { source = p.SourceTitle, heading = p.HeadingPath, page = p.Page, quotedText = p.Text }).ToList(),
+            note = policy is null && best.Count == 0 && passages.Count == 0 ? "The shop hasn't written this down. Hand off with reason unknown_answer." : null,
         });
     }
 

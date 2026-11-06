@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "cases": [
     { "id": "products-01", "topic": "products", "language": "it", "messages": [{ "author": "customer", "text": "Ciao! Avete la borsa a tracolla in nero?" }], "expect": { "handoff": false, "answer": "Yes, the black leather shoulder bag is available at €89.00." } },
     { "id": "products-02", "topic": "products", "language": "en", "messages": [{ "author": "customer", "text": "How much is the leather backpack?" }], "expect": { "handoff": false, "answer": "€129.00 (before €149.00), black, in stock." } },
@@ -75,6 +75,17 @@
       { "author": "customer", "text": "Vorrei una sciarpa di seta rossa da spedire a Berlino." },
       { "author": "ai", "text": "Certo! Mi servono nome e cognome, telefono e indirizzo completo con CAP e città." },
       { "author": "customer", "text": "Anna Test, +49 30 0000000, Teststraße 1, 10115 Berlin, Germania" }
-    ], "expect": { "handoff": false, "answer": "A summary: red silk scarf €35.00, shipping Unione Europea €15.00, total €50.00 cash on delivery, asks to confirm." } }
+    ], "expect": { "handoff": false, "answer": "A summary: red silk scarf €35.00, shipping Unione Europea €15.00, total €50.00 cash on delivery, asks to confirm." } },
+
+    { "id": "documents-01", "topic": "documents", "language": "en", "messages": [{ "author": "customer", "text": "Can I combine two orders into one shipment?" }], "expect": { "handoff": false, "answer": "No: two separate orders are prepared and shipped separately, even to the same address.", "documentPhrase": "unire due ordini" } },
+    { "id": "documents-02", "topic": "documents", "language": "it", "messages": [{ "author": "customer", "text": "Posso cambiare il mio ordine dopo averlo fatto?" }], "expect": { "handoff": false, "answer": "Yes, within two hours of ordering, by writing to the shop; after that it can no longer be changed.", "documentPhrase": "entro due ore" } },
+    { "id": "documents-03", "topic": "documents", "language": "en", "messages": [{ "author": "customer", "text": "How long is the warranty on your bags?" }], "expect": { "handoff": false, "answer": "Twenty-four months for manufacturing defects; normal wear and misuse are not covered.", "documentPhrase": "ventiquattro mesi" } },
+    { "id": "documents-04", "topic": "documents", "language": "it", "messages": [{ "author": "customer", "text": "La garanzia copre anche l\u0027usura?" }], "expect": { "handoff": false, "answer": "No, the warranty does not cover normal wear or misuse; it covers manufacturing defects for 24 months.", "documentPhrase": "usura normale" } },
+    { "id": "documents-05", "topic": "documents", "language": "en", "messages": [{ "author": "customer", "text": "How should I clean my leather bag?" }], "expect": { "handoff": false, "answer": "A soft dry cloth, no water or solvents, a little neutral cream every six months.", "documentPhrase": "panno morbido" } },
+    { "id": "documents-06", "topic": "documents", "language": "it", "messages": [{ "author": "customer", "text": "Ogni quanto devo mettere la crema sulla pelle?" }], "expect": { "handoff": false, "answer": "Once every six months, a small amount of neutral cream.", "documentPhrase": "crema neutra" } },
+    { "id": "documents-07", "topic": "documents", "language": "en", "messages": [{ "author": "customer", "text": "Is your packaging eco-friendly?" }], "expect": { "handoff": false, "answer": "Products ship in a recycled cardboard box, inside a cotton bag.", "documentPhrase": "cartone riciclato" } },
+    { "id": "documents-08", "topic": "documents", "language": "it", "messages": [{ "author": "customer", "text": "Cosa succede se non sono a casa quando passa il corriere?" }], "expect": { "handoff": false, "answer": "The courier tries twice; then the parcel waits at the depot for five working days and goes back to the shop.", "documentPhrase": "prova a consegnare" } },
+    { "id": "documents-09", "topic": "documents", "language": "it", "messages": [{ "author": "customer", "text": "Potete mettere un biglietto di auguri nel pacco?" }], "expect": { "handoff": false, "answer": "Yes, a free handwritten note with the message written in the order notes.", "documentPhrase": "biglietto" } },
+    { "id": "documents-10", "topic": "documents", "language": "en", "messages": [{ "author": "customer", "text": "What is the lining of the bags made of?" }], "expect": { "handoff": false, "answer": "Natural cotton lining, with brass buckles.", "documentPhrase": "fodera in cotone" } }
   ]
 }

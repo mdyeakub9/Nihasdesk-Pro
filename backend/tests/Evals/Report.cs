@@ -28,12 +28,13 @@ internal sealed record CaseResult(
     int Tokens,
     int DurationMs,
     bool WrongLanguage = false,
-    IReadOnlyList<ToolCallResult>? Calls = null);
+    IReadOnlyList<ToolCallResult>? Calls = null,
+    bool? FoundInTop4 = null);
 
 /// <summary>What a tool was asked and returned (trimmed), to see why a case went wrong. Made-up data only.</summary>
 internal sealed record ToolCallResult(string Name, string Arguments, string Result);
 
-/// <summary>RecallAt4 stays "n/a" until search returns ranked sections (ADR 0026 §3).</summary>
+/// <summary>RecallAt4: of the cases answered by a document, how many had the right section in the top 4 (ADR 0026 §3).</summary>
 internal sealed record RunTotals(
     int Cases,
     int Correct,
@@ -75,8 +76,20 @@ internal static class Report
         cases.Count(c => c.Outcome == "failed"),
         cases.Count == 0 ? 0 : (int)cases.Average(c => c.Tokens),
         cases.Count == 0 ? 0 : Math.Round(cases.Average(c => c.DurationMs) / 1000.0, 1),
-        "n/a",
+        Recall(cases),
         cases.Count(c => c.WrongLanguage));
+
+    private static string Recall(IReadOnlyList<CaseResult> cases)
+    {
+        var measured = cases.Where(c => c.FoundInTop4 is not null).ToList();
+        if (measured.Count == 0)
+        {
+            return "n/a";
+        }
+
+        var found = measured.Count(c => c.FoundInTop4 == true);
+        return string.Create(CultureInfo.InvariantCulture, $"{found} / {measured.Count} ({found * 100 / measured.Count}%)");
+    }
 
     /// <summary>The newest earlier run in <paramref name="runsDirectory"/>, to compare with.</summary>
     public static RunFile? Previous(string runsDirectory, string? except)
@@ -120,7 +133,7 @@ internal static class Report
         Row(md, "Judge errors", t.JudgeErrors, p?.JudgeErrors, null);
         md.AppendLine(CultureInfo.InvariantCulture, $"| Average tokens per turn | {t.AverageTokens} | {p?.AverageTokens.ToString(CultureInfo.InvariantCulture) ?? "–"} | {Delta(t.AverageTokens, p?.AverageTokens)} |");
         md.AppendLine(CultureInfo.InvariantCulture, $"| Average seconds per turn | {t.AverageSeconds:0.0} | {(p is null ? "–" : p.AverageSeconds.ToString("0.0", CultureInfo.InvariantCulture))} | |");
-        md.AppendLine(CultureInfo.InvariantCulture, $"| Retrieval recall@4 | {t.RecallAt4} | {p?.RecallAt4 ?? "–"} | comes with hybrid search (Issue #53) |");
+        md.AppendLine(CultureInfo.InvariantCulture, $"| Retrieval recall@4 | {t.RecallAt4} | {p?.RecallAt4 ?? "–"} | target 85% |");
         md.AppendLine();
 
         md.AppendLine("## By topic");
@@ -163,7 +176,7 @@ internal static class Report
 
         md.AppendLine("## To look at");
         md.AppendLine();
-        var look = run.Cases.Where(c => c.Grade is "wrong" or "error" || !c.HandoffOk || c.MadeUpFact || c.WrongLanguage || c.MadeUpPrices.Count > 0).ToList();
+        var look = run.Cases.Where(c => c.Grade is "wrong" or "error" || !c.HandoffOk || c.MadeUpFact || c.WrongLanguage || c.FoundInTop4 == false || c.MadeUpPrices.Count > 0).ToList();
         if (look.Count == 0)
         {
             md.AppendLine("Nothing: every case was correct or acceptable with the right handoff.");
@@ -192,6 +205,11 @@ internal static class Report
             if (c.WrongLanguage)
             {
                 flags.Add("wrong language");
+            }
+
+            if (c.FoundInTop4 == false)
+            {
+                flags.Add("search missed the section");
             }
 
             if (c.MadeUpPrices.Count > 0)

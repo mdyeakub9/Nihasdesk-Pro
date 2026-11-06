@@ -563,7 +563,7 @@ internal sealed partial class WebPageParser : IDocumentParser
     private static partial Regex CookieNotice();
 }
 
-/// <summary>Plain text: paragraphs between blank lines.</summary>
+/// <summary>Plain text: paragraphs between blank lines. A question line with its answer right under it is a FAQ pair.</summary>
 internal sealed class TextParser : IDocumentParser
 {
     public ParsedDocument Parse(byte[] content, string origin)
@@ -571,7 +571,9 @@ internal sealed class TextParser : IDocumentParser
         var builder = new SectionBuilder();
         foreach (var paragraph in Encoding.UTF8.GetString(content).ReplaceLineEndings("\n").Split("\n\n", StringSplitOptions.RemoveEmptyEntries))
         {
-            builder.Add(SectionKind.Text, paragraph);
+            var clean = paragraph.Trim();
+            var lineEnd = clean.IndexOf('\n', StringComparison.Ordinal);
+            builder.Add(lineEnd > 0 && clean[lineEnd - 1] == '?' ? SectionKind.Faq : SectionKind.Text, clean);
         }
 
         return new ParsedDocument(null, null, builder.Sections, null, []);

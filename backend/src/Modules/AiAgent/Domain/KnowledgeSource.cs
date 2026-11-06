@@ -103,6 +103,29 @@ internal sealed class KnowledgeSource : TenantEntity
         ReadLockUntil = null;
     }
 
+    /// <summary>The owner lets the AI use it. Replaced by draft and publish in Issue #55.</summary>
+    public bool Use()
+    {
+        if (Status is not (SourceStatus.Review or SourceStatus.Live))
+        {
+            return false;
+        }
+
+        Status = SourceStatus.Live;
+        return true;
+    }
+
+    public bool StopUsing()
+    {
+        if (Status is not (SourceStatus.Review or SourceStatus.Live))
+        {
+            return false;
+        }
+
+        Status = SourceStatus.Review;
+        return true;
+    }
+
     /// <summary>A failure that may pass (network, provider): tried again from then on.</summary>
     public void RetryAt(DateTimeOffset at) => ReadLockUntil = at;
 

@@ -9,9 +9,10 @@ internal sealed record EvalMessage(string Author, string Text);
 /// <summary>
 /// What a good outcome is. <see cref="Handoff"/>: the AI must hand over to the team (unknown,
 /// complaint, wants a person) instead of answering. <see cref="Answer"/>: what a correct reply says,
-/// for the judge; not an exact text.
+/// for the judge; not an exact text. <see cref="DocumentPhrase"/>: the words the right section of the
+/// shop's document contains, to measure search (recall@4).
 /// </summary>
-internal sealed record EvalExpectation(bool Handoff, string? Answer);
+internal sealed record EvalExpectation(bool Handoff, string? Answer, string? DocumentPhrase = null);
 
 internal sealed record EvalCase(string Id, string Topic, string Language, IReadOnlyList<EvalMessage> Messages, EvalExpectation Expect);
 
