@@ -3,7 +3,7 @@ import { ArrowDownToLine, RefreshCw, Smile, Sparkles, Scissors } from 'lucide-re
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { authErrorMessage, isErrorCode } from '../auth/errors';
-import { useAssist, type AssistSource, type AssistStyle } from './api';
+import { useAssist, useConversationMemory, type AssistSource, type AssistStyle } from './api';
 import { useDraftStore } from './drafts';
 import { useSuggestionStore } from './suggestions';
 import type { Conversation } from './types';
@@ -16,6 +16,7 @@ import type { Conversation } from './types';
 export function AssistantPanel({ conversation }: { conversation: Conversation }) {
   const { t } = useTranslation();
   const assist = useAssist(conversation.id);
+  const memory = useConversationMemory(conversation.id).data;
   const draft = useDraftStore((state) => state.drafts[conversation.id] ?? '');
   const setDraft = useDraftStore((state) => state.setDraft);
   const setInserted = useSuggestionStore((state) => state.setInserted);
@@ -33,6 +34,13 @@ export function AssistantPanel({ conversation }: { conversation: Conversation })
 
   return (
     <div className="flex flex-col gap-3 px-4 py-3 text-[13px]">
+      {memory?.summary && (
+        <section aria-label={t('assistant.memory')}>
+          <h3 className="text-xs font-medium text-muted-foreground">{t('assistant.memory')}</h3>
+          <p className="whitespace-pre-line text-secondary-foreground">{memory.summary}</p>
+        </section>
+      )}
+
       <p className="text-xs text-muted-foreground">{t('assistant.intro')}</p>
 
       {!result && (

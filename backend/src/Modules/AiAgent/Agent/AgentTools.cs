@@ -5,6 +5,7 @@ using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Ingestion;
 using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Commerce.Contracts;
+using Nihasdesk.Modules.Contacts.Contracts;
 using Nihasdesk.Modules.Shipping.Contracts;
 
 namespace Nihasdesk.Modules.AiAgent.Agent;
@@ -48,8 +49,10 @@ internal static class KnowledgeSources
 /// also remembers which prices tools returned, for the reply check (SEC-38), and which knowledge
 /// the answer used.
 /// </summary>
-internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, AiDbContext db, KnowledgeSearch documents)
+internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, IContactOrders contactOrders, IContactProfile profiles, AiDbContext db, KnowledgeSearch documents)
 {
+    public const int ProfileOrders = 3;
+
     // Tool results go to the model, never into HTML: keep "+39…" and "€" readable instead of +.
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -70,6 +73,12 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
     /// from the model (SEC-36). Null in the dashboard's test chat, where no order can be requested.
     /// </summary>
     public Guid? ConversationId { get; set; }
+
+    /// <summary>
+    /// The customer this turn is about, set by the caller from the conversation — never from the
+    /// model (SEC-36). Null in the dashboard's test chat, where there is no customer.
+    /// </summary>
+    public Guid? ContactId { get; set; }
 
     /// <summary>Set when this turn created an order request (for the run record).</summary>
     public int? OrderNumber { get; private set; }
@@ -97,6 +106,9 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
         Tool("handoff_to_human",
             "Give the conversation to the shop's team. Use when you don't know the answer, the customer wants a person, has a special request about an order you can't take, complains or asks for a refund, or you are unsure. Don't tell the customer you are 'handing off'; the team will answer.",
             """{"type":"object","properties":{"reason":{"type":"string","enum":["unknown_answer","customer_asked_for_human","complaint","refund","order","special_request","low_confidence","other"]},"question":{"type":"string","description":"For unknown_answer: the customer's question, short, in their words"},"summary":{"type":"string","description":"One sentence for the team"}},"required":["reason"],"additionalProperties":false}"""),
+        Tool("get_customer_profile",
+            "About the customer you are talking to: first name, language and their last 3 orders and order requests (number, status, date). Use it when they ask about their order or earlier orders. Status: pending = waiting for the shop to confirm, confirmed, rejected.",
+            """{"type":"object","properties":{},"additionalProperties":false}"""),
     ];
 
     /// <summary>The team's AI assistant only reads (ADR 0023): no handoff, no orders, no leads.</summary>
@@ -129,6 +141,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
             "get_product_options" => await ProductOptionsAsync(args, ct),
             "get_shipping_options" => await ShippingOptionsAsync(ct),
             "search_knowledge" => await SearchKnowledgeAsync(args, ct),
+            "get_customer_profile" => await CustomerProfileAsync(ct),
             "quote_order" => await QuoteOrderAsync(args, ct),
             "create_order_request" when !readOnly => await CreateOrderRequestAsync(args, ct),
             "handoff_to_human" when !readOnly => Handoff(args),
@@ -157,6 +170,28 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
                 variants = p.Variants.Select(Variant).ToList(),
             }).ToList(),
             note = products.Count == 0 ? "No matching products. Try once more with translated or fewer words; don't invent any." : null,
+        });
+    }
+
+    /// <summary>No phone, email or address (SEC-37, rule 7); the contact comes from the turn, not the model (SEC-36).</summary>
+    private async Task<ToolOutcome> CustomerProfileAsync(CancellationToken ct)
+    {
+        if (ContactId is not { } contactId || await profiles.GetAsync(contactId, ct) is not { } profile)
+        {
+            return Result(new { profile = (object?)null, note = "There is no customer profile in this chat." });
+        }
+
+        var recent = await contactOrders.RecentAsync(contactId, ProfileOrders, ct);
+        return Result(new
+        {
+            firstName = profile.FirstName,
+            language = profile.Language,
+            orders = recent.Select(o => new
+            {
+                number = o.Number,
+                status = o.Status,
+                date = o.CreatedAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            }).ToList(),
         });
     }
 

@@ -147,7 +147,16 @@ internal sealed class AiOptions
     /// <summary><c>minimal</c> / <c>low</c> / <c>medium</c> / <c>high</c> for reasoning models; empty for others.</summary>
     public string? ReasoningEffort { get; set; } = "low";
 
-    public int HistorySize { get; set; } = 20;
+    /// <summary>The cheap model that writes the running summary (ADR 0026 §4).</summary>
+    public string SummaryModel { get; set; } = "gpt-5-nano";
+
+    public int SummaryMaxOutputTokens { get; set; } = 800;
+
+    /// <summary>The newest messages that go to the model, in estimated tokens (ADR 0026 §4).</summary>
+    public int RecentMessagesTokenBudget { get; set; } = 2000;
+
+    /// <summary>How many messages are read to choose from; older ones are in the summary.</summary>
+    public int MaxHistoryMessages { get; set; } = 200;
 
     /// <summary>1536 dimensions, the size of <c>ai.knowledge_sections.embedding</c> (ADR 0026 §2).</summary>
     public string EmbeddingModel { get; set; } = "text-embedding-3-small";

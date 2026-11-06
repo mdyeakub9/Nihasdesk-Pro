@@ -318,6 +318,16 @@ export function useAssist(id: string) {
   });
 }
 
+/** The running summary of a long conversation (ADR 0026 §4); null until there is one. */
+export type ConversationMemory = { summary: string | null; updatedAt: string | null };
+
+export function useConversationMemory(id: string) {
+  return useQuery({
+    queryKey: [...inboxKeys.detail(id), 'memory'],
+    queryFn: () => apiGet<ConversationMemory>(`${path(id)}/memory`),
+  });
+}
+
 /** Catalog variants to send as product cards (ADR 0024); names and prices come from the server. */
 export function useSendProducts(id: string) {
   const queryClient = useQueryClient();

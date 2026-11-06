@@ -161,6 +161,74 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                     b.ToTable("settings", "ai");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.ConversationMemory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("contact_id");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTimeOffset?>("CoveredUpToAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("covered_up_to_at");
+
+                    b.Property<Guid?>("CoveredUpToMessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("covered_up_to_message_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("summary");
+
+                    b.Property<int>("SummaryAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("summary_attempts");
+
+                    b.Property<DateTimeOffset?>("SummaryDueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("summary_due_at");
+
+                    b.Property<DateTimeOffset?>("SummaryLockUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("summary_lock_until");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_conversation_memory");
+
+                    b.HasIndex("SummaryDueAt")
+                        .HasDatabaseName("ix_conversation_memory_summary_due_at")
+                        .HasFilter("summary_due_at IS NOT NULL");
+
+                    b.HasIndex("TenantId", "ContactId")
+                        .HasDatabaseName("ix_conversation_memory_tenant_id_contact_id");
+
+                    b.HasIndex("TenantId", "ConversationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_conversation_memory_tenant_id_conversation_id");
+
+                    b.ToTable("conversation_memory", "ai");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeGap", b =>
                 {
                     b.Property<Guid>("Id")

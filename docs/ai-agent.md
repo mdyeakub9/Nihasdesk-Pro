@@ -66,6 +66,7 @@ Rules:
 - Context builder with a token budget replaces the fixed message count.
 - Rolling conversation summary (cheap model, background, ≤ 120 words) in `ai.conversation_memory`; never includes team notes.
 - Customer profile through `get_customer_profile`; computed from Contacts and Commerce, never written by the AI in Phase 1.
+- The team reads the summary in the AI assistant tab. Details and limits: ADR 0026 §4.
 
 ## Learning loop
 - Unanswered questions → "Teach the AI" → taught answer becomes a Layer 3 source.

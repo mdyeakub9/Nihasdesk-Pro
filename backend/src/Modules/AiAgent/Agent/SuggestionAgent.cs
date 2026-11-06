@@ -29,6 +29,7 @@ internal sealed record Suggestion(
 /// </summary>
 internal sealed class SuggestionAgent(
     AgentBrain brain,
+    AgentTools tools,
     AiSettingsStore settingsStore,
     IAiConversations conversations,
     IContactDirectory contacts,
@@ -50,7 +51,7 @@ internal sealed class SuggestionAgent(
 
     public async Task<Result<Suggestion>> SuggestAsync(Guid conversationId, string style, string teamLanguage, CancellationToken ct)
     {
-        var conversation = await conversations.HistoryAsync(conversationId, Options.HistorySize, ct);
+        var conversation = await conversations.HistoryAsync(conversationId, Options.MaxHistoryMessages, ct);
         if (conversation is null)
         {
             return NotFound;
@@ -82,7 +83,10 @@ internal sealed class SuggestionAgent(
         var contact = (await contacts.GetAsync([conversation.ContactId], ct)).GetValueOrDefault(conversation.ContactId);
         var shop = await settingsStore.ShopNameAsync(ct);
         var prompt = Prompt.Assistant(shop, settings, FirstName(contact?.Name), contact?.Language, teamLanguage, style);
-        var thought = await brain.ThinkAsync(prompt, conversation.Messages, ct, readOnly: true);
+        tools.ContactId = conversation.ContactId;
+        var memory = await db.Memory.AsNoTracking().SingleOrDefaultAsync(m => m.ConversationId == conversationId, ct);
+        var context = ContextBuilder.Build(conversation.Messages, memory, Options);
+        var thought = await brain.ThinkAsync(prompt, context.Recent, ct, readOnly: true, summary: context.Summary);
 
         db.Runs.Add(AiRun.Finish(
             tenant.TenantId, conversationId, Options.ReplyModel, thought.InputTokens, thought.OutputTokens, thought.Tools,

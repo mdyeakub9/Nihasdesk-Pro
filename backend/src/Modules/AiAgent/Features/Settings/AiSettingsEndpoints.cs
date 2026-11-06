@@ -148,7 +148,7 @@ internal static class AiSettingsEndpoints
                 var now = time.GetUtcNow();
                 var history = request.Messages!.Select(m => new AiHistoryMessage(m.Author!, m.Text!.Trim(), now)).ToList();
                 // The same brain as real conversations, with settings as saved; nothing is stored but the metering.
-                var thought = await brain.ThinkAsync(Prompt.System(shop, settings, null, null), history, ct);
+                var thought = await brain.ThinkAsync(Prompt.System(shop, settings, null, null), ContextBuilder.Recent(history, options.Value.RecentMessagesTokenBudget), ct);
 
                 var run = AiRun.Finish(
                     tenant.TenantId, Guid.Empty, options.Value.ReplyModel, thought.InputTokens, thought.OutputTokens, thought.Tools,

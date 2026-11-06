@@ -4,7 +4,7 @@ namespace Nihasdesk.Modules.Inbox.Contracts;
 public sealed record DueAiReply(Guid TenantId, Guid ConversationId);
 
 /// <summary>One message of the history the AI may see: no internal notes, no team names.</summary>
-public sealed record AiHistoryMessage(string Author, string Text, DateTimeOffset SentAt);
+public sealed record AiHistoryMessage(string Author, string Text, DateTimeOffset SentAt, Guid Id = default);
 
 /// <summary>What the AI needs to answer one conversation, already limited to what it may see (GDPR).</summary>
 public sealed record AiConversation(
@@ -43,4 +43,11 @@ public interface IAiConversations
 
     /// <summary>Hands the conversation to the team, with a note for them saying why.</summary>
     Task HandOffAsync(Guid conversationId, string teamNote, CancellationToken cancellationToken);
+}
+
+/// <summary>Older messages for the running summary (ADR 0026 §4). Needs only the database, so the Workers host can use it.</summary>
+public interface IAiMessageReader
+{
+    /// <summary>The messages the AI may see after the given one, oldest first: no internal notes, no team names.</summary>
+    Task<IReadOnlyList<AiHistoryMessage>> AfterAsync(Guid conversationId, DateTimeOffset? afterSentAt, Guid? afterId, int limit, CancellationToken cancellationToken);
 }

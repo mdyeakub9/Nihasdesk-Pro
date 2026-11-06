@@ -44,7 +44,7 @@ public sealed class FakeAi
             }
 
             var call = new FakeAiCall(
-                request.Messages.First(m => m.Role == LlmRole.System).Content ?? string.Empty,
+                string.Join("\n\n", request.Messages.Where(m => m.Role == LlmRole.System).Select(m => m.Content)),
                 request.Messages.Where(m => m.Role != LlmRole.System).Select(m => (m.Role.ToString().ToLowerInvariant(), m.Content)).ToList(),
                 request.Tools.Select(t => t.Name).ToList());
             fake.Calls.Enqueue(call);

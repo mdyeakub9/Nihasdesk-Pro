@@ -166,6 +166,8 @@ type Options = Parameters<typeof fakeApi>[0] & {
   reply?: (conversation: FakeConversation, text: string) => Response | undefined;
   /** Messages per page before "older"; default 50. */
   pageSize?: number;
+  /** The stored summary of a long conversation (ADR 0026 §4); none by default. */
+  memorySummary?: string;
   /** How the AI assistant answers `POST /assist` (ADR 0023); a fixed suggestion by default. */
   assist?: (conversation: FakeConversation, body: { style?: string; language?: string }) => Response;
 };
@@ -175,6 +177,7 @@ export function fakeInboxApi({
   conversations = seedConversations(),
   reply,
   assist,
+  memorySummary,
   pageSize = 50,
   ...options
 }: Options = {}) {
@@ -237,6 +240,9 @@ export function fakeInboxApi({
     routes[`POST ${base}/typing`] = withConversation(() => new Response(null, { status: 204 }));
     routes[`POST ${base}/assist`] = withConversation((c, body: { style?: string; language?: string }) =>
       assist ? assist(c, body) : json(defaultSuggestion),
+    );
+    routes[`GET ${base}/memory`] = withConversation(() =>
+      json({ summary: memorySummary ?? null, updatedAt: memorySummary ? '2026-11-06T10:00:00Z' : null }),
     );
     routes[`POST ${base}/read`] = withConversation((c) => {
       c.unread = false;

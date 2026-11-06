@@ -35,6 +35,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 
     public DbSet<KnowledgeSection> Sections => Set<KnowledgeSection>();
 
+    public DbSet<ConversationMemory> Memory => Set<ConversationMemory>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -144,6 +146,19 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             section.HasIndex(s => new { s.TenantId, s.SourceId, s.Position });
             // Deleting a source deletes its sections and search data (SEC-45).
             section.HasOne<KnowledgeSource>().WithMany().HasForeignKey(s => s.SourceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ConversationMemory>(memory =>
+        {
+            memory.ToTable("conversation_memory");
+            memory.Property(m => m.Id).ValueGeneratedNever();
+            memory.Property(m => m.Summary).HasMaxLength(ConversationMemory.SummaryMaxLength);
+            // One summary per conversation.
+            memory.HasIndex(m => new { m.TenantId, m.ConversationId }).IsUnique();
+            // Erasure finds a contact's summaries (SEC-45).
+            memory.HasIndex(m => new { m.TenantId, m.ContactId });
+            // The job looks for due summaries every few seconds; almost none are.
+            memory.HasIndex(m => m.SummaryDueAt).HasFilter("summary_due_at IS NOT NULL");
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);

@@ -392,6 +392,22 @@ internal sealed class OrdersHandler(
     }
 }
 
+/// <summary>The AI's read of a customer's earlier orders (ADR 0026 §4): number, status and date only.</summary>
+internal sealed class ContactOrdersService(CommerceDbContext db) : IContactOrders
+{
+    public async Task<IReadOnlyList<ContactOrder>> RecentAsync(Guid contactId, int limit, CancellationToken cancellationToken)
+    {
+        var rows = await db.Orders
+            .AsNoTracking()
+            .Where(o => o.ContactId == contactId)
+            .OrderByDescending(o => o.Number)
+            .Take(limit)
+            .Select(o => new { o.Number, o.Status, o.CreatedAt })
+            .ToListAsync(cancellationToken);
+        return rows.Select(o => new ContactOrder(o.Number, o.Status.ToString().ToLowerInvariant(), o.CreatedAt)).ToList();
+    }
+}
+
 /// <summary>The AI's entry point (PRD 4.9): same validation and prices as the team's, result is a pending request.</summary>
 internal sealed class OrderRequestsService(OrdersHandler orders, OrderPricer pricer, FluentValidation.IValidator<OrderRequest> validator) : IOrderRequests
 {

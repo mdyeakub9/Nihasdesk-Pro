@@ -29,6 +29,7 @@ public sealed class InboxModule : IModule
         services.AddScoped<IInboxIngest, InboxIngest>();
         services.AddScoped<IOutboundMessages, OutboundMessages>();
         services.AddScoped<IAiConversations, AiConversations>();
+        services.AddScoped<IAiMessageReader, AiMessageReader>();
         services.AddScoped<IOrderConversations, OrderConversations>();
         services.AddScoped<IOrderNotifications, OrderNotifications>();
         services.AddScoped<ConversationsHandler>();
@@ -42,6 +43,13 @@ public sealed class InboxModule : IModule
         services.AddScoped<IValidator<SavedReplyRequest>, SavedReplyValidator>();
         services.AddScoped<ProductMessagesHandler>();
         services.AddScoped<IValidator<SendProductsRequest>, SendProductsValidator>();
+    }
+
+    /// <summary>Workers: the AI's summary job reads messages. Replies and SignalR stay in the API.</summary>
+    public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddModuleDbContext<InboxDbContext>(configuration, InboxDbContext.Schema);
+        services.AddScoped<IAiMessageReader, AiMessageReader>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
