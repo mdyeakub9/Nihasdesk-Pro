@@ -48,6 +48,14 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
         }
 
         messages.AddRange(history.Select(m => m.Author == "customer" ? LlmMessage.User(m.Text) : LlmMessage.Assistant(m.Text)));
+
+        // The team's assistant is left out: its summary is in the team's language, not the customer's.
+        var language = readOnly ? null : ReplyLanguage.OfCustomer(history);
+        if (language is not null)
+        {
+            messages.Add(LlmMessage.System(Prompt.ReplyIn(language)));
+        }
+
         var offered = readOnly ? AgentTools.ReadOnlyDefinitions : AgentTools.Definitions;
         var usedTools = new List<string>();
         var calls = new List<ToolTrace>();
@@ -75,6 +83,11 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
             if (response.ToolCalls.Count == 0)
             {
                 var reply = response.Text?.Trim();
+                if (language is not null && ReplyLanguage.HasOtherLanguageSentence(reply, language))
+                {
+                    reply = await InCustomersLanguageAsync(reply!, language, ct);
+                }
+
                 var blocked = Guardrails.Check(reply, tools.AllowedPrices);
                 check = blocked ?? RunTraces.Passed;
                 return blocked is not null ? Done(blocked: blocked) : Done(reply: reply);
@@ -97,6 +110,25 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
 
         check = "too_many_tool_rounds";
         return Done(blocked: check);
+
+        // One try, and the reply check still follows. If it fails, a mixed reply is better than no reply.
+        async Task<string> InCustomersLanguageAsync(string mixed, string target, CancellationToken cancel)
+        {
+            calls.Add(new ToolTrace("fix_reply_language", target, string.Empty));
+            try
+            {
+                var fixedReply = await llm.CompleteAsync(
+                    new LlmRequest(Options.ReplyModel, [LlmMessage.System(Prompt.LanguageFix(target)), LlmMessage.User(mixed)], [], Options.MaxOutputTokens),
+                    cancel);
+                input += fixedReply.Usage.InputTokens;
+                output += fixedReply.Usage.OutputTokens;
+                return string.IsNullOrWhiteSpace(fixedReply.Text) ? mixed : fixedReply.Text.Trim();
+            }
+            catch (LlmException)
+            {
+                return mixed;
+            }
+        }
     }
 }
 

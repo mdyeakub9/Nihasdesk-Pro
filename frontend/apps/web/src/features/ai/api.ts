@@ -160,8 +160,8 @@ export type EvalCaseExport = {
 
 export type FeedbackExport = { notice: string; cases: EvalCaseExport[] };
 
-// Under the inbox's key, so the inbox's live updates refresh the ratings too.
-const repliesKey = (conversationId: string) => ['inbox', 'aiReplies', conversationId] as const;
+// Under the conversation's key, so the inbox's live updates show the buttons on a new AI reply too.
+const repliesKey = (conversationId: string) => ['inbox', 'detail', conversationId, 'aiReplies'] as const;
 const traceKey = (messageId: string) => ['ai', 'trace', messageId] as const;
 
 export function useAiReplies(conversationId: string) {

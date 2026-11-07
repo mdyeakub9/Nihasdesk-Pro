@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { callsTo, json } from '../../test/fake-api';
 import { fakeInboxApi, seedConversations } from '../../test/inbox-api';
 import { renderApp } from '../../test/render-app';
+import { hub } from '../../test/signalr-mock';
 import type { RatedReply, Trace } from './api';
 
 const trace = (over: Partial<Trace> = {}): Trace => ({
@@ -92,6 +93,26 @@ describe('Why this answer', () => {
     await userEvent.click(why);
     expect(why).toHaveAttribute('aria-expanded', 'false');
     expect(within(list).queryByText('return policy')).not.toBeInTheDocument();
+  });
+
+  it('shows the buttons on a new AI reply as soon as the hub says something changed', async () => {
+    const conversations = seedConversations();
+    const giulia = conversations.find((c) => c.id === 'c-giulia');
+    let replies: RatedReply[] = [];
+    fakeInboxApi({
+      conversations,
+      routes: { 'GET /api/v1/ai/conversations/c-giulia/replies': () => json(replies) },
+    });
+    await renderApp('/inbox/c-giulia');
+    const list = await history();
+    await waitFor(() => expect(hub.started).toBe(1));
+    expect(within(list).queryByRole('button', { name: 'Why this answer' })).not.toBeInTheDocument();
+
+    giulia?.messages.push(aiMessage('m-new', 'Sì, la borsa nera c’è!'));
+    replies = [{ messageId: 'm-new', rating: null }];
+    hub.emit('conversationChanged', { conversationId: 'c-giulia' });
+
+    expect(await within(list).findByRole('button', { name: 'Why this answer' })).toBeInTheDocument();
   });
 
   it('names the document an answer came from', async () => {

@@ -37,6 +37,7 @@ internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
             .Where(p => p.Status == ProductStatus.Active)
             .Where(p =>
                 patterns.Any(x => EF.Functions.ILike(p.Title, x))
+                || (p.ProductType != null && patterns.Any(x => EF.Functions.ILike(p.ProductType, x)))
                 || (p.Category != null && patterns.Any(x => EF.Functions.ILike(p.Category, x)))
                 || (p.Vendor != null && patterns.Any(x => EF.Functions.ILike(p.Vendor, x)))
                 || (p.Description != null && patterns.Any(x => EF.Functions.ILike(p.Description, x)))
@@ -82,7 +83,7 @@ internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
         {
             var points = Has(p.Title, stem) ? 4
                 : p.Tags.Any(t => Has(t, stem)) || p.Variants.Any(v => Has(v.Sku, stem) || Has(v.Option1, stem) || Has(v.Option2, stem) || Has(v.Option3, stem)) ? 3
-                : Has(p.Category, stem) || Has(p.Vendor, stem) ? 2
+                : Has(p.ProductType, stem) || Has(p.Category, stem) || Has(p.Vendor, stem) ? 2
                 : Has(p.Description, stem) ? 1
                 : 0;
             words += points > 0 ? 1 : 0;

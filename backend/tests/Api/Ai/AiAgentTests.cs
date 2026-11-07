@@ -46,6 +46,30 @@ public sealed class AiAgentTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task After_a_handoff_later_messages_wait_for_the_team_until_someone_returns_it_to_the_ai()
+    {
+        var (owner, workspace) = await OwnerAsync();
+        var first = Marker();
+        Api.Ai.Respond = c => Mine(c, first) ? FakeAiAnswer.Call("handoff_to_human", """{"reason":"customer_asked_for_human"}""") : FakeAiAnswer.Say("Ciao!");
+        var id = await ReceiveAsync(workspace, $"Vorrei parlare con una persona {first}", from: "v-handoff");
+        await Api.RunAiAsync();
+        Assert.Equal("human", (await ConversationAsync(owner, id)).GetProperty("responder").GetString());
+
+        var later = Marker();
+        await ReceiveAsync(workspace, $"Ci siete? {later}", from: "v-handoff");
+        await Api.RunAiAsync();
+        Assert.DoesNotContain(Api.Ai.Calls, c => Mine(c, later));
+        Assert.Equal("human", (await ConversationAsync(owner, id)).GetProperty("responder").GetString());
+
+        await owner.RefreshCsrfAsync();
+        (await owner.Http.PatchAsJsonAsync($"/api/v1/conversations/{id}", new { responder = "ai" })).EnsureSuccessStatusCode();
+        var returned = Marker();
+        await ReceiveAsync(workspace, $"Grazie {returned}", from: "v-handoff");
+        await Api.RunAiAsync();
+        Assert.Contains(Api.Ai.Calls, c => Mine(c, returned));
+    }
+
+    [Fact]
     public async Task Made_up_prices_and_links_never_reach_the_customer()
     {
         var (owner, workspace) = await OwnerAsync();
