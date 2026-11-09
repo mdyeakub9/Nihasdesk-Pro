@@ -9,6 +9,7 @@ using Nihasdesk.Modules.AiAgent.Domain;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Ingestion;
 using Nihasdesk.Modules.Identity.Contracts;
+using Nihasdesk.Modules.Shipping.Contracts;
 using Nihasdesk.SharedKernel;
 using Npgsql;
 
@@ -32,6 +33,8 @@ internal sealed record SiteResponse(
 internal sealed record SitePagesAdded(int Added, int AlreadyAdded);
 
 internal sealed record SiteUsed(int Used, int NotReady);
+
+internal sealed record SiteDifferences(int Count);
 
 internal sealed class SiteValidator : AbstractValidator<SiteRequest>
 {
@@ -74,6 +77,8 @@ internal static class SiteErrors
 /// </summary>
 internal static class SiteEndpoints
 {
+    private const int MaxSectionsChecked = 5000;
+
     public static void Map(IEndpointRouteBuilder endpoints)
     {
         var sites = endpoints.MapGroup("/api/v1/ai/sites").RequireAuthorization().AddEndpointFilter<RequireTeamMember>();
@@ -93,6 +98,21 @@ internal static class SiteEndpoints
                 ? SiteErrors.NotFound.ToProblem()
                 : Results.Ok(ToResponse(site, await db.Sources.AsNoTracking().Where(s => s.SiteId == id).ToListAsync(ct)));
         });
+
+        // Before "Use all for AI": from the settings as they are now, like a source's review page.
+        sites.MapGet("/{id:guid}/differences", async (Guid id, AiDbContext db, IShippingRates shipping, CancellationToken ct) =>
+            {
+                if (!await db.Sites.AnyAsync(s => s.Id == id, ct))
+                {
+                    return SiteErrors.NotFound.ToProblem();
+                }
+
+                var sourceIds = await db.Sources.AsNoTracking().Where(s => s.SiteId == id).Select(s => s.Id).ToListAsync(ct);
+                var sections = await db.Sections.AsNoTracking().Where(s => sourceIds.Contains(s.SourceId)).Take(MaxSectionsChecked).ToListAsync(ct);
+                var returnDays = await db.Policies.AsNoTracking().Select(p => p.ReturnDays).SingleOrDefaultAsync(ct);
+                return Results.Ok(new SiteDifferences(ConflictCheck.Find(sections, new BusinessFacts(await shipping.ListAsync(ct), returnDays)).Count));
+            })
+            .AddEndpointFilter(manage);
 
         sites.MapPost("/", AddAsync)
             .AddEndpointFilter(manage)

@@ -116,6 +116,71 @@ export const useAddWebPage = () => useSourceMutation((url: string) => apiPost(`$
 export const useDeleteSource = () =>
   useSourceMutation((id: string) => apiDelete(`${sourcesPath}/${encodeURIComponent(id)}`));
 
+/* A whole website from its domain (ADR 0030): a job finds the pages, the owner confirms them. */
+export type SitePage = {
+  url: string;
+  title: string;
+  chosen: boolean;
+  sourceId: string | null;
+  sourceStatus: SourceStatus | null;
+};
+
+export type KnowledgeSite = {
+  id: string;
+  host: string;
+  status: 'finding' | 'ready' | 'failed';
+  failureReason: string | null;
+  pages: SitePage[];
+  createdAt: string;
+};
+
+const sitesKey = ['knowledge', 'sites'] as const;
+const sitesPath = '/api/v1/ai/sites';
+const sitePath = (id: string) => `${sitesPath}/${encodeURIComponent(id)}`;
+
+export function useSites() {
+  return useQuery({
+    queryKey: sitesKey,
+    queryFn: () => apiGet<KnowledgeSite[]>(sitesPath),
+    refetchInterval: (query) =>
+      query.state.data?.some(
+        (site) => site.status === 'finding' || site.pages.some((page) => page.sourceStatus === 'reading'),
+      )
+        ? readingRefreshMs
+        : false,
+  });
+}
+
+function useSiteMutation<TArgs>(mutationFn: (args: TArgs) => Promise<unknown>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sitesKey }),
+        queryClient.invalidateQueries({ queryKey: sourcesKey }),
+      ]),
+  });
+}
+
+export const useAddSite = () =>
+  useSiteMutation((domain: string) => apiPost(sitesPath, { domain, confirmed: true }));
+
+export const useAddSitePages = (id: string) =>
+  useSiteMutation((urls: string[]) => apiPost(`${sitePath(id)}/pages`, { urls }));
+
+export const useUseSite = (id: string) => useSiteMutation(() => apiPost(`${sitePath(id)}/use`));
+
+export const useDeleteSite = () => useSiteMutation((id: string) => apiDelete(sitePath(id)));
+
+/** Differences between the site's read pages and the settings, before they are all used. */
+export const useSiteDifferences = (id: string, enabled: boolean) =>
+  useQuery({
+    queryKey: [...sitesKey, id, 'differences'],
+    queryFn: () => apiGet<{ count: number }>(`${sitePath(id)}/differences`),
+    enabled,
+  });
+
 /* Reviewing a source: what the AI will be able to find, and where it differs from the settings. */
 
 export type ReviewConflict = {
