@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { ChannelIcon } from '../../components/ChannelIcon';
 import { formatAge } from '../../lib/format';
 import { useConversations } from './api';
+import { mediaPreviewKey } from './media';
 import { countByTab, defaultFilters, filterConversations, inboxTabs, type InboxFilters } from './filters';
 import { channels, type ConversationSummary } from './types';
 
@@ -45,6 +46,7 @@ function ConversationRow({
 }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage ?? 'en';
+  const previewKey = mediaPreviewKey(conversation.preview);
 
   return (
     <li>
@@ -74,7 +76,7 @@ function ConversationRow({
           </div>
           <div className="flex items-center gap-2">
             <span className="flex-1 truncate text-[13px] text-secondary-foreground">
-              {conversation.preview}
+              {previewKey ? t(previewKey) : conversation.preview}
             </span>
             {conversation.responder === 'ai' && conversation.status !== 'done' && (
               <Badge tone="info">

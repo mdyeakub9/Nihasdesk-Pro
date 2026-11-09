@@ -31,7 +31,48 @@ type ApiMessage = {
   mentionedUserIds?: string[];
   resolvedAt?: string | null;
   resolvedByUserId?: string | null;
+  attachments?: FakeAttachment[];
 };
+
+/** A message's media as the API sends it (ADR 0031); `url` is set once saved. */
+export type FakeAttachment = {
+  id: string;
+  kind: 'image' | 'audio' | 'video' | 'file' | 'sticker';
+  status: 'pending' | 'saved' | 'failed' | 'too_large';
+  failureCode: string | null;
+  contentType: string | null;
+  sizeBytes: number | null;
+  width: number | null;
+  height: number | null;
+  fileName: string | null;
+  url: string | null;
+  thumbnailUrl: string | null;
+};
+
+/** Media in a given state; saved ones get the endpoint's URLs (thumbnails for photos and stickers). */
+export function attachment(
+  id: string,
+  kind: FakeAttachment['kind'],
+  status: FakeAttachment['status'] = 'saved',
+  extra: Partial<FakeAttachment> = {},
+): FakeAttachment {
+  const saved = status === 'saved';
+  const picture = kind === 'image' || kind === 'sticker';
+  return {
+    id,
+    kind,
+    status,
+    failureCode: status === 'too_large' ? 'too_large' : null,
+    contentType: null,
+    sizeBytes: null,
+    width: null,
+    height: null,
+    fileName: null,
+    url: saved ? `/api/v1/media/${id}` : null,
+    thumbnailUrl: saved && picture ? `/api/v1/media/${id}?variant=thumbnail` : null,
+    ...extra,
+  };
+}
 
 export type FakeConversation = Summary & {
   contact: { phone: string | null; email: string | null; language: string | null };

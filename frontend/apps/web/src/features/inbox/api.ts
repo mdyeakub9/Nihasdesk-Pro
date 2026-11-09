@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ApiError, apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../../lib/api';
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost, apiPut, apiUrl } from '../../lib/api';
 import { useSession } from '../session/useSession';
 import type {
+  Attachment,
   Channel,
   Conversation,
   ConversationPatch,
@@ -62,7 +63,43 @@ type ApiMessage = {
     price: number;
     currency: string;
   } | null;
+  /** Missing in older fakes and replies that have no media. */
+  attachments?: ApiAttachment[];
 };
+
+type ApiAttachment = {
+  id: string;
+  kind: Attachment['kind'];
+  status: Attachment['status'];
+  failureCode: Attachment['failureCode'] | null;
+  contentType: string | null;
+  sizeBytes: number | null;
+  width: number | null;
+  height: number | null;
+  fileName: string | null;
+  url: string | null;
+  thumbnailUrl: string | null;
+};
+
+/** While media is being downloaded, the open conversation reloads this often (ADR 0031 §10). */
+export const pendingMediaRefreshMs = 3_000;
+
+function toAttachment(a: ApiAttachment): Attachment {
+  return {
+    id: a.id,
+    kind: a.kind,
+    status: a.status,
+    failureCode: a.failureCode ?? undefined,
+    contentType: a.contentType ?? undefined,
+    sizeBytes: a.sizeBytes ?? undefined,
+    width: a.width ?? undefined,
+    height: a.height ?? undefined,
+    fileName: a.fileName ?? undefined,
+    // Relative API paths; in production the API is on its own origin (cookies go with <img>/<audio>).
+    url: a.url ? apiUrl(a.url) : undefined,
+    thumbnailUrl: a.thumbnailUrl ? apiUrl(a.thumbnailUrl) : undefined,
+  };
+}
 
 type ConversationPage = { items: ApiConversationSummary[]; nextCursor: string | null };
 type MessagePage = { items: ApiMessage[]; before: string | null };
@@ -113,8 +150,12 @@ function toMessage(m: ApiMessage): Message {
         }
       : {}),
     ...(m.delivery !== 'none' ? { delivery: m.delivery } : {}),
+    ...(m.attachments?.length ? { attachments: m.attachments.map(toAttachment) } : {}),
   };
 }
+
+const hasPendingMedia = (c: { messages: Message[] } | null | undefined) =>
+  !!c?.messages.some((m) => m.attachments?.some((a) => a.status === 'pending'));
 
 async function listConversations(): Promise<Raw<ConversationSummary>[]> {
   const page = await apiGet<ConversationPage>(`/api/v1/conversations?limit=${listLimit}`);
@@ -203,6 +244,9 @@ export function useConversation(id: string) {
       }
       return conversation;
     },
+    // The download job runs in Workers, which has no SignalR, so poll until the media is in.
+    // React Query stops polling while the tab is in the background.
+    refetchInterval: (query) => (hasPendingMedia(query.state.data) ? pendingMediaRefreshMs : false),
     select: (c): Conversation | null =>
       c && {
         ...c,

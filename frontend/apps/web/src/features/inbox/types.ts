@@ -20,6 +20,28 @@ export type ProductCard = {
   price: { amount: number; currency: string };
 };
 
+/** Media a customer sent (PRD 4.4, ADR 0031): kept by Nihasdesk, read through the media endpoint. */
+export type AttachmentKind = 'image' | 'audio' | 'video' | 'file' | 'sticker';
+
+/** Why media could not be saved; the team can ask the customer to send it again. */
+export type AttachmentFailure =
+  'expired' | 'type_not_allowed' | 'too_large' | 'network' | 'source_not_allowed';
+
+export type Attachment = {
+  id: string;
+  kind: AttachmentKind;
+  status: 'pending' | 'saved' | 'failed' | 'too_large';
+  failureCode?: AttachmentFailure | undefined;
+  contentType?: string | undefined;
+  sizeBytes?: number | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  fileName?: string | undefined;
+  /** Set once saved; the API checks the session and the workspace (never a public link). */
+  url?: string | undefined;
+  thumbnailUrl?: string | undefined;
+};
+
 export type Message = {
   id: string;
   author: 'customer' | 'ai' | 'agent';
@@ -40,6 +62,8 @@ export type Message = {
   product?: ProductCard;
   /** Team replies to a channel (ADR 0017): queued, sent, or given up. */
   delivery?: 'pending' | 'sent' | 'failed' | 'delivered' | 'read';
+  /** Photos, voice notes, videos, files and stickers, in the order they were sent. */
+  attachments?: Attachment[];
 };
 
 export type ConversationSummary = {
