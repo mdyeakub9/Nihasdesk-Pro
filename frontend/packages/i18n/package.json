@@ -10,14 +10,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "i18next": "^26.5.11",
-    "i18next-browser-languagedetector": "^8.2.3",
-    "react-i18next": "^17.1.9"
+    "i18next": "^26.7.2",
+    "i18next-browser-languagedetector": "^8.3.0",
+    "react-i18next": "^17.1.13"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
     "react": "^19.3.1",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
