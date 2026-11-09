@@ -1,7 +1,7 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.8 · 2026-11-03 · Owner: Yeakub_
-_Related: `docs/project-brief.md`, ADR 0003, ADR 0026 (AI knowledge and memory)._
+_Status: draft v0.9 · 2026-11-09 · Owner: Yeakub_
+_Related: `docs/project-brief.md`, ADR 0003, ADR 0026 (AI knowledge and memory), ADR 0031 (customer media, images and voice)._
 
 ## 1. Problem
 Owners of small online shops in Italy sell through Instagram, Facebook and WhatsApp. Customers ask the same questions all day and night (price, size, colour, stock, delivery, returns). If nobody answers quickly, the sale is lost. Owners can't be online 24/7, and messages are spread across three apps, so leads get forgotten.
@@ -69,9 +69,19 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 **+ Actions menu**
 - **Send products**: search the catalog, send a card or carousel with in-stock variants.
 - **Create order**: opens an order **modal** with name and phone pre-filled from the chat; the full field set is defined with the Orders module (4.9). An order created by a team member is a confirmed order (a human created it). The AI agent still only creates **order requests** that a human approves (rule 5).
-- **Send image or file**.
+- **Send image or file**: pick from the computer (image, PDF), shown in the chat after delivery.
 - **Saved reply** (same list as `/`).
 - Later: send checkout link, send payment link.
+
+**Photos, voice notes and files in the inbox** — technical design: ADR 0031
+- Media the customer sends is kept by Nihasdesk (the channel's own links expire), so the team always sees it in the conversation:
+  - **photo**: thumbnail, click to open full size;
+  - **voice note**: player with duration, and the **transcription** under it ("🎤 Transcription");
+  - **video and file**: name, size and a download link; the AI does not open them.
+  - stickers and reactions are shown as small images, never sent to the AI.
+- If media can't be saved (too big, unknown type, the link already expired), the message shows "Media could not be loaded" with the reason, and the team can ask the customer to send it again.
+- Limits (Phase 1 defaults): photo up to 10 MB, voice note up to 10 minutes and 25 MB, video and file up to 25 MB. Larger media stays as a link only.
+- Media is deleted with the contact or workspace, and after the conversation retention period (SEC-44, SEC-45).
 
 ### 4.5 Contacts & leads
 - One contact per person; auto-created on first message.
@@ -82,6 +92,7 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 
 ### 4.6 Product catalog (native)
 - Add/edit products manually: name, code/SKU, description, category, price, currency, images, variants (e.g. size, colour) with optional stock quantity, active/inactive.
+- **Product images**: up to 8 per product (JPG, PNG, WebP, up to 10 MB each), drag to reorder, the first is the main image; optional image per variant (e.g. the black one). Images are shown in product cards sent to customers and are used by the AI to recognise products in customers' photos (4.8). CSV import reads the image URL columns (Shopify `Image Src`, `Variant Image`) and downloads the images in the background; failed images are listed per row.
 - **CSV import** with a downloadable template, preview, validation errors per row, and update-by-SKU.
 - Catalog is the only source of prices and stock for the AI.
 
@@ -149,7 +160,23 @@ These values are used by **code**: order totals, shipping cost and delivery esti
 - AI on/off per channel and per conversation; business-hours mode (AI only outside hours, or always).
 - AI disclosure message (EU AI Act), editable text.
 - **Test chat** inside the dashboard, using the draft (4.7), optionally continuing the same test conversation.
-- Understands images (match to catalog when possible) and voice notes (transcribe).
+- Understands images (match to catalog when possible) and voice notes (transcribe), see below.
+
+**Voice notes** — technical design: ADR 0031
+- A voice note is transcribed to text in its language (Italian and English first) within a few seconds; the transcription is shown to the team under the player.
+- The AI answers the transcription like a written message, in the customer's language.
+- Hand off instead of answering when: the voice note is longer than **2 minutes**, the transcription is empty or unclear, or the language is not supported. Reason "voice note" is shown to the team.
+- If the customer wrote text and sent a voice note together, the AI reads both in order.
+
+**Photos** — technical design: ADR 0031
+- The AI looks at the customer's latest photo (with the text sent with it) and first decides what kind of photo it is:
+  - **a product the customer wants** ("do you have this?", a screenshot of a post or another shop): the AI describes it (type, colour, material, details), searches the catalog and compares the best 2–3 products with their images. It then **always asks**, never claims: "Is it this one?" with the product card(s), or says it doesn't have it and suggests similar products. Prices, sizes and stock come only from the catalog tools (rule 5), never from the photo.
+  - **a damaged or wrong product, a complaint:** hand off at once (reason "complaint"), with a short note for the team.
+  - **a payment, order or shipping screenshot:** hand off (reason "payment or order screenshot"); the AI never confirms a payment from a picture.
+  - **unclear or anything else:** ask one short question, or hand off.
+- Text inside a photo (labels, screenshots) is treated as customer data, never as instructions (SEC-35).
+- Only the latest photo of the turn is sent to the AI (max 3 if sent together), scaled down; earlier photos are referred to by their short description.
+- Video and files are never sent to the AI; the AI tells the customer the team will look and hands off.
 
 **Memory (what the AI remembers in a conversation)** — technical design: ADR 0026
 - The AI has no memory of its own; each reply gets a small, chosen context with a fixed size budget: instructions → conversation summary → customer profile → recent messages → found knowledge → tool results.
@@ -247,6 +274,7 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 - Handoff works end to end with notification and return-to-AI timer.
 - An order flows end to end via chat and via form: product → option buttons → details (messy chat input correctly extracted, only missing fields asked) → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
 - No cross-workspace data access possible (critical tests) — for every module with tenant data (Identity, Contacts, Inbox, Channels, AiAgent, Commerce, Shipping), including knowledge sections and their search data.
+- Media: photos, voice notes, video and files sent on Messenger are saved and shown in the inbox; the team can send an image. Voice notes in Italian and English are transcribed; in the eval set (≥ 10 photo and ≥ 10 voice cases) the right product is offered among the first 3 for ≥ 80% of product photos, complaints and payment screenshots always hand off, and 0 prices come from a photo.
 - Knowledge: a PDF, DOCX and web page can be imported, reviewed and published; in the eval set the right section is among the found ones for ≥ 85% of questions, and questions without an answer in the knowledge hand off instead of guessing (0 made-up policies).
 - Customers never get unpublished (draft) knowledge or instructions (test).
 - Usage limits enforced and visible.
