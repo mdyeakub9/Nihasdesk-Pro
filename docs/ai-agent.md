@@ -17,7 +17,7 @@ _Status: draft._
 
 ## Tool registry
 Each tool implements `IAgentTool { Name, Description, Parameters, ExecuteAsync(ctx, input) }`. Tools are enabled per workspace by connected integrations/features.
-- Phase 1: `search_products`, `get_product_options`, `get_shipping_options` (zones and costs, ADR 0020), `search_knowledge` (hybrid search over all Layer 3 sections, ADR 0026), `get_customer_profile` (first name, language, last orders — no contact details), `match_photo_to_products` (customer photo → up to 3 catalog products with match level, no prices; ADR 0031), `quote_order`, `create_lead`, `create_order_request`, `handoff_to_human`
+- Phase 1: `search_products`, `get_product_options`, `get_shipping_options` (zones and costs, ADR 0020), `search_knowledge` (hybrid search over all Layer 3 sections, ADR 0026), `get_customer_profile` (first name, language, last orders — no contact details), `show_products` (attach a carousel of up to 10 product ids returned by tools this turn; ADR 0032), `show_choices` (quick replies from tool values), `match_photo_to_products` (customer photo → up to 3 catalog products with match level, no prices; ADR 0031), `quote_order`, `create_lead`, `create_order_request`, `handoff_to_human`
 - Later: `get_order_status`, `check_availability`, `book_appointment`, custom API tool.
 - There is deliberately **no** `create_order` tool: orders are created only by a human approving an order request (PRD Phase 1, section 4.9).
 
@@ -27,8 +27,15 @@ Tool code validates all inputs and takes `TenantId` from `ToolContext`, never fr
 - Media is downloaded and checked by code (SEC-04, SEC-05), images re-encoded without metadata; the AI never opens video, files or stickers.
 - The reply waits up to 30 s for pending media of the last message, then continues or hands off (`media`).
 - Voice: transcribed (`gpt-4o-mini-transcribe`, configurable), the transcript is the customer's text; > 2 min, empty or unsupported language → handoff `voice_note`.
-- Photo: step 1 "look" returns kind + short description (no people described); code hands off `complaint` and `payment_screenshot`; for `product_request` the model uses `match_photo_to_products` and always asks for confirmation.
+- Photo: step 1 "look" returns kind + short description (no people described); code hands off `complaint` and `payment_screenshot`; for `product_request` the model uses `match_photo_to_products`, then `show_products` with likely matches first and similar ones marked, and continues the conversation ("Sembra uno di questi", never "È questo").
+- Voice: answered with the same tools as text, including carousels; a voice note is not a reason to hand off.
 - Only the latest photo(s) of the turn are sent, scaled down; later turns use the stored description. Text in photos is untrusted (SEC-35). Traces store descriptions, never images (SEC-40).
+
+## Rich messages and taps (ADR 0032)
+- Products are shown with `show_products` (ids only); the channel sender fills name, price and image from the catalog at send time. Guardrails reject replies listing more than 2 products in text.
+- Button payloads are opaque tokens checked by code (tenant, conversation, expiry, product active).
+- Taps (`buy`, `options`, `pick_variant`, `similar`, `confirm_summary`, `edit_summary`, `more_products`, `talk_to_human`) are answered by code first, with no model call; the AI handles free text.
+- The order summary always comes with **Conferma / Modifica** buttons built by code from `quote_order`.
 
 ## Safety
 - Never invent prices, stock, times, order status.
