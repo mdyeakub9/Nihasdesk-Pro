@@ -89,6 +89,11 @@ internal sealed partial class MessengerSender(
         {
             var token = services.GetRequiredService<PageTokens>().Unprotect(connection.ProtectedToken);
             var graph = services.GetRequiredService<MetaGraphClient>();
+            if (message.Rich is { } rich)
+            {
+                return await SendRichAsync(graph, connection.ExternalAccountId, token, psid, message, rich, ct);
+            }
+
             var messageId = message.Image is { } image
                 ? await graph.SendImageAsync(connection.ExternalAccountId, token, psid, image.Content, image.ContentType, ct)
                 : await graph.SendTextAsync(connection.ExternalAccountId, token, psid, message.Text, ct);
@@ -104,6 +109,48 @@ internal sealed partial class MessengerSender(
             return DeliveryOutcome.Retryable(ex.GetType().Name);
         }
     }
+
+    /// <summary>
+    /// ADR 0032 §2: the rich message; if Meta refuses it, once more without images; if it still refuses,
+    /// the numbered text list. A carousel's intro goes first as its own text, only on the first attempt.
+    /// </summary>
+    private async Task<DeliveryOutcome> SendRichAsync(
+        MetaGraphClient graph, string pageId, string token, string psid, OutboundMessage message, OutboundRich rich, CancellationToken ct)
+    {
+        if (rich is { Kind: RichKind.Carousel, Text: { } intro } && message.Attempts == 0)
+        {
+            await graph.SendTextAsync(pageId, token, psid, intro, ct);
+        }
+
+        try
+        {
+            return DeliveryOutcome.Sent(await graph.SendRichAsync(pageId, token, psid, rich, withImages: true, ct));
+        }
+        catch (MetaGraphException ex) when (ex.IsRejectedContent)
+        {
+            LogRichRejected(logger, message.MessageId, ex.Code, ex.Subcode);
+        }
+
+        if (rich.Cards.Any(c => c.ImageUrl is not null))
+        {
+            try
+            {
+                return DeliveryOutcome.Sent(await graph.SendRichAsync(pageId, token, psid, rich, withImages: false, ct));
+            }
+            catch (MetaGraphException ex) when (ex.IsRejectedContent)
+            {
+                LogRichRejected(logger, message.MessageId, ex.Code, ex.Subcode);
+            }
+        }
+
+        var fallback = rich.Kind == RichKind.Carousel && rich.Text is { } sentIntro && rich.FallbackText.StartsWith(sentIntro, StringComparison.Ordinal)
+            ? rich.FallbackText[sentIntro.Length..].TrimStart('\n')
+            : rich.FallbackText;
+        return DeliveryOutcome.SentAsText(await graph.SendTextAsync(pageId, token, psid, fallback, ct));
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Messenger refused the rich message {Id} (code {Code}, subcode {Subcode})")]
+    private static partial void LogRichRejected(ILogger logger, Guid id, int code, int subcode);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Messenger send for message {Id} failed (code {Code}, subcode {Subcode})")]
     private static partial void LogSendFailed(ILogger logger, Guid id, int code, int subcode);

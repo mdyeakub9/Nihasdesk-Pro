@@ -126,6 +126,10 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("ActionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("action_id");
+
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -169,9 +173,19 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("external_id");
 
+                    b.Property<bool>("FallbackText")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fallback_text");
+
                     b.Property<bool>("Internal")
                         .HasColumnType("boolean")
                         .HasColumnName("internal");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
 
                     b.PrimitiveCollection<List<Guid>>("MentionedUserIds")
                         .IsRequired()
@@ -200,6 +214,19 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("resolved_by_user_id");
 
+                    b.Property<string>("RichContent")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("rich_content");
+
+                    b.Property<string>("RichKind")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("rich_kind");
+
+                    b.Property<string>("RichRendered")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("rich_rendered");
+
                     b.Property<DateTimeOffset>("SentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("sent_at");
@@ -221,6 +248,9 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_messages");
 
+                    b.HasIndex("ActionId")
+                        .HasDatabaseName("ix_messages_action_id");
+
                     b.HasIndex("ConversationId")
                         .HasDatabaseName("ix_messages_pinned")
                         .HasFilter("pinned_at IS NOT NULL");
@@ -238,6 +268,94 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasFilter("external_id IS NOT NULL");
 
                     b.ToTable("messages", "inbox");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.MessageAction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("action");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("label");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("message_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(22)
+                        .HasColumnType("character(22)")
+                        .HasColumnName("token")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<string>("Value")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("value");
+
+                    b.Property<Guid?>("VariantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("variant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_message_actions");
+
+                    b.HasIndex("ConversationId")
+                        .HasDatabaseName("ix_message_actions_conversation_id");
+
+                    b.HasIndex("MessageId", "Position")
+                        .IsUnique()
+                        .HasDatabaseName("ix_message_actions_message_id_position");
+
+                    b.HasIndex("TenantId", "Token")
+                        .IsUnique()
+                        .HasDatabaseName("ix_message_actions_tenant_id_token");
+
+                    b.ToTable("message_actions", "inbox");
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.MessageAttachment", b =>
@@ -447,6 +565,12 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
 
             modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.Message", b =>
                 {
+                    b.HasOne("Nihasdesk.Modules.Inbox.Domain.MessageAction", null)
+                        .WithMany()
+                        .HasForeignKey("ActionId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_messages_message_actions_action_id");
+
                     b.HasOne("Nihasdesk.Modules.Inbox.Domain.Conversation", null)
                         .WithMany()
                         .HasForeignKey("ConversationId")
@@ -489,6 +613,23 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         });
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.MessageAction", b =>
+                {
+                    b.HasOne("Nihasdesk.Modules.Inbox.Domain.Conversation", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_message_actions_conversations_conversation_id");
+
+                    b.HasOne("Nihasdesk.Modules.Inbox.Domain.Message", null)
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_message_actions_messages_message_id");
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.Inbox.Domain.MessageAttachment", b =>

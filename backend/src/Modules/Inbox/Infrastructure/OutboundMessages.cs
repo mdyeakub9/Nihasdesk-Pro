@@ -10,6 +10,7 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure;
 internal sealed class OutboundMessages(
     InboxDbContext db,
     IFileStore files,
+    RichRenderer renderer,
     ITenantContext tenant,
     InboxNotifier notifier,
     TimeProvider time) : IOutboundMessages
@@ -58,21 +59,29 @@ internal sealed class OutboundMessages(
         {
             message.DeliveryFailed("outside_window", retryAt: null);
         }
-        else if (await ImageOfAsync(message, cancellationToken) is not { } image)
+        else if (await renderer.RenderAsync(message, conversation, now, cancellationToken) is var rendered
+            && (rendered is not null ? new PhotoToSend(null) : await ImageOfAsync(message, cancellationToken)) is not { } image)
         {
             // The photo was removed (retention or erasure) before it could be sent.
             message.DeliveryFailed("media_missing", retryAt: null);
         }
         else
         {
+            // A carousel whose products are all gone goes as its text ("no longer available").
+            var rich = rendered is null or { Kind: RichKind.Carousel, Cards.Count: 0 } ? null : ToOutbound(rendered);
+            var text = rendered is not null && rich is null ? rendered.FallbackText : message.Text;
             var outcome = await send(
                 new OutboundMessage(
-                    message.Id, conversation.Id, conversation.Channel, connectionId, conversation.ContactId, message.Text, message.DeliveryAttempts, image.Image),
+                    message.Id, conversation.Id, conversation.Channel, connectionId, conversation.ContactId, text, message.DeliveryAttempts, image.Image, rich),
                 cancellationToken);
 
             if (outcome.ExternalId is { } externalId)
             {
                 message.Delivered(externalId);
+                if (rendered is not null && (outcome.FallbackText || rich is null))
+                {
+                    message.Rendered(RichContentJson.Serialize(rendered), fallbackText: true);
+                }
             }
             else
             {
@@ -125,6 +134,16 @@ internal sealed class OutboundMessages(
             return null;
         }
     }
+
+    private static OutboundRich ToOutbound(RenderedRich rendered) =>
+        new(
+            rendered.Kind,
+            rendered.Text,
+            rendered.Cards.Select(c => new OutboundCard(c.Title, c.Subtitle, c.ImageUrl, c.Buttons.Select(ToOutbound).ToList())).ToList(),
+            rendered.Buttons.Select(ToOutbound).ToList(),
+            rendered.FallbackText);
+
+    private static OutboundButton ToOutbound(RenderedButton button) => new(button.Label, button.Payload);
 
     private sealed record PhotoToSend(OutboundImage? Image);
 

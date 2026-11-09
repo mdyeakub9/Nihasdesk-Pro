@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
+using Nihasdesk.Modules.Inbox.Contracts;
 
 namespace Nihasdesk.Modules.Channels.Infrastructure.Meta;
 
@@ -23,6 +24,9 @@ internal sealed class MetaGraphException(HttpStatusCode status, int code, int su
     /// <summary>Rate limits, Meta outages and transient errors; everything else won't get better by retrying.</summary>
     public bool IsTransient =>
         Status == HttpStatusCode.TooManyRequests || (int)Status >= 500 || Code is 1 or 2 or 4 or 17 or 32 or 613;
+
+    /// <summary>Meta refused the message itself (invalid parameter, e.g. an image it can't fetch): a simpler form may still go.</summary>
+    public bool IsRejectedContent => Code == 100;
 }
 
 /// <summary>
@@ -93,11 +97,12 @@ internal sealed class MetaGraphClient(HttpClient http, IOptions<MetaOptions> opt
             .ToList();
     }
 
-    /// <summary>Lets the app receive the Page's message webhooks.</summary>
+    /// <summary>Lets the app receive the Page's message and button-tap webhooks.</summary>
     public async Task SubscribeAsync(string pageId, string pageToken, CancellationToken ct)
     {
         using var request = Authorized(HttpMethod.Post, $"{Segment(pageId)}/subscribed_apps", pageToken);
-        request.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["subscribed_fields"] = "messages" });
+        // Taps on buttons arrive as postbacks (ADR 0032 §3); quick replies come with "messages".
+        request.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["subscribed_fields"] = "messages,messaging_postbacks" });
         await SendAsync<JsonElement>(request, ct);
     }
 
@@ -125,6 +130,65 @@ internal sealed class MetaGraphClient(HttpClient http, IOptions<MetaOptions> opt
         var sent = await SendAsync<SendResult>(request, ct);
         return sent.MessageId ?? throw new MetaGraphException(HttpStatusCode.OK, 0, 0);
     }
+
+    /// <summary>
+    /// Sends a rich message inside the 24-hour window (ADR 0032 §2): a carousel as a generic template,
+    /// buttons as a button template, quick replies under a text. <paramref name="withImages"/> false
+    /// leaves card images out (the retry when Meta can't fetch one). Returns Meta's message ID.
+    /// </summary>
+    public async Task<string> SendRichAsync(string pageId, string pageToken, string psid, OutboundRich rich, bool withImages, CancellationToken ct)
+    {
+        object message = rich.Kind switch
+        {
+            RichKind.Carousel => new
+            {
+                attachment = new
+                {
+                    type = "template",
+                    payload = new
+                    {
+                        template_type = "generic",
+                        elements = rich.Cards.Select(card => new GenericElement(
+                            card.Title,
+                            card.Subtitle,
+                            withImages ? card.ImageUrl : null,
+                            card.Buttons.Count == 0 ? null : card.Buttons.Select(Postback).ToList())).ToList(),
+                    },
+                },
+            },
+            RichKind.Buttons => new
+            {
+                attachment = new
+                {
+                    type = "template",
+                    payload = new { template_type = "button", text = rich.Text, buttons = rich.Buttons.Select(Postback).ToList() },
+                },
+            },
+            RichKind.QuickReplies => new
+            {
+                text = rich.Text,
+                quick_replies = rich.Buttons.Select(b => new { content_type = "text", title = b.Label, payload = b.Payload }).ToList(),
+            },
+            _ => throw new ArgumentException($"Unknown rich kind '{rich.Kind}'.", nameof(rich)),
+        };
+
+        using var request = Authorized(HttpMethod.Post, $"{Segment(pageId)}/messages", pageToken);
+        request.Content = JsonContent.Create(
+            new { recipient = new { id = psid }, messaging_type = "RESPONSE", message },
+            options: SkipNulls);
+        var sent = await SendAsync<SendResult>(request, ct);
+        return sent.MessageId ?? throw new MetaGraphException(HttpStatusCode.OK, 0, 0);
+    }
+
+    private static object Postback(OutboundButton button) => new { type = "postback", title = button.Label, payload = button.Payload };
+
+    private static readonly JsonSerializerOptions SkipNulls = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
+    private sealed record GenericElement(
+        [property: JsonPropertyName("title")] string Title,
+        [property: JsonPropertyName("subtitle")] string? Subtitle,
+        [property: JsonPropertyName("image_url")] string? ImageUrl,
+        [property: JsonPropertyName("buttons")] List<object>? Buttons);
 
     /// <summary>
     /// Sends a photo inside the 24-hour window (ADR 0031 §6). The file goes up with the message, so no

@@ -328,7 +328,21 @@ internal sealed class ConversationsHandler(
             m.ResolvedAt,
             m.ResolvedByUserId,
             m.Product is { } p ? new ProductCardResponse(p.ProductId, p.VariantId, p.Title, p.Variant, p.Sku, p.Price, p.Currency) : null,
-            attachments);
+            attachments,
+            InboxValues.Text(m.Kind),
+            m.RichKind,
+            m.RichRendered is { } rendered ? ToResponse(RichContentJson.Rendered(rendered)) : null,
+            m.FallbackText);
+
+    private static RichResponse ToResponse(RenderedRich r) =>
+        new(
+            r.Kind,
+            r.Text,
+            r.Cards.Select(c => new RichCardResponse(
+                c.ProductId, c.VariantId, c.Title, c.Subtitle, c.Price, c.Currency, c.ImageUrl, c.MatchLabel, c.Buttons.Select(ToResponse).ToList())).ToList(),
+            r.Buttons.Select(ToResponse).ToList());
+
+    private static RichButtonResponse ToResponse(RenderedButton b) => new(b.Label, b.Action);
 
     private sealed class ConversationRow
     {

@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Identity.Contracts;
+using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.Modules.Inbox.Domain;
 using Nihasdesk.Modules.Inbox.Features.Conversations;
 using Nihasdesk.Modules.Inbox.Infrastructure;
@@ -11,9 +13,10 @@ using Nihasdesk.SharedKernel;
 namespace Nihasdesk.Modules.Inbox.Features.Products;
 
 /// <summary>
-/// "Send products" from the + menu (PRD 4.4, ADR 0024): one message per product, built from the
-/// catalog (rule 5). Sent like a team reply: takes the conversation over, respects the 24-hour
-/// window, delivered by the channel's sender as text.
+/// "Send products" from the + menu (PRD 4.4, ADR 0032 §7): up to 10 products as one carousel with
+/// the standard buttons. The message holds product ids only; the channel sender reads names and prices
+/// from the catalog when it sends (rule 5). Sent like a team reply: takes the conversation over and
+/// respects the 24-hour window.
 /// </summary>
 internal sealed class ProductMessagesHandler(
     InboxDbContext db,
@@ -23,6 +26,8 @@ internal sealed class ProductMessagesHandler(
     InboxNotifier notifier,
     TimeProvider time)
 {
+    private static readonly string[] CardButtons = [RichAction.Buy, RichAction.Options, RichAction.Similar];
+
     public async Task<Result<IReadOnlyList<MessageResponse>>> SendAsync(Guid conversationId, SendProductsRequest request, CancellationToken ct)
     {
         var conversation = await db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, ct);
@@ -38,68 +43,54 @@ internal sealed class ProductMessagesHandler(
         }
 
         // Check everything before storing anything: all products go, or none.
-        var snapshots = new List<ProductSnapshot>();
+        var cards = new List<ProductCard>();
+        var lines = new StringBuilder();
         foreach (var item in request.Items!)
         {
             var product = await catalog.GetAsync(item.ProductId, ct);
-            var variant = product?.Variants.SingleOrDefault(v => v.Id == item.VariantId);
-            if (product is null || variant is null)
+            if (product is null)
             {
                 return ProductMessageErrors.ProductNotFound;
             }
 
-            if (!variant.Available)
+            var variant = item.VariantId is { } variantId ? product.Variants.SingleOrDefault(v => v.Id == variantId) : null;
+            if (item.VariantId is not null && variant is null)
+            {
+                return ProductMessageErrors.ProductNotFound;
+            }
+
+            if (variant is { Available: false } || (variant is null && !product.Variants.Any(v => v.Available)))
             {
                 return ProductMessageErrors.NotAvailable;
             }
 
-            snapshots.Add(new ProductSnapshot
-            {
-                ProductId = product.Id,
-                VariantId = variant.Id,
-                Title = product.Title,
-                Variant = string.Join(" / ", variant.OptionValues.Where(v => !string.IsNullOrWhiteSpace(v))),
-                Sku = variant.Sku,
-                Price = variant.Price,
-                Currency = variant.Currency,
-            });
+            cards.Add(new ProductCard(product.Id, variant?.Id, null, CardButtons));
+            lines.Append(CultureInfo.InvariantCulture, $"{cards.Count}. ").Append(CardText(product, variant)).Append('\n');
         }
 
         var me = await team.CurrentAsync(ct) ?? throw new InvalidOperationException("Inbox endpoints require a team member.");
-        var messages = new List<Message>();
-        var sentAt = now;
-        foreach (var snapshot in snapshots)
+        // The text is what the team's list and the AI's history read; the customer gets the carousel.
+        var message = Message.FromTeam(tenant.TenantId, conversation.Id, me.UserId, me.DisplayName, lines.ToString(), isInternal: false, now);
+        message.AttachRich(RichKind.Carousel, RichContentJson.Serialize(new RichContent(Carousel: new ProductCarousel(null, cards))));
+        db.Messages.Add(message);
+        conversation.RepliedByTeam(message);
+        if (conversation.ChannelConnectionId is not null)
         {
-            var message = Message.FromTeamProduct(tenant.TenantId, conversation.Id, me.UserId, me.DisplayName, CardText(snapshot), snapshot, sentAt);
-            db.Messages.Add(message);
-            conversation.RepliedByTeam(message);
-            if (conversation.ChannelConnectionId is not null)
-            {
-                message.QueueDelivery(sentAt);
-            }
-
-            messages.Add(message);
-            // Keeps the order of the cards, also for the channel.
-            sentAt = sentAt.AddMilliseconds(1);
+            message.QueueDelivery(now);
         }
 
         await db.SaveChangesAsync(ct);
         await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, ct);
-        return Result.Success<IReadOnlyList<MessageResponse>>(messages.Select(ConversationsHandler.ToResponse).ToList());
+        return Result.Success<IReadOnlyList<MessageResponse>>([ConversationsHandler.ToResponse(message)]);
     }
 
-    /// <summary>What the channel shows (ADR 0024: a text card until product images exist).</summary>
-    internal static string CardText(ProductSnapshot p)
+    /// <summary>"🛍️ Borsa nera — Nero · €89.00".</summary>
+    internal static string CardText(CatalogProduct product, CatalogVariant? variant)
     {
-        var title = string.IsNullOrEmpty(p.Variant) ? p.Title : $"{p.Title} — {p.Variant}";
-        var price = Price(p.Price, p.Currency);
-        return p.Sku is null ? $"🛍️ {title}\n{price}" : $"🛍️ {title}\n{price} · SKU {p.Sku}";
-    }
-
-    /// <summary>8900 EUR → "€89.00"; other currencies "89.00 USD".</summary>
-    internal static string Price(long cents, string currency)
-    {
-        var amount = (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
-        return currency == "EUR" ? $"€{amount}" : $"{amount} {currency}";
+        var options = variant is null ? string.Empty : string.Join(" / ", variant.OptionValues.Where(v => !string.IsNullOrWhiteSpace(v)));
+        var title = options.Length == 0 ? product.Title : $"{product.Title} — {options}";
+        var price = variant?.Price ?? product.Variants.Where(v => v.Available).Min(v => v.Price);
+        var currency = variant?.Currency ?? product.Variants.First(v => v.Available).Currency;
+        return $"🛍️ {title} · {RichRenderer.Money(price, currency)}";
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Contacts.Contracts;
 using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.Modules.Inbox.Domain;
@@ -11,6 +12,7 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure;
 internal sealed class InboxIngest(
     InboxDbContext db,
     IContactDirectory contacts,
+    ICatalog catalog,
     ITenantContext tenant,
     InboxNotifier notifier,
     TimeProvider time) : IInboxIngest
@@ -38,9 +40,13 @@ internal sealed class InboxIngest(
         var now = time.GetUtcNow();
         var media = message.Attachments ?? [];
         var kinds = media.Select(a => KindOf(a.Kind)).ToList();
-        var stored = kinds.Count == 0
-            ? Message.FromCustomer(tenant.TenantId, conversation.Id, message.Text, message.ExternalMessageId, sentAt)
-            : Message.FromCustomerWithMedia(tenant.TenantId, conversation.Id, message.Text, kinds[0], message.ExternalMessageId, sentAt);
+        var tap = kinds.Count == 0 ? await TapAsync(message.ActionPayload, conversation.Id, now, cancellationToken) : null;
+        var stored = tap is not null
+            ? Message.FromCustomerTap(tenant.TenantId, conversation.Id, tap.Value.Text, tap.Value.Action.Id, message.ExternalMessageId, sentAt)
+            : kinds.Count == 0
+                ? Message.FromCustomer(tenant.TenantId, conversation.Id, TextOf(message), message.ExternalMessageId, sentAt)
+                : Message.FromCustomerWithMedia(tenant.TenantId, conversation.Id, message.Text, kinds[0], message.ExternalMessageId, sentAt);
+        tap?.Action.MarkUsed(now);
         db.Messages.Add(stored);
         // Saved with the message, so a repeated webhook can't add them twice (it stops at the check above).
         for (var i = 0; i < media.Count; i++)
@@ -73,6 +79,39 @@ internal sealed class InboxIngest(
         await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, cancellationToken);
         return new InboundResult(conversation.Id, stored.Id, Duplicate: false);
     }
+
+    /// <summary>
+    /// A tap on one of our buttons (ADR 0032 §3): the token must belong to this workspace (RLS and the
+    /// query filter) and to the sender's conversation, must not be expired, and its product must still be
+    /// active. Anything else is null and the customer's words are stored as plain text (SEC-36).
+    /// </summary>
+    private async Task<(MessageAction Action, string Text)?> TapAsync(string? payload, Guid conversationId, DateTimeOffset now, CancellationToken ct)
+    {
+        var action = await MessageActionLookup.FindAsync(db, payload, conversationId, ct);
+        if (action is null || action.IsExpired(now))
+        {
+            return null;
+        }
+
+        string? productTitle = null;
+        if (action.ProductId is { } productId)
+        {
+            if (await catalog.GetAsync(productId, ct) is not { } product)
+            {
+                return null;
+            }
+
+            productTitle = product.Title;
+        }
+
+        // "Lo voglio — Borsa Milano": what the customer tapped, with the product it was for.
+        var text = productTitle is null ? action.Label : $"{action.Label} — {productTitle}";
+        return (action, text.Length <= Message.TextMaxLength ? text : text[..Message.TextMaxLength]);
+    }
+
+    /// <summary>A tap we can't use still reads as what the customer saw (the button's title).</summary>
+    private static string TextOf(InboundMessage message) =>
+        string.IsNullOrWhiteSpace(message.Text) && message.ActionPayload is not null ? "👆" : message.Text;
 
     private static AttachmentKind KindOf(string kind) => kind switch
     {

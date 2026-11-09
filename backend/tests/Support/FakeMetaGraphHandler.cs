@@ -25,6 +25,9 @@ public sealed class FakeMetaGraphHandler : HttpMessageHandler
     /// <summary>When set, the Send API answers with this status and Graph error code.</summary>
     public (HttpStatusCode Status, int Code)? SendFailure { get; set; }
 
+    /// <summary>How many of the next rich messages (templates, quick replies) Meta refuses as invalid.</summary>
+    public int RejectRichSends { get; set; }
+
     public IReadOnlyList<GraphCall> Sends => Calls.Where(c => c.Method == HttpMethod.Post && c.Path.EndsWith("/messages", StringComparison.Ordinal)).ToList();
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -59,6 +62,13 @@ public sealed class FakeMetaGraphHandler : HttpMessageHandler
             if (SendFailure is { } failure)
             {
                 return Json(new { error = new { code = failure.Code, error_subcode = 0, message = "fake" } }, failure.Status);
+            }
+
+            // Meta refusing a template or quick replies as invalid (code 100), e.g. an image it can't fetch.
+            if (RejectRichSends > 0 && (body.Contains("\"template\"", StringComparison.Ordinal) || body.Contains("quick_replies", StringComparison.Ordinal)))
+            {
+                RejectRichSends--;
+                return Json(new { error = new { code = 100, error_subcode = 2018047, message = "fake" } }, HttpStatusCode.BadRequest);
             }
 
             using var sent = JsonDocument.Parse(body);
