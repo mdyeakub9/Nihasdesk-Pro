@@ -42,6 +42,14 @@ const messages: Record<string, string> = {
   'source.no_next_section': 'sources.errors.noNextSection',
   'source.section_too_long': 'sources.errors.sectionTooLong',
   'source.not_ready': 'sources.errors.notReady',
+  'site.invalid_domain': 'sources.sites.errors.invalid',
+  'site.blocked': 'sources.sites.errors.blocked',
+  'site.unreachable': 'sources.sites.errors.unreachable',
+  'site.duplicate': 'sources.sites.errors.duplicate',
+  'site.limit_reached': 'sources.sites.errors.limit',
+  'site.not_ready': 'sources.sites.errors.notReady',
+  'site.unknown_page': 'sources.sites.errors.unknownPage',
+  'site.not_found': 'sources.sites.errors.notFound',
 };
 
 export function authErrorMessage(error: unknown, t: TFunction): string {

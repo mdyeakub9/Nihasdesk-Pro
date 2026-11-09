@@ -52,7 +52,7 @@ function sourcesApi(sources: () => KnowledgeSource[], role: Role = 'owner', extr
 const list = () => screen.findByRole('list', { name: 'Sources' });
 
 describe('Settings → Shop knowledge → Documents and web pages', () => {
-  it('shows status, sections and warnings, and says the AI does not use them yet', async () => {
+  it('shows status, sections and warnings, and says how a source gets used', async () => {
     sourcesApi(() => [
       source({ warnings: ['pages_without_text:3,4', 'no_embeddings'] }),
       source({
@@ -74,7 +74,7 @@ describe('Settings → Shop knowledge → Documents and web pages', () => {
     expect(within(sources).getByText(/only be found by exact words/)).toBeInTheDocument();
     expect(within(sources).getByText('Web page · 1 section')).toBeInTheDocument();
     expect(within(sources).getByText('https://shop.example/spedizioni')).toBeInTheDocument();
-    expect(screen.getByText(/The AI doesn’t use them yet/)).toBeInTheDocument();
+    expect(screen.getByText(/after you open it and choose “Use for AI”/)).toBeInTheDocument();
   });
 
   it('explains each failure in plain words', async () => {

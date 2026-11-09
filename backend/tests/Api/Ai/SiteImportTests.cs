@@ -146,6 +146,7 @@ public sealed class SiteImportTests(AuthFixture fixture)
         Assert.Equal(2, again.GetProperty("alreadyAdded").GetInt32());
 
         await Api.ReadSourcesAsync();
+        Assert.True((await owner.Http.GetFromJsonAsync<JsonElement>($"{Path}/{id}/differences")).GetProperty("count").GetInt32() >= 0);
         var used = await (await owner.PostAsync($"{Path}/{id}/use")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, used.GetProperty("used").GetInt32());
         var pages = (await owner.Http.GetFromJsonAsync<JsonElement>($"{Path}/{id}")).GetProperty("pages").EnumerateArray();
@@ -174,6 +175,7 @@ public sealed class SiteImportTests(AuthFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.Http.GetAsync($"{Path}/{id}")).StatusCode);
         Assert.Equal(0, (await stranger.Http.GetFromJsonAsync<JsonElement>(Path)).GetArrayLength());
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync($"{Path}/{id}/use")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.Http.GetAsync($"{Path}/{id}/differences")).StatusCode);
     }
 
     [Theory]
