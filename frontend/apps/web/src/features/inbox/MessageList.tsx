@@ -6,6 +6,7 @@ import { formatDay, formatPrice, formatTime, isSameDay } from '../../lib/format'
 import { useAiReplies, type RatedReply } from '../ai/api';
 import { AiReplyTools } from '../ai/TracePanel';
 import { useOlderMessages } from './api';
+import { MessageMedia } from './MessageMedia';
 import type { Conversation, Message, ProductCard } from './types';
 
 function ProductMessage({ product }: { product: ProductCard }) {
@@ -52,8 +53,10 @@ function MessageItem({
     return (
       <li className="flex items-start gap-3">
         <Avatar name={contactName} />
-        <div className="max-w-100 rounded-lg bg-subtle px-3 py-2">
-          <p className="text-sm">{message.text}</p>
+        <div className="flex max-w-100 flex-col gap-1 rounded-lg bg-subtle px-3 py-2">
+          {message.attachments && <MessageMedia attachments={message.attachments} />}
+          {/* A media-only message has no text (ADR 0031); old rows still read "[attachment]". */}
+          {message.text && <p className="text-sm">{message.text}</p>}
           <time dateTime={message.sentAt} className="text-xs text-muted-foreground">
             {time}
           </time>

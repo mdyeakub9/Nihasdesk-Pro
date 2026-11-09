@@ -128,6 +128,43 @@
     "teamOnly": "Lo vede solo il tuo team",
     "productCard": "Prodotto: {{name}}"
   },
+  "media": {
+    "kind": {
+      "image": "Foto",
+      "audio": "Messaggio vocale",
+      "video": "Video",
+      "file": "File",
+      "sticker": "Sticker"
+    },
+    "loading": {
+      "image": "Caricamento foto…",
+      "audio": "Caricamento messaggio vocale…",
+      "video": "Caricamento video…",
+      "file": "Caricamento file…",
+      "sticker": "Caricamento sticker…"
+    },
+    "failed": "Impossibile caricare il contenuto",
+    "failure": {
+      "expired": "Il link è scaduto prima che potessimo salvarlo. Chiedi al cliente di inviarlo di nuovo.",
+      "type_not_allowed": "Questo tipo di file non è supportato. Chiedi al cliente di inviare una foto, un vocale, un video o un PDF.",
+      "too_large": "Supera il limite di dimensione. Chiedi al cliente di inviare un file più piccolo.",
+      "network": "Non siamo riusciti a scaricarlo dopo diversi tentativi. Chiedi al cliente di inviarlo di nuovo.",
+      "source_not_allowed": "Non proveniva dai server del canale, quindi non l'abbiamo aperto.",
+      "unknown": "Chiedi al cliente di inviarlo di nuovo."
+    },
+    "openPhoto": "Apri la foto a dimensione intera",
+    "viewer": "Foto",
+    "close": "Chiudi",
+    "download": "Scarica {{name}}",
+    "preview": {
+      "image": "📷 Foto",
+      "audio": "🎤 Messaggio vocale",
+      "video": "🎬 Video",
+      "file": "📎 File",
+      "sticker": "Sticker",
+      "attachment": "📎 Allegato"
+    }
+  },
   "composer": {
     "reply": "Rispondi",
     "replyPlaceholder": "Scrivi una risposta…",
