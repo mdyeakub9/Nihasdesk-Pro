@@ -1,26 +1,34 @@
 import { Button, cn } from '@nihasdesk/ui';
-import { ClipboardList, MessageSquareText, Paperclip, Plus, ShoppingBag } from 'lucide-react';
+import { ClipboardList, ImageUp, MessageSquareText, Plus, ShoppingBag } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type Action = 'products' | 'order' | 'savedReply';
+export type Action = 'products' | 'order' | 'savedReply' | 'photo';
 
 /**
- * The composer's + menu (PRD 4.4): Send products, Create order, Saved reply; Send image or file
- * comes later (shown disabled). Arrow keys move, Enter picks, Esc closes.
+ * The composer's + menu (PRD 4.4): Send products, Create order, Saved reply, Send photo. An action
+ * can be switched off with a reason, e.g. a photo after the 24-hour window. Arrow keys move, Enter
+ * picks, Esc closes.
  */
-export function ActionsMenu({ onPick }: { onPick: (action: Action) => void }) {
+export function ActionsMenu({
+  onPick,
+  unavailable = {},
+}: {
+  onPick: (action: Action) => void;
+  /** Actions that can't be used now, with the reason shown instead. */
+  unavailable?: Partial<Record<Action, string>>;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const items = useRef<(HTMLButtonElement | null)[]>([]);
   const button = useRef<HTMLButtonElement>(null);
 
-  const entries: { action: Action | null; label: string; icon: typeof Plus }[] = [
+  const entries: { action: Action; label: string; icon: typeof Plus }[] = [
     { action: 'products', label: t('actions.sendProducts'), icon: ShoppingBag },
     { action: 'order', label: t('actions.createOrder'), icon: ClipboardList },
     { action: 'savedReply', label: t('actions.savedReply'), icon: MessageSquareText },
-    { action: null, label: t('actions.sendFile'), icon: Paperclip },
+    { action: 'photo', label: t('actions.sendPhoto'), icon: ImageUp },
   ];
 
   useEffect(() => {
@@ -68,31 +76,33 @@ export function ActionsMenu({ onPick }: { onPick: (action: Action) => void }) {
           onKeyDown={onKeyDown}
           className="absolute bottom-full left-0 z-20 mb-1 flex w-56 flex-col rounded-md border bg-surface py-1 shadow-md"
         >
-          {entries.map(({ action, label, icon: Icon }, index) => (
-            <button
-              key={label}
-              ref={(element) => {
-                items.current[index] = element;
-              }}
-              type="button"
-              role="menuitem"
-              disabled={!action}
-              title={action ? undefined : t('comingSoon.short')}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none',
-                !action && 'cursor-not-allowed text-muted-foreground hover:bg-transparent',
-              )}
-              onClick={() => {
-                if (!action) return;
-                setOpen(false);
-                onPick(action);
-              }}
-            >
-              <Icon className="size-4" aria-hidden="true" />
-              <span className="flex-1">{label}</span>
-              {!action && <span className="text-xs">{t('comingSoon.short')}</span>}
-            </button>
-          ))}
+          {entries.map(({ action, label, icon: Icon }, index) => {
+            const reason = unavailable[action];
+            return (
+              <button
+                key={action}
+                ref={(element) => {
+                  items.current[index] = element;
+                }}
+                type="button"
+                role="menuitem"
+                disabled={!!reason}
+                title={reason}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-subtle focus-visible:bg-subtle focus-visible:outline-none',
+                  reason && 'cursor-not-allowed text-muted-foreground hover:bg-transparent',
+                )}
+                onClick={() => {
+                  if (reason) return;
+                  setOpen(false);
+                  onPick(action);
+                }}
+              >
+                <Icon className="size-4" aria-hidden="true" />
+                <span className="flex-1">{label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

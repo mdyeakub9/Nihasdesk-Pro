@@ -38,7 +38,7 @@ type ApiMessage = {
 export type FakeAttachment = {
   id: string;
   kind: 'image' | 'audio' | 'video' | 'file' | 'sticker';
-  status: 'pending' | 'saved' | 'failed' | 'too_large';
+  status: 'pending' | 'saved' | 'failed' | 'too_large' | 'deleted';
   failureCode: string | null;
   contentType: string | null;
   sizeBytes: number | null;
@@ -205,6 +205,8 @@ type Options = Parameters<typeof fakeApi>[0] & {
   conversations?: FakeConversation[];
   /** How the server answers a team reply; queued for delivery by default. */
   reply?: (conversation: FakeConversation, text: string) => Response | undefined;
+  /** How the server answers `POST /images`; a sent photo by default. */
+  image?: (conversation: FakeConversation, form: FormData) => Response | undefined;
   /** Messages per page before "older"; default 50. */
   pageSize?: number;
   /** The stored summary of a long conversation (ADR 0026 §4); none by default. */
@@ -217,6 +219,7 @@ type Options = Parameters<typeof fakeApi>[0] & {
 export function fakeInboxApi({
   conversations = seedConversations(),
   reply,
+  image,
   assist,
   memorySummary,
   pageSize = 50,
@@ -322,6 +325,18 @@ export function fakeInboxApi({
         m.resolvedByUserId = null;
       });
     }
+    // A photo from the + menu: the server re-encodes it; here it is a saved JPEG at once.
+    routes[`POST ${base}/images`] = withConversation((c, form: FormData) => {
+      const custom = image?.(c, form);
+      if (custom) return custom;
+      c.responder = 'human';
+      c.preview = '[image]';
+      const message = addTeamMessage(c, '', false);
+      message.attachments = [
+        attachment(`a-sent-${message.id}`, 'image', 'saved', { contentType: 'image/jpeg' }),
+      ];
+      return json(message, 201);
+    });
     routes[`POST ${base}/messages`] = withConversation((c, body: { text: string }) => {
       const custom = reply?.(c, body.text);
       if (custom) return custom;

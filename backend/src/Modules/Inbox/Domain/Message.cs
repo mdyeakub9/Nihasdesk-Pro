@@ -114,6 +114,15 @@ internal sealed class Message : TenantEntity
         return message;
     }
 
+    /// <summary>A photo the team sends from the + menu (ADR 0031 §6): no text, the list shows <c>[image]</c>.</summary>
+    public static Message FromTeamImage(Guid tenantId, Guid conversationId, Guid userId, string authorName, DateTimeOffset sentAt) =>
+        new(tenantId, conversationId, MessageAuthor.Agent, string.Empty, sentAt)
+        {
+            AuthorUserId = userId,
+            AuthorName = authorName.Length <= AuthorNameMaxLength ? authorName : authorName[..AuthorNameMaxLength],
+            _mediaPreview = $"[{AttachmentText.Of(AttachmentKind.Image)}]",
+        };
+
     /// <summary>Set for product cards sent from the + menu.</summary>
     public ProductSnapshot? Product { get; private set; }
 

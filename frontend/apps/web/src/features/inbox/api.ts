@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ApiError, apiDelete, apiGet, apiPatch, apiPost, apiPut, apiUrl } from '../../lib/api';
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost, apiPostForm, apiPut, apiUrl } from '../../lib/api';
 import { useSession } from '../session/useSession';
 import type {
   Attachment,
@@ -290,6 +290,25 @@ export function useSendMessage(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (text: string) => apiPost(`${path(id)}/messages`, { text }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
+  });
+}
+
+/** Photos the team may send (ADR 0031 §6); the server checks the content again. */
+export const sendablePhotoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+/** The server's photo limit (10 MB); checked here first so nobody waits for an upload that is refused. */
+export const photoMaxBytes = 10 * 1024 * 1024;
+
+/** A photo from the + menu: checked, re-encoded and sent like a team reply (24-hour window only). */
+export function useSendImage(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return apiPostForm(`${path(id)}/images`, form);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: inboxKeys.all }),
   });
 }

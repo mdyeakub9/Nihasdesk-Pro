@@ -30,7 +30,8 @@ export type AttachmentFailure =
 export type Attachment = {
   id: string;
   kind: AttachmentKind;
-  status: 'pending' | 'saved' | 'failed' | 'too_large';
+  /** `deleted`: removed after the retention period (SEC-44). */
+  status: 'pending' | 'saved' | 'failed' | 'too_large' | 'deleted';
   failureCode?: AttachmentFailure | undefined;
   contentType?: string | undefined;
   sizeBytes?: number | undefined;

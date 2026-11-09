@@ -126,6 +126,27 @@ internal sealed class MetaGraphClient(HttpClient http, IOptions<MetaOptions> opt
         return sent.MessageId ?? throw new MetaGraphException(HttpStatusCode.OK, 0, 0);
     }
 
+    /// <summary>
+    /// Sends a photo inside the 24-hour window (ADR 0031 §6). The file goes up with the message, so no
+    /// public link to our storage is needed; returns Meta's message ID.
+    /// </summary>
+    public async Task<string> SendImageAsync(string pageId, string pageToken, string psid, byte[] content, string contentType, CancellationToken ct)
+    {
+        using var request = Authorized(HttpMethod.Post, $"{Segment(pageId)}/messages", pageToken);
+        var file = new ByteArrayContent(content);
+        file.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        request.Content = new MultipartFormDataContent
+        {
+            { new StringContent(JsonSerializer.Serialize(new { id = psid })), "recipient" },
+            { new StringContent("RESPONSE"), "messaging_type" },
+            { new StringContent(JsonSerializer.Serialize(new { attachment = new { type = "image", payload = new { is_reusable = false } } })), "message" },
+            // The name is ours, never the uploader's.
+            { file, "filedata", contentType == "image/webp" ? "photo.webp" : "photo.jpg" },
+        };
+        var sent = await SendAsync<SendResult>(request, ct);
+        return sent.MessageId ?? throw new MetaGraphException(HttpStatusCode.OK, 0, 0);
+    }
+
     private async Task<string> TokenAsync(Dictionary<string, string> form, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "oauth/access_token") { Content = new FormUrlEncodedContent(form) };

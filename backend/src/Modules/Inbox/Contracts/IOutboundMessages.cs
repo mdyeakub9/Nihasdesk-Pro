@@ -8,7 +8,14 @@ public sealed record OutboundMessage(
     Guid ConnectionId,
     Guid ContactId,
     string Text,
-    int Attempts);
+    int Attempts,
+    OutboundImage? Image = null);
+
+/// <summary>
+/// A photo the team sends (ADR 0031 §6): already checked and re-encoded by the Inbox, read from its
+/// storage for this one send. <see cref="OutboundMessage.Text"/> is empty then.
+/// </summary>
+public sealed record OutboundImage(byte[] Content, string ContentType);
 
 /// <summary>A reply that is due, in some workspace. Found across workspaces by a narrow database lookup.</summary>
 public sealed record DueDelivery(Guid TenantId, Guid MessageId);

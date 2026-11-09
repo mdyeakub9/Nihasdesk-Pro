@@ -18,6 +18,9 @@ internal enum AttachmentStatus
     Saved,
     Failed,
     TooLarge,
+
+    /// <summary>Removed after the retention period (SEC-44); the row stays so the chat shows it was there.</summary>
+    Deleted,
 }
 
 /// <summary>Why media can't be shown; codes the dashboard turns into plain words.</summary>
@@ -141,6 +144,37 @@ internal sealed class MessageAttachment : TenantEntity
         StorageKey = key;
         FileName = fileName;
         Finish(AttachmentStatus.Saved, null);
+    }
+
+    /// <summary>A photo the team sends (ADR 0031 §6), already checked and re-encoded. Never given to the AI, so no AI copy.</summary>
+    public static MessageAttachment OutgoingImage(Guid tenantId, Guid messageId, string contentType, long size, int width, int height, string sha256, string key, string thumbnailKey)
+    {
+        var attachment = new MessageAttachment(tenantId, messageId, position: 0, AttachmentKind.Image, sourceUrl: null)
+        {
+            ContentType = contentType,
+            SizeBytes = size,
+            Width = width,
+            Height = height,
+            Sha256 = sha256,
+            StorageKey = key,
+            ThumbnailKey = thumbnailKey,
+        };
+        attachment.Finish(AttachmentStatus.Saved, null);
+        return attachment;
+    }
+
+    /// <summary>Every stored file of this attachment, to delete it from storage.</summary>
+    public IReadOnlyList<string> StoredKeys() =>
+        new[] { StorageKey, ThumbnailKey, AiImageKey }.OfType<string>().ToList();
+
+    /// <summary>After the retention period (SEC-44): the files go, what is left says it was there.</summary>
+    public void Removed()
+    {
+        StorageKey = null;
+        ThumbnailKey = null;
+        AiImageKey = null;
+        FileName = null;
+        Finish(AttachmentStatus.Deleted, null);
     }
 
     public void Failed(string code) => Finish(AttachmentStatus.Failed, code);

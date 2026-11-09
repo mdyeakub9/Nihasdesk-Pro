@@ -152,6 +152,7 @@
       "source_not_allowed": "It didn't come from the channel's own servers, so we didn't open it.",
       "unknown": "Ask the customer to send it again."
     },
+    "deleted": "Removed after the retention period",
     "openPhoto": "Open photo full size",
     "viewer": "Photo",
     "close": "Close",
@@ -172,7 +173,14 @@
     "outsideWindow": "The customer's last message is more than 24 hours old, so the channel doesn't allow a reply now. Add a team note in the side panel, or answer when they write again.",
     "sendAndTakeOver": "Send & take over",
     "shortcuts": "Ctrl+Enter to send · / for saved replies",
-    "typing": "{{names}} is typing…"
+    "typing": "{{names}} is typing…",
+    "photo": {
+      "choose": "Photo to send",
+      "sending": "Sending photo…",
+      "outsideWindow": "Photos can only be sent within 24 hours of the customer's last message.",
+      "typeNotAllowed": "Send a JPEG, PNG, WebP or GIF photo.",
+      "tooLarge": "The photo is larger than 10 MB. Choose a smaller one."
+    }
   },
   "customer": {
     "title": "Customer details",
@@ -826,7 +834,7 @@
     "sendProducts": "Send products",
     "createOrder": "Create order",
     "savedReply": "Saved reply",
-    "sendFile": "Send image or file",
+    "sendPhoto": "Send photo",
     "products": {
       "title": "Send products",
       "search": "Search the catalog",

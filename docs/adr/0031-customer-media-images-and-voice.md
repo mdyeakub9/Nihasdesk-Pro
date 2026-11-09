@@ -81,6 +81,18 @@ Changes to the plan above, the first two decided by the owner:
 - **The file as sent is never kept for images:** only the re-encoded copy, the thumbnail and the AI copy.
 - **AI handoff** looks at every customer message of the turn, not only the last one.
 
+### 11. As built in Issue #84 PR 3 (2026-11-09)
+Decided by the owner:
+- **The team's photo is checked and re-encoded in the API, during the upload**, so it shows at once. It comes from a signed-in team member, not a stranger, and has the same 10 MB and 40 MP limits.
+- **Retention keeps the row:** after `Inbox:Media:RetentionDays` (365, config only, no screen yet) the files go and the attachment becomes `deleted`; the chat says "Removed after the retention period". Counted from the message's time. Needs a legal check before launch.
+
+Also:
+- **Sending:** `POST /api/v1/conversations/{id}/images`. The photo goes to Meta as a file upload with the Send API message, so no public link to our storage is needed. No caption, no PDF. The AI copy isn't made for team photos.
+- **Channels never sees storage keys:** the Inbox reads the photo and hands the bytes to the sender in `OutboundMessage.Image`. A photo removed before it was sent fails with `media_missing`.
+- **Erasure:** `IMediaErasure` (per contact, per workspace) deletes the files and the rows. Nothing calls it until #75.
+- **Retention lookup:** `inbox.expired_media(before, limit)`, `SECURITY DEFINER`, IDs only, like `due_media`. Files are deleted before the row changes, so a failure leaves the row due again instead of a forgotten file.
+- **The + menu** switches "Send photo" off when the newest customer message on screen is more than 24 hours old; the server still decides (SEC-43).
+
 ## Alternatives considered
 - **Image embeddings (CLIP-style) for product matching:** better at large catalogs, but needs an extra model and index. Phase 1 catalogs are small; text search + visual comparison of the top 5 is simpler. Revisit if catalogs grow past a few thousand products.
 - **Sending the photo straight to the reply model with all tools:** fewer calls, but the model would decide alone whether a photo is a complaint. The two-step design lets code hand off reliably.

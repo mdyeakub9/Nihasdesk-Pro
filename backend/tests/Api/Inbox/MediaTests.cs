@@ -22,7 +22,7 @@ public sealed class MediaTestsDatabase : ICollectionFixture<AuthFixture>
 
 /// <summary>Customer media from webhook to dashboard against a fake Meta (Issue #84, ADR 0031, SEC-04/05/06).</summary>
 [Collection(MediaTestsDatabase.Name)]
-public sealed class MediaTests(AuthFixture fixture)
+public sealed partial class MediaTests(AuthFixture fixture)
 {
     private const string Webhook = "/api/v1/webhooks/meta";
 

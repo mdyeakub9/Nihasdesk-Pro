@@ -152,6 +152,7 @@
       "source_not_allowed": "Non proveniva dai server del canale, quindi non l'abbiamo aperto.",
       "unknown": "Chiedi al cliente di inviarlo di nuovo."
     },
+    "deleted": "Eliminato dopo il periodo di conservazione",
     "openPhoto": "Apri la foto a dimensione intera",
     "viewer": "Foto",
     "close": "Chiudi",
@@ -172,7 +173,14 @@
     "outsideWindow": "L'ultimo messaggio del cliente ha più di 24 ore, quindi il canale non permette di rispondere ora. Aggiungi una nota del team nel pannello laterale o rispondi quando scrive di nuovo.",
     "sendAndTakeOver": "Invia e subentra",
     "shortcuts": "Ctrl+Invio per inviare · / per le risposte salvate",
-    "typing": "{{names}} sta scrivendo…"
+    "typing": "{{names}} sta scrivendo…",
+    "photo": {
+      "choose": "Foto da inviare",
+      "sending": "Invio della foto…",
+      "outsideWindow": "Le foto si possono inviare solo entro 24 ore dall'ultimo messaggio del cliente.",
+      "typeNotAllowed": "Invia una foto JPEG, PNG, WebP o GIF.",
+      "tooLarge": "La foto supera i 10 MB. Scegline una più piccola."
+    }
   },
   "customer": {
     "title": "Dettagli cliente",
@@ -826,7 +834,7 @@
     "sendProducts": "Invia prodotti",
     "createOrder": "Crea ordine",
     "savedReply": "Risposta salvata",
-    "sendFile": "Invia immagine o file",
+    "sendPhoto": "Invia foto",
     "products": {
       "title": "Invia prodotti",
       "search": "Cerca nel catalogo",
