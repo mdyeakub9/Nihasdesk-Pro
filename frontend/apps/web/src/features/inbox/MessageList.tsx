@@ -94,6 +94,12 @@ function MessageItem({
   return (
     <li className="flex flex-col items-end gap-1">
       {message.product && <ProductMessage product={message.product} />}
+      {/* A photo the team sent from the + menu (ADR 0031 §6). */}
+      {message.attachments && (
+        <div className="max-w-125 rounded-lg bg-selected p-2">
+          <MessageMedia attachments={message.attachments} />
+        </div>
+      )}
       {!message.product && message.text && (
         <div className="max-w-125 rounded-lg bg-selected px-3 py-2">
           <p className="text-sm">{message.text}</p>

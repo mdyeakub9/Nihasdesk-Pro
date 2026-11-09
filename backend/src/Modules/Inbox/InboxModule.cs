@@ -44,6 +44,7 @@ public sealed class InboxModule : IModule
         services.AddScoped<SavedRepliesHandler>();
         services.AddScoped<IValidator<SavedReplyRequest>, SavedReplyValidator>();
         services.AddScoped<ProductMessagesHandler>();
+        services.AddScoped<SendImageHandler>();
         services.AddScoped<IValidator<SendProductsRequest>, SendProductsValidator>();
         AddMedia(services, configuration);
     }
@@ -55,6 +56,7 @@ public sealed class InboxModule : IModule
         services.AddScoped<IAiMessageReader, AiMessageReader>();
         AddMedia(services, configuration);
         services.AddHostedService(sp => sp.GetRequiredService<MediaDownloadProcessor>());
+        services.AddHostedService(sp => sp.GetRequiredService<MediaRetention>());
     }
 
     /// <summary>In the API too, without running: tests run the job step by step, and the API serves the files.</summary>
@@ -64,12 +66,15 @@ public sealed class InboxModule : IModule
         services.AddFileStore(configuration);
         services.AddScoped<MediaDownloader>();
         services.AddSingleton<MediaDownloadProcessor>();
+        services.AddSingleton<MediaRetention>();
+        services.AddScoped<IMediaErasure, MediaErasure>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         ConversationEndpoints.Map(endpoints);
         MediaEndpoints.Map(endpoints);
+        SendImageEndpoints.Map(endpoints);
         NoteEndpoints.Map(endpoints);
         SavedReplyEndpoints.Map(endpoints);
         ProductMessageEndpoints.Map(endpoints);

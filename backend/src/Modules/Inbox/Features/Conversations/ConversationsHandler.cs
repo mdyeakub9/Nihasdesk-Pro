@@ -295,7 +295,7 @@ internal sealed class ConversationsHandler(
             c.LastMessageAt);
     }
 
-    private static AttachmentResponse ToResponse(MessageAttachment a)
+    internal static AttachmentResponse ToResponse(MessageAttachment a)
     {
         var saved = a.Status == AttachmentStatus.Saved;
         return new AttachmentResponse(
@@ -314,7 +314,7 @@ internal sealed class ConversationsHandler(
 
     internal static MessageResponse ToResponse(Message m) => ToResponse(m, []);
 
-    private static MessageResponse ToResponse(Message m, IReadOnlyList<AttachmentResponse> attachments) =>
+    internal static MessageResponse ToResponse(Message m, IReadOnlyList<AttachmentResponse> attachments) =>
         new(
             m.Id,
             InboxValues.Text(m.Author),

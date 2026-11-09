@@ -30,6 +30,12 @@ internal sealed class InboxMediaOptions
     public long MaxPixels { get; set; } = ImageProcessor.DefaultMaxPixels;
 
     public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// Media files are removed this many days after their message (SEC-44); the row stays as "deleted".
+    /// Phase 1 default, no screen yet; needs a legal check before launch.
+    /// </summary>
+    public int RetentionDays { get; set; } = 365;
 }
 
 /// <summary>

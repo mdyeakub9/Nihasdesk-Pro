@@ -69,7 +69,7 @@ async function openMenu() {
 }
 
 describe('+ menu', () => {
-  it('lists the actions, keeps image/file disabled, and closes with Esc', async () => {
+  it('lists the actions and closes with Esc', async () => {
     fakeInboxApi();
     await renderApp('/inbox/c-giulia');
 
@@ -79,9 +79,9 @@ describe('+ menu', () => {
       'Send products',
       'Create order',
       'Saved reply',
-      'Send image or fileComing soon',
+      'Send photo',
     ]);
-    expect(within(menu).getByRole('menuitem', { name: /Send image or file/ })).toBeDisabled();
+    expect(within(menu).getByRole('menuitem', { name: 'Send photo' })).toBeEnabled();
     expect(items[0]).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     expect(items[1]).toHaveFocus();

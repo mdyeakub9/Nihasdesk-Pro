@@ -1,5 +1,5 @@
 import { Button, cn } from '@nihasdesk/ui';
-import { AlertCircle, Download, FileText, Film, Loader2, X } from 'lucide-react';
+import { AlertCircle, Download, FileText, Film, Loader2, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatSize } from '../../lib/format';
@@ -157,6 +157,16 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
       <p role="status" className="flex items-center gap-2 text-[13px] text-secondary-foreground">
         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         {t(`media.loading.${attachment.kind}`)}
+      </p>
+    );
+  }
+
+  if (attachment.status === 'deleted') {
+    // Retention (SEC-44): the chat still shows something was sent here.
+    return (
+      <p className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-[13px] text-muted-foreground">
+        <Trash2 className="size-4 shrink-0" aria-hidden="true" />
+        {t(`media.kind.${attachment.kind}`)} · {t('media.deleted')}
       </p>
     );
   }

@@ -68,6 +68,10 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         }
     }
 
+    /// <summary>Runs the daily media retention job once; returns how many attachments it removed.</summary>
+    public Task<int> PurgeOldMediaAsync() =>
+        Services.GetRequiredService<MediaRetention>().PurgeOnceAsync(CancellationToken.None);
+
     /// <summary>Uploaded files of this test run; nothing lands in the developer's own folder.</summary>
     public string FilesFolder { get; } = Path.Combine(Path.GetTempPath(), "nihasdesk-tests", Guid.NewGuid().ToString("N"));
 

@@ -88,8 +88,10 @@ internal sealed partial class MessengerSender(
         try
         {
             var token = services.GetRequiredService<PageTokens>().Unprotect(connection.ProtectedToken);
-            var messageId = await services.GetRequiredService<MetaGraphClient>()
-                .SendTextAsync(connection.ExternalAccountId, token, psid, message.Text, ct);
+            var graph = services.GetRequiredService<MetaGraphClient>();
+            var messageId = message.Image is { } image
+                ? await graph.SendImageAsync(connection.ExternalAccountId, token, psid, image.Content, image.ContentType, ct)
+                : await graph.SendTextAsync(connection.ExternalAccountId, token, psid, message.Text, ct);
             return DeliveryOutcome.Sent(messageId);
         }
         catch (MetaGraphException ex)

@@ -30,7 +30,13 @@ public sealed class FakeMetaGraphHandler : HttpMessageHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var path = request.RequestUri!.AbsolutePath;
-        var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
+        var body = request.Content switch
+        {
+            null => string.Empty,
+            // A photo upload: the fields as JSON, the file as its type, size and SHA-256.
+            MultipartFormDataContent form => await MultipartAsJsonAsync(form, cancellationToken),
+            var content => await content.ReadAsStringAsync(cancellationToken),
+        };
         Calls.Enqueue(new GraphCall(request.Method, path, request.Headers.Authorization?.ToString(), body));
 
         if (path.EndsWith("/oauth/access_token", StringComparison.Ordinal))
@@ -61,6 +67,31 @@ public sealed class FakeMetaGraphHandler : HttpMessageHandler
 
         // User Profile API: GET /{psid}?fields=first_name,last_name
         return Json(new { first_name = "Giulia", last_name = "Rossi" });
+    }
+
+    /// <summary>The last photo sent, as Meta received it.</summary>
+    public byte[]? LastUpload { get; private set; }
+
+    private async Task<string> MultipartAsJsonAsync(MultipartFormDataContent form, CancellationToken ct)
+    {
+        var fields = new Dictionary<string, object?>();
+        foreach (var part in form)
+        {
+            var name = part.Headers.ContentDisposition?.Name?.Trim('"') ?? string.Empty;
+            if (part.Headers.ContentDisposition?.FileName is not null)
+            {
+                var bytes = await part.ReadAsByteArrayAsync(ct);
+                LastUpload = bytes;
+                fields[name] = new { contentType = part.Headers.ContentType?.MediaType, length = bytes.Length };
+            }
+            else
+            {
+                var text = await part.ReadAsStringAsync(ct);
+                fields[name] = text.StartsWith('{') ? JsonDocument.Parse(text).RootElement.Clone() : text;
+            }
+        }
+
+        return JsonSerializer.Serialize(fields);
     }
 
     private static HttpResponseMessage Json(object body, HttpStatusCode status = HttpStatusCode.OK) =>
