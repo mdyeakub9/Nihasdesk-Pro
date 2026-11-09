@@ -28,6 +28,8 @@ internal sealed class Message : TenantEntity
     public const int ExternalIdMaxLength = 200;
     public const int DeliveryErrorMaxLength = 100;
 
+    private string? _mediaPreview;
+
     private Message(Guid tenantId, Guid conversationId, MessageAuthor author, string text, DateTimeOffset sentAt)
         : base(tenantId)
     {
@@ -68,6 +70,17 @@ internal sealed class Message : TenantEntity
 
     public static Message FromCustomer(Guid tenantId, Guid conversationId, string text, string? externalId, DateTimeOffset sentAt) =>
         new(tenantId, conversationId, MessageAuthor.Customer, CheckText(text), sentAt) { ExternalId = externalId };
+
+    /// <summary>A customer message with media (ADR 0031): the text may be empty, then the list shows what kind it was.</summary>
+    public static Message FromCustomerWithMedia(Guid tenantId, Guid conversationId, string text, AttachmentKind firstKind, string? externalId, DateTimeOffset sentAt) =>
+        new(tenantId, conversationId, MessageAuthor.Customer, string.IsNullOrWhiteSpace(text) ? string.Empty : CheckText(text), sentAt)
+        {
+            ExternalId = externalId,
+            _mediaPreview = $"[{AttachmentText.Of(firstKind)}]",
+        };
+
+    /// <summary>What the conversation list shows for this message.</summary>
+    public string PreviewText => Text.Length > 0 ? Text : _mediaPreview ?? string.Empty;
 
     /// <summary>
     /// No longer used: pinning was removed (ADR 0021 update). The columns stay until a later

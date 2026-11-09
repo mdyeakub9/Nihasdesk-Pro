@@ -62,7 +62,26 @@ internal sealed record MessageResponse(
     DateTimeOffset? ResolvedAt,
     Guid? ResolvedByUserId,
     // Product cards only (ADR 0024).
-    ProductCardResponse? Product);
+    ProductCardResponse? Product,
+    // Photos, voice notes, video and files (ADR 0031).
+    IReadOnlyList<AttachmentResponse> Attachments);
+
+/// <summary>
+/// Media of a message. <see cref="Url"/> is set once saved. Status: pending, saved, failed or too_large.
+/// FailureCode: expired, type_not_allowed, too_large, network or source_not_allowed.
+/// </summary>
+internal sealed record AttachmentResponse(
+    Guid Id,
+    string Kind,
+    string Status,
+    string? FailureCode,
+    string? ContentType,
+    long? SizeBytes,
+    int? Width,
+    int? Height,
+    string? FileName,
+    string? Url,
+    string? ThumbnailUrl);
 
 /// <summary>A product as it was sent; price in cents.</summary>
 internal sealed record ProductCardResponse(Guid ProductId, Guid VariantId, string Title, string Variant, string? Sku, long Price, string Currency);

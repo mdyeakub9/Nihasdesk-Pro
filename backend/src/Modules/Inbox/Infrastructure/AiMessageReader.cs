@@ -23,6 +23,10 @@ internal sealed class AiMessageReader(InboxDbContext db) : IAiMessageReader
             .Select(m => new { m.Id, m.Author, m.Text, m.SentAt })
             .ToListAsync(cancellationToken);
         var after = rows.FindIndex(m => m.Id == afterId);
-        return rows.Skip(after + 1).Select(m => new AiHistoryMessage(m.Author.ToString().ToLowerInvariant(), m.Text, m.SentAt, m.Id)).ToList();
+        return rows.Skip(after + 1).Select(m => new AiHistoryMessage(
+            m.Author.ToString().ToLowerInvariant(),
+            m.Text.Length > 0 ? m.Text : AiHistoryMessage.MediaOnlyText,
+            m.SentAt,
+            m.Id)).ToList();
     }
 }

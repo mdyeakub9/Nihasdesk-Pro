@@ -62,7 +62,7 @@ internal sealed class AiConversations(
             .OrderByDescending(m => m.SentAt)
             .ThenByDescending(m => m.Id)
             .Take(historySize)
-            .Select(m => new { m.Id, m.Author, m.Text, m.SentAt })
+            .Select(m => new { m.Id, m.Author, m.Text, m.SentAt, HasMedia = db.Attachments.Any(a => a.MessageId == m.Id) })
             .ToListAsync(cancellationToken);
         var aiHasReplied = await db.Messages.AnyAsync(m => m.ConversationId == conversation.Id && m.Author == MessageAuthor.Ai && !m.Internal, cancellationToken);
 
@@ -71,7 +71,12 @@ internal sealed class AiConversations(
             conversation.ContactId,
             conversation.Channel,
             aiHasReplied,
-            history.AsEnumerable().Reverse().Select(m => new AiHistoryMessage(m.Author.ToString().ToLowerInvariant(), m.Text, m.SentAt, m.Id)).ToList());
+            history.AsEnumerable().Reverse().Select(m => new AiHistoryMessage(
+                m.Author.ToString().ToLowerInvariant(),
+                m.Text.Length > 0 ? m.Text : AiHistoryMessage.MediaOnlyText,
+                m.SentAt,
+                m.Id,
+                m.HasMedia)).ToList());
     }
 
     public async Task<bool> ReplyAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken) =>

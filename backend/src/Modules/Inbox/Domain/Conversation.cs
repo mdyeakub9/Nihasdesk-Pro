@@ -180,7 +180,8 @@ internal sealed class Conversation : TenantEntity
         if (message.SentAt >= LastMessageAt)
         {
             LastMessageAt = message.SentAt;
-            Preview = message.Text.Length <= PreviewMaxLength ? message.Text : message.Text[..PreviewMaxLength];
+            var preview = message.PreviewText;
+            Preview = preview.Length <= PreviewMaxLength ? preview : preview[..PreviewMaxLength];
         }
     }
 }

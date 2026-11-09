@@ -28,6 +28,9 @@ internal sealed partial class MessengerWebhookProcessor(
 {
     public static readonly TimeSpan Retention = TimeSpan.FromDays(7);
 
+    /// <summary>Messenger itself allows few; a forged or broken payload can't queue more downloads than this.</summary>
+    private const int MaxAttachments = 10;
+
     private static readonly TimeSpan[] Backoff =
         [TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30)];
 
@@ -143,7 +146,7 @@ internal sealed partial class MessengerWebhookProcessor(
         var name = await ProfileNameAsync(scope.ServiceProvider, connection.Id, pageId, inbound.SenderId, ct);
         var ingest = scope.ServiceProvider.GetRequiredService<IInboxIngest>();
         await ingest.ReceiveAsync(
-            new InboundMessage(ChannelKind.Messenger, inbound.SenderId, name, inbound.Text, inbound.MessageId, inbound.SentAt, connection.Id),
+            new InboundMessage(ChannelKind.Messenger, inbound.SenderId, name, inbound.Text, inbound.MessageId, inbound.SentAt, connection.Id, inbound.Attachments),
             ct);
     }
 
@@ -174,7 +177,7 @@ internal sealed partial class MessengerWebhookProcessor(
         return name;
     }
 
-    /// <summary>Customer text messages only; echoes of the Page's own messages, reads and reactions are skipped.</summary>
+    /// <summary>Customer messages with text or media; echoes of the Page's own messages, reads and reactions are skipped.</summary>
     private static ParsedMessage? Parse(JsonElement messaging)
     {
         if (!messaging.TryGetProperty("message", out var message)
@@ -188,11 +191,14 @@ internal sealed partial class MessengerWebhookProcessor(
             return null;
         }
 
+        var attachments = ParseAttachments(message);
         var text = Text(message, "text");
         if (string.IsNullOrWhiteSpace(text))
         {
-            // Media storage comes later (ADR 0017).
-            text = message.TryGetProperty("attachments", out _) ? "[attachment]" : null;
+            // Anything else Meta can attach (a location, a shared post) isn't media we keep: the team still hears of it.
+            text = attachments.Count > 0
+                ? string.Empty
+                : message.TryGetProperty("attachments", out _) ? AiHistoryMessage.MediaOnlyText : null;
         }
 
         if (text is null)
@@ -204,7 +210,38 @@ internal sealed partial class MessengerWebhookProcessor(
             ? DateTimeOffset.FromUnixTimeMilliseconds(ms)
             : DateTimeOffset.UtcNow;
         const int max = 4000;
-        return new ParsedMessage(senderId, messageId.Length <= 200 ? messageId : messageId[..200], text.Length <= max ? text : text[..max], sentAt);
+        return new ParsedMessage(senderId, messageId.Length <= 200 ? messageId : messageId[..200], text.Length <= max ? text : text[..max], sentAt, attachments);
+    }
+
+    /// <summary>Media as Meta announces it; nothing here is believed yet (ADR 0031 §2). A sticker is an image with a sticker ID.</summary>
+    private static List<InboundAttachment> ParseAttachments(JsonElement message)
+    {
+        var found = new List<InboundAttachment>();
+        if (!message.TryGetProperty("attachments", out var attachments) || attachments.ValueKind != JsonValueKind.Array)
+        {
+            return found;
+        }
+
+        foreach (var attachment in attachments.EnumerateArray().Where(a => a.ValueKind == JsonValueKind.Object))
+        {
+            var isObject = attachment.TryGetProperty("payload", out var payload) && payload.ValueKind == JsonValueKind.Object;
+            var kind = Text(attachment, "type") switch
+            {
+                "image" when isObject && payload.TryGetProperty("sticker_id", out _) => InboundAttachmentKind.Sticker,
+                "image" => InboundAttachmentKind.Image,
+                "sticker" => InboundAttachmentKind.Sticker,
+                "audio" => InboundAttachmentKind.Audio,
+                "video" => InboundAttachmentKind.Video,
+                "file" => InboundAttachmentKind.File,
+                _ => null,
+            };
+            if (kind is not null && found.Count < MaxAttachments)
+            {
+                found.Add(new InboundAttachment(kind, isObject ? Text(payload, "url") : null));
+            }
+        }
+
+        return found;
     }
 
     private static string? Text(JsonElement element, string property) =>
@@ -214,7 +251,7 @@ internal sealed partial class MessengerWebhookProcessor(
             ? value.GetString()
             : null;
 
-    private sealed record ParsedMessage(string SenderId, string MessageId, string Text, DateTimeOffset SentAt);
+    private sealed record ParsedMessage(string SenderId, string MessageId, string Text, DateTimeOffset SentAt, IReadOnlyList<InboundAttachment> Attachments);
 
     private sealed record ConnectionRow(Guid Id, Guid TenantId);
 

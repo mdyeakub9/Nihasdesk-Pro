@@ -13,6 +13,7 @@ using Nihasdesk.Modules.AiAgent.Ingestion;
 using Nihasdesk.Modules.AiAgent.Llm;
 using Nihasdesk.Modules.Channels.Infrastructure.Meta;
 using Nihasdesk.Modules.Identity.Infrastructure;
+using Nihasdesk.Modules.Inbox.Infrastructure;
 
 namespace Nihasdesk.TestSupport;
 
@@ -53,6 +54,15 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
     public async Task FindSitesAsync()
     {
         var processor = Services.GetRequiredService<SiteFindProcessor>();
+        while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+    }
+
+    /// <summary>Downloads waiting media like the Workers job, until none is due now.</summary>
+    public async Task DownloadMediaAsync()
+    {
+        var processor = Services.GetRequiredService<MediaDownloadProcessor>();
         while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
         {
         }
@@ -118,7 +128,12 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
             services.RemoveAll<SafeHttpClient>();
             services.AddSingleton(_ => new SafeHttpClient(
                 Web,
-                (host, _) => Task.FromResult(new[] { host == "localhost" ? System.Net.IPAddress.Loopback : System.Net.IPAddress.Parse("93.184.216.34") })));
+                (host, _) => Task.FromResult(new[]
+                {
+                    host == "localhost" || host.StartsWith("private.", StringComparison.Ordinal)
+                        ? System.Net.IPAddress.Loopback
+                        : System.Net.IPAddress.Parse("93.184.216.34"),
+                })));
         });
     }
 

@@ -67,6 +67,20 @@ Two steps, so code stays in control:
 - The eval set gets media cases with fixture files in `docs/evals/media/`: product photos of the test shop (including variants and a product we don't sell), a damaged product, a payment screenshot, a photo with injected text ("ignore your rules…"), Italian and English voice notes (generated with TTS), a 3-minute voice note.
 - Measured: right product among the first 3 (≥ 80%), handoff correctness for complaint and screenshot (100%), 0 prices from photos, transcript word accuracy on the fixtures.
 
+### 10. As built in Issue #84 PR 1 (2026-11-09)
+Changes to the plan above, the first two decided by the owner:
+- **Types not on the list are refused, not kept as `file`:** status `failed`, code `type_not_allowed`. The team can't download something we don't know (SEC-04).
+- **No live update from Workers:** the download job has no SignalR, so the dashboard refreshes the open conversation every 3 s while it has pending media.
+- **Polling instead of `MediaReceived` / `MediaSaved` events:** MassTransit isn't used yet; the job polls `inbox.message_attachments` through `inbox.due_media` (IDs only), like the other jobs.
+- **`IChannelMediaFetcher` lives in Inbox Contracts** and Channels implements it, because Channels already depends on Inbox.
+- **`IMessageMedia` comes with its first caller** (#85, #87). Transcript, description and duration columns come with their issues; `ffprobe` and the 10-minute limit with #85.
+- **`file_name`:** a cleaned name only for display and download. The extension comes from the detected type, and the name is never part of a storage key.
+- **Extra failure code `source_not_allowed`:** a link outside Meta's CDN or to a blocked address.
+- **Storage keys** are `{tenant}/{guid}` from the existing `IFileStore`.
+- **SEC-04 deviation, recorded here:** SEC-04 says files are served through short-lived signed URLs. Customer media is instead served only to signed-in team members of the workspace (`GET /api/v1/media/{id}`), which is stricter. Signed URLs stay for product images (§7).
+- **The file as sent is never kept for images:** only the re-encoded copy, the thumbnail and the AI copy.
+- **AI handoff** looks at every customer message of the turn, not only the last one.
+
 ## Alternatives considered
 - **Image embeddings (CLIP-style) for product matching:** better at large catalogs, but needs an extra model and index. Phase 1 catalogs are small; text search + visual comparison of the top 5 is simpler. Revisit if catalogs grow past a few thousand products.
 - **Sending the photo straight to the reply model with all tools:** fewer calls, but the model would decide alone whether a photo is a complaint. The two-step design lets code hand off reliably.
