@@ -146,7 +146,8 @@ internal sealed partial class MessengerWebhookProcessor(
         var name = await ProfileNameAsync(scope.ServiceProvider, connection.Id, pageId, inbound.SenderId, ct);
         var ingest = scope.ServiceProvider.GetRequiredService<IInboxIngest>();
         await ingest.ReceiveAsync(
-            new InboundMessage(ChannelKind.Messenger, inbound.SenderId, name, inbound.Text, inbound.MessageId, inbound.SentAt, connection.Id, inbound.Attachments),
+            new InboundMessage(
+                ChannelKind.Messenger, inbound.SenderId, name, inbound.Text, inbound.MessageId, inbound.SentAt, connection.Id, inbound.Attachments, inbound.ActionPayload),
             ct);
     }
 
@@ -177,9 +178,42 @@ internal sealed partial class MessengerWebhookProcessor(
         return name;
     }
 
+    /// <summary>
+    /// A tap on a button (ADR 0032 §3): Meta sends the button's title and our payload. The payload is
+    /// passed on as it came; the Inbox decides whether it is one of ours.
+    /// </summary>
+    private static ParsedMessage? ParsePostback(JsonElement messaging)
+    {
+        if (!messaging.TryGetProperty("postback", out var postback)
+            || postback.ValueKind != JsonValueKind.Object
+            || !messaging.TryGetProperty("sender", out var sender)
+            || Text(sender, "id") is not { } senderId
+            || !senderId.All(char.IsAsciiDigit))
+        {
+            return null;
+        }
+
+        var sentAt = SentAt(messaging);
+        // Newer webhooks carry a message ID; otherwise sender and time identify a repeated delivery.
+        var messageId = Text(postback, "mid") ?? $"pb:{senderId}:{sentAt.ToUnixTimeMilliseconds()}";
+        var title = Text(postback, "title");
+        return new ParsedMessage(
+            senderId,
+            Cut(messageId, 200),
+            Cut(string.IsNullOrWhiteSpace(title) ? string.Empty : title, 4000),
+            sentAt,
+            [],
+            Payload(Text(postback, "payload")));
+    }
+
     /// <summary>Customer messages with text or media; echoes of the Page's own messages, reads and reactions are skipped.</summary>
     private static ParsedMessage? Parse(JsonElement messaging)
     {
+        if (ParsePostback(messaging) is { } tap)
+        {
+            return tap;
+        }
+
         if (!messaging.TryGetProperty("message", out var message)
             || message.ValueKind != JsonValueKind.Object
             || (message.TryGetProperty("is_echo", out var echo) && echo.ValueKind == JsonValueKind.True)
@@ -206,12 +240,20 @@ internal sealed partial class MessengerWebhookProcessor(
             return null;
         }
 
-        var sentAt = messaging.TryGetProperty("timestamp", out var ts) && ts.TryGetInt64(out var ms)
+        // A quick reply is a text message with our payload next to it.
+        var quickReply = message.TryGetProperty("quick_reply", out var quick) ? Payload(Text(quick, "payload")) : null;
+        return new ParsedMessage(senderId, Cut(messageId, 200), Cut(text, 4000), SentAt(messaging), attachments, quickReply);
+    }
+
+    private static DateTimeOffset SentAt(JsonElement messaging) =>
+        messaging.TryGetProperty("timestamp", out var ts) && ts.TryGetInt64(out var ms)
             ? DateTimeOffset.FromUnixTimeMilliseconds(ms)
             : DateTimeOffset.UtcNow;
-        const int max = 4000;
-        return new ParsedMessage(senderId, messageId.Length <= 200 ? messageId : messageId[..200], text.Length <= max ? text : text[..max], sentAt, attachments);
-    }
+
+    /// <summary>Payloads longer than ours are never ours; nothing else is checked here.</summary>
+    private static string? Payload(string? payload) => payload is { Length: > 0 and <= 100 } ? payload : null;
+
+    private static string Cut(string text, int max) => text.Length <= max ? text : text[..max];
 
     /// <summary>Media as Meta announces it; nothing here is believed yet (ADR 0031 §2). A sticker is an image with a sticker ID.</summary>
     private static List<InboundAttachment> ParseAttachments(JsonElement message)
@@ -251,7 +293,8 @@ internal sealed partial class MessengerWebhookProcessor(
             ? value.GetString()
             : null;
 
-    private sealed record ParsedMessage(string SenderId, string MessageId, string Text, DateTimeOffset SentAt, IReadOnlyList<InboundAttachment> Attachments);
+    private sealed record ParsedMessage(
+        string SenderId, string MessageId, string Text, DateTimeOffset SentAt, IReadOnlyList<InboundAttachment> Attachments, string? ActionPayload = null);
 
     private sealed record ConnectionRow(Guid Id, Guid TenantId);
 

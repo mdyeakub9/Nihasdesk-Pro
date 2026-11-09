@@ -31,19 +31,14 @@ public sealed class ProductMessagesTests(AuthFixture fixture)
             },
         });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var sent = (await response.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray().ToList();
-        Assert.Equal(2, sent.Count);
-
-        var card = sent[0].GetProperty("product");
-        Assert.Equal("Borsa nera", card.GetProperty("title").GetString());
-        Assert.Equal("Nero", card.GetProperty("variant").GetString());
-        Assert.Equal(8900, card.GetProperty("price").GetInt64());
-        Assert.Equal("EUR", card.GetProperty("currency").GetString());
-        Assert.StartsWith("🛍️ Borsa nera — Nero\n€89.00 · SKU ", sent[0].GetProperty("text").GetString(), StringComparison.Ordinal);
-        Assert.Equal("agent", sent[0].GetProperty("author").GetString());
+        // One carousel (ADR 0032 §7); its text is what the list and the AI's history read.
+        var sent = Assert.Single((await response.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
+        Assert.Equal("carousel", sent.GetProperty("richKind").GetString());
+        Assert.Equal("1. 🛍️ Borsa nera — Nero · €89.00\n2. 🛍️ Sciarpa — Blu · €25.00", sent.GetProperty("text").GetString());
+        Assert.Equal("agent", sent.GetProperty("author").GetString());
 
         var history = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}/messages")).GetProperty("items").EnumerateArray().ToList();
-        Assert.Equal(["Borsa nera", "Sciarpa"], history.Where(m => m.GetProperty("product").ValueKind == JsonValueKind.Object).Select(m => m.GetProperty("product").GetProperty("title").GetString()));
+        Assert.Equal(2, history.Count);
         var conversation = (await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}")).GetProperty("conversation");
         Assert.Equal("human", conversation.GetProperty("responder").GetString());
     }
@@ -83,11 +78,14 @@ public sealed class ProductMessagesTests(AuthFixture fixture)
         var inbox = new InboxTests(fixture);
         var (owner, workspace) = await inbox.OwnerAsync();
         var id = (await inbox.ReceiveAsync(workspace, "visitor-p3", "Ciao")).ConversationId;
-        var six = Enumerable.Range(0, 6).Select(_ => new { productId = Guid.NewGuid(), variantId = Guid.NewGuid() }).ToArray();
+        var eleven = Enumerable.Range(0, 11).Select(_ => new { productId = Guid.NewGuid(), variantId = Guid.NewGuid() }).ToArray();
+        var twice = Guid.NewGuid();
 
         Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { items = Array.Empty<object>() })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { })).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { items = six })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { items = eleven })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { items = new[] { new { productId = twice }, new { productId = twice } } })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { items = new[] { new { productId = Guid.NewGuid(), variantId = Guid.Empty } } })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await SendAsync(owner, id, new { items = new[] { new { productId = Guid.Empty, variantId = Guid.NewGuid() } } })).StatusCode);
 
         using var anonymous = fixture.Api.CreateApiClient();

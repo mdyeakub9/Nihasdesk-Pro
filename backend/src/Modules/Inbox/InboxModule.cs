@@ -30,6 +30,7 @@ public sealed class InboxModule : IModule
         services.AddSingleton<InboxNotifier>();
         services.AddScoped<IInboxIngest, InboxIngest>();
         services.AddScoped<IOutboundMessages, OutboundMessages>();
+        services.AddScoped<RichRenderer>();
         services.AddScoped<IAiConversations, AiConversations>();
         services.AddScoped<IAiMessageReader, AiMessageReader>();
         services.AddScoped<IOrderConversations, OrderConversations>();

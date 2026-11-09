@@ -34,7 +34,7 @@ internal sealed class OrderNotifications(
     /// </summary>
     internal static string SummaryText(ConfirmedOrderSummary order, bool italian)
     {
-        string Money(long cents) => ProductMessagesHandler.Price(cents, order.Currency);
+        string Money(long cents) => RichRenderer.Money(cents, order.Currency);
         var lines = order.Lines.Select(l =>
             $"{l.Quantity}× {(string.IsNullOrEmpty(l.Variant) ? l.Title : $"{l.Title} — {l.Variant}")}  {Money(l.LineTotal)}");
         var shipping = order.ShippingCost == 0 ? (italian ? "gratis" : "free") : Money(order.ShippingCost);

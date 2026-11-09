@@ -10,6 +10,10 @@ namespace Nihasdesk.Modules.Inbox.Contracts;
 /// <param name="ExternalMessageId">The channel's message ID; repeats are ignored.</param>
 /// <param name="ConnectionId">The channel connection (e.g. Facebook Page) that received it; replies go out through it.</param>
 /// <param name="Attachments">Media of the message; with them <paramref name="Text"/> may be empty.</param>
+/// <param name="ActionPayload">
+/// The payload of a tapped button or quick reply, as the channel gave it (ADR 0032 §3). Untrusted: the
+/// Inbox looks it up only in the current workspace and conversation; anything else is just <paramref name="Text"/>.
+/// </param>
 public sealed record InboundMessage(
     string Channel,
     string ExternalContactId,
@@ -18,7 +22,8 @@ public sealed record InboundMessage(
     string? ExternalMessageId,
     DateTimeOffset SentAt,
     Guid? ConnectionId = null,
-    IReadOnlyList<InboundAttachment>? Attachments = null);
+    IReadOnlyList<InboundAttachment>? Attachments = null,
+    string? ActionPayload = null);
 
 /// <summary>Media as the channel announced it. The Workers job downloads and checks it (ADR 0031 §2).</summary>
 /// <param name="Kind">One of <see cref="InboundAttachmentKind"/>.</param>

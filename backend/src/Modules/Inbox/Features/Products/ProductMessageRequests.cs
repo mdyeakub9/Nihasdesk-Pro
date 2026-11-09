@@ -1,16 +1,19 @@
 using FluentValidation;
+using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.SharedKernel;
 
 namespace Nihasdesk.Modules.Inbox.Features.Products;
 
-/// <summary>Which catalog variants to send. Only IDs: names and prices come from the catalog (SEC-22).</summary>
+/// <summary>Which catalog products to send. Only IDs: names and prices come from the catalog (SEC-22).</summary>
 internal sealed record SendProductsRequest(IReadOnlyList<ProductItem>? Items);
 
-internal sealed record ProductItem(Guid ProductId, Guid VariantId);
+/// <param name="VariantId">Optional: a card for one variant; without it the card shows the product.</param>
+internal sealed record ProductItem(Guid ProductId, Guid? VariantId);
 
 internal static class ProductMessageValues
 {
-    public const int MaxItems = 5;
+    /// <summary>One carousel (ADR 0032 §7).</summary>
+    public const int MaxItems = ProductCarousel.MaxCards;
 }
 
 internal sealed class SendProductsValidator : AbstractValidator<SendProductsRequest>
@@ -18,7 +21,9 @@ internal sealed class SendProductsValidator : AbstractValidator<SendProductsRequ
     public SendProductsValidator()
     {
         RuleFor(r => r.Items).Cascade(CascadeMode.Stop).NotEmpty().Must(i => i!.Count <= ProductMessageValues.MaxItems)
-            .WithMessage($"Send 1 to {ProductMessageValues.MaxItems} products at a time.");
+            .WithMessage($"Send 1 to {ProductMessageValues.MaxItems} products at a time.")
+            .Must(i => i!.Select(x => (x.ProductId, x.VariantId)).Distinct().Count() == i!.Count)
+            .WithMessage("Each product only once.");
         RuleForEach(r => r.Items).ChildRules(item =>
         {
             item.RuleFor(i => i.ProductId).NotEqual(Guid.Empty);

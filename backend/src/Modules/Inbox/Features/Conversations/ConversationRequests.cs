@@ -64,7 +64,32 @@ internal sealed record MessageResponse(
     // Product cards only (ADR 0024).
     ProductCardResponse? Product,
     // Photos, voice notes, video and files (ADR 0031).
-    IReadOnlyList<AttachmentResponse> Attachments);
+    IReadOnlyList<AttachmentResponse> Attachments,
+    // text | tap (ADR 0032 §3).
+    string Kind = "text",
+    // carousel | quick_replies | buttons, or null (ADR 0032 §1).
+    string? RichKind = null,
+    // What the customer saw; null until the channel sender has rendered it.
+    RichResponse? Rich = null,
+    // The rich message was refused and went as a numbered text list.
+    bool FallbackText = false);
+
+/// <summary>A rich message as the customer saw it (PRD 4.4). No button payloads: they never leave the server.</summary>
+internal sealed record RichResponse(string Kind, string? Text, IReadOnlyList<RichCardResponse> Cards, IReadOnlyList<RichButtonResponse> Buttons);
+
+/// <summary>A product card with the catalog values at send time; price in cents.</summary>
+internal sealed record RichCardResponse(
+    Guid ProductId,
+    Guid? VariantId,
+    string Title,
+    string? Subtitle,
+    long? Price,
+    string? Currency,
+    string? ImageUrl,
+    string? MatchLabel,
+    IReadOnlyList<RichButtonResponse> Buttons);
+
+internal sealed record RichButtonResponse(string Label, string Action);
 
 /// <summary>
 /// Media of a message. <see cref="Url"/> is set once saved. Status: pending, saved, failed or too_large.

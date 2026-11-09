@@ -68,3 +68,14 @@ A `TapHandler` in AiAgent runs before the model:
 - The inbox renders cards, chips and tap bubbles.
 - Instagram and WhatsApp reuse the model; only rendering differs.
 - Issue #87 (photos) now continues with a carousel through `show_products` instead of handing off.
+
+## Update 2026-11-09 (Issue #91 PR 1, owner decisions)
+- **Rendering lives in the Inbox, layout in Channels.** The Inbox already reads `ICatalog` (ADR 0024), so it resolves product ids at send time, drops inactive products, picks the labels and creates the `message_actions` rows; Channels gets a ready `OutboundRich` (titles, subtitles, labels, `rm1:` payloads) and only builds Messenger's JSON. Channels still doesn't reference Commerce. The rendered result is stored in `inbox.messages.rich_rendered` and reused on retries, so a retry sends the same buttons.
+- **Columns:** `inbox.messages` gets `kind` (`text` | `tap`), `action_id`, `rich_kind`, `rich_content`, `rich_rendered`, `fallback_text`; new table `inbox.message_actions` with a unique `(tenant_id, token)`; additive migration `AddRichMessages`, RLS on.
+- **Fallback only for refused content.** Meta's code 100 (invalid parameter) means the message itself was refused: retry without images (when a card has one), then the numbered text list. Other errors (blocked, outside the window, token) stay permanent or retryable as before.
+- **Postbacks need a subscription.** Pages now subscribe to `messages,messaging_postbacks`. A Page connected before this change must be connected again before button taps arrive; quick replies arrive with `messages` already.
+- **Labels** fit Messenger's 20 characters: "Talk to a person" is **Parla con noi** in Italian ("Parla con una persona" is 21).
+- **Not yet:** `open_form` is refused until the checkout form exists (and its URL allow-list); a written "1" or "2" after the text fallback is ordinary text for the AI.
+- **Interest (owner decision A):** there is no event bus yet, so taps record interest through a Contacts contract `IContactInterest` (in process) instead of a `ProductInterestRecorded` event (PR 3).
+- **Choices so far (owner decision B):** the chosen product, option values and the summary hash live in `ai.order_drafts`, one row per conversation (PR 2).
+- **Team "Send products"** (owner decision C): up to 10 products, variant optional, as one carousel with Lo voglio / Taglie e colori / Simili; earlier text cards stay as they were.

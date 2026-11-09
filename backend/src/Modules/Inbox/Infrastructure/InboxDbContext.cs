@@ -22,6 +22,8 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
 
     public DbSet<MessageAttachment> Attachments => Set<MessageAttachment>();
 
+    public DbSet<MessageAction> MessageActions => Set<MessageAction>();
+
     public DbSet<ReadMarker> ReadMarkers => Set<ReadMarker>();
 
     public DbSet<SavedReply> SavedReplies => Set<SavedReply>();
@@ -57,6 +59,12 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             LowerCaseText(message.Property(m => m.Author));
             LowerCaseText(message.Property(m => m.Delivery));
             message.Property(m => m.MentionedUserIds).HasDefaultValueSql("'{}'::uuid[]");
+            // Rich messages (ADR 0032 §1): kind, channel-neutral content and what was rendered.
+            LowerCaseText(message.Property(m => m.Kind));
+            message.Property(m => m.RichKind).HasMaxLength(Message.RichKindMaxLength);
+            message.Property(m => m.RichContent).HasColumnType("jsonb");
+            message.Property(m => m.RichRendered).HasColumnType("jsonb");
+            message.HasOne<MessageAction>().WithMany().HasForeignKey(m => m.ActionId).OnDelete(DeleteBehavior.SetNull);
             // The product card as sent (ADR 0024), one jsonb column.
             message.OwnsOne(m => m.Product, product => product.ToJson("product"));
             // Pinned notes on top of the side panel (PRD 4.4).
@@ -92,6 +100,21 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             attachment.HasIndex(a => new { a.MessageId, a.Position }).IsUnique();
             // The download job's queue (ADR 0031 §2).
             attachment.HasIndex(a => a.NextAttemptAt).HasFilter("status = 'pending'");
+        });
+
+        modelBuilder.Entity<MessageAction>(action =>
+        {
+            action.ToTable("message_actions");
+            action.Property(a => a.Token).HasMaxLength(MessageAction.TokenLength).IsFixedLength();
+            action.Property(a => a.Action).HasMaxLength(MessageAction.ActionMaxLength);
+            action.Property(a => a.Label).HasMaxLength(MessageAction.LabelMaxLength);
+            action.Property(a => a.Value).HasMaxLength(MessageAction.ValueMaxLength);
+            action.Ignore(a => a.Payload);
+            action.HasOne<Conversation>().WithMany().HasForeignKey(a => a.ConversationId).OnDelete(DeleteBehavior.Cascade);
+            action.HasOne<Message>().WithMany().HasForeignKey(a => a.MessageId).OnDelete(DeleteBehavior.Cascade);
+            // A tap is looked up by its token inside the receiving workspace (ADR 0032 §3).
+            action.HasIndex(a => new { a.TenantId, a.Token }).IsUnique();
+            action.HasIndex(a => new { a.MessageId, a.Position }).IsUnique();
         });
 
         modelBuilder.Entity<ReadMarker>(marker =>

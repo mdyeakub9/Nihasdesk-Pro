@@ -20,6 +20,15 @@ internal enum DeliveryStatus
     Failed,
 }
 
+/// <summary>What a customer message is (ADR 0032 §3). Stored as lower-case text.</summary>
+internal enum MessageKind
+{
+    Text,
+
+    /// <summary>The customer tapped a button or quick reply; <see cref="Message.Text"/> is its label.</summary>
+    Tap,
+}
+
 /// <summary>One message or internal note in a conversation (ADR 0016).</summary>
 internal sealed class Message : TenantEntity
 {
@@ -27,6 +36,7 @@ internal sealed class Message : TenantEntity
     public const int AuthorNameMaxLength = 100;
     public const int ExternalIdMaxLength = 200;
     public const int DeliveryErrorMaxLength = 100;
+    public const int RichKindMaxLength = 20;
 
     private string? _mediaPreview;
 
@@ -125,6 +135,51 @@ internal sealed class Message : TenantEntity
 
     /// <summary>Set for product cards sent from the + menu.</summary>
     public ProductSnapshot? Product { get; private set; }
+
+    public MessageKind Kind { get; private set; }
+
+    /// <summary>For a tap: the button or quick reply in <c>inbox.message_actions</c> it came from.</summary>
+    public Guid? ActionId { get; private set; }
+
+    /// <summary>One of <c>Contracts.RichKind</c> when the message carries rich content (ADR 0032 §1).</summary>
+    public string? RichKind { get; private set; }
+
+    /// <summary>The channel-neutral content (product ids, actions) as JSON; never prices.</summary>
+    public string? RichContent { get; private set; }
+
+    /// <summary>What was actually sent (titles, prices, labels read from the catalog at send time) as JSON, for the team's view.</summary>
+    public string? RichRendered { get; private set; }
+
+    /// <summary>The channel refused the rich message, so a numbered text list went instead.</summary>
+    public bool FallbackText { get; private set; }
+
+    /// <summary>A tap on one of our buttons (ADR 0032 §3); <paramref name="label"/> is what the customer saw.</summary>
+    public static Message FromCustomerTap(Guid tenantId, Guid conversationId, string label, Guid actionId, string? externalId, DateTimeOffset sentAt) =>
+        new(tenantId, conversationId, MessageAuthor.Customer, CheckText(label), sentAt)
+        {
+            ExternalId = externalId,
+            Kind = MessageKind.Tap,
+            ActionId = actionId,
+        };
+
+    /// <summary>Adds rich content to a reply before it is queued; <paramref name="json"/> is the serialized contract.</summary>
+    public void AttachRich(string kind, string json)
+    {
+        if (Author == MessageAuthor.Customer || Internal)
+        {
+            throw new InvalidOperationException("Only replies to the customer carry rich content.");
+        }
+
+        RichKind = kind;
+        RichContent = json;
+    }
+
+    /// <summary>Records what the channel sender rendered from the catalog, and whether it fell back to text.</summary>
+    public void Rendered(string renderedJson, bool fallbackText)
+    {
+        RichRendered = renderedJson;
+        FallbackText = fallbackText;
+    }
 
     /// <summary>A team-only note (PRD 4.4). Never delivered to the channel or given to the AI.</summary>
     public static Message TeamNote(Guid tenantId, Guid conversationId, Guid userId, string authorName, string text, IEnumerable<Guid> mentions, DateTimeOffset sentAt)
