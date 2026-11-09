@@ -107,7 +107,7 @@ These values are used by **code**: order totals, shipping cost and delivery esti
 **Importing a source (ingestion)** — how a file or page becomes knowledge (technical design: ADR 0026)
 - Upload or URL → the file is checked (type by content, size, SEC-04) and stored → a background job reads it → the source shows a status: **Reading… → Ready to review → Live**, or **Failed** with a plain reason ("This PDF is a scan; we can't read text from images yet").
 - The AI never reads the raw file. Code reads it once, cleans it, splits it into sections and stores them with search indexes; the AI only gets the 3–4 best sections for a question later.
-- Readers: PDF with selectable text, DOCX, plain text, one web page (main content only, menus and footers removed). Tables are kept whole as tables; headings are kept as the section path ("Shipping › Italy › Islands").
+- Readers: PDF with selectable text, DOCX, plain text, one web page (main content only, menus and footers removed), or a whole website from its domain: the system finds the main pages and the owner confirms the list (ADR 0030). Tables are kept whole as tables; headings are kept as the section path ("Shipping › Italy › Islands").
 - Limits per workspace (Phase 1 defaults, shown in the UI): file up to **20 MB** and **300 pages**, up to **100 sources**, text only (no images, no scanned PDFs, no password-protected files). Reaching a limit shows a clear message, never a silent failure.
 - Same file uploaded again → detected (content hash) and not stored twice. A new version of a file replaces the old one only when published.
 - **Web pages are re-read automatically once a week** (and on "Re-read now"). If the page changed, the new content becomes a draft to review; if re-reading fails twice in a row, the owner gets an in-app notice and an email, and the last good version stays live.
@@ -138,7 +138,7 @@ These values are used by **code**: order totals, shipping cost and delivery esti
 - Questions the AI could not answer are listed for the team; a taught answer becomes a Layer 3 source.
 - When a team member edits an AI draft or takes over and answers, the dashboard offers "Save as knowledge" for that answer.
 
-**Later (not Phase 1):** reading scanned PDFs and images (OCR), whole-website crawling and Google Drive/Notion sync, and "Tell the AI what to change" — the owner writes a change in plain language; an assistant shows the current text and the proposed change, applies it to the draft after confirmation and runs the test chat.
+**Later (not Phase 1):** reading scanned PDFs and images (OCR), Google Drive/Notion sync, and "Tell the AI what to change" — the owner writes a change in plain language; an assistant shows the current text and the proposed change, applies it to the draft after confirmation and runs the test chat.
 
 ### 4.8 AI agent
 - Replies in the customer's language; tone setting (formal/friendly); owner instructions as Layer 2 blocks (4.7).

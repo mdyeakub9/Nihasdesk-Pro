@@ -47,6 +47,9 @@ internal sealed class KnowledgeSource : TenantEntity
 
     public SourceKind Kind { get; private set; }
 
+    /// <summary>The website this page was added from (ADR 0030); deleting the site deletes it.</summary>
+    public Guid? SiteId { get; private set; }
+
     public string Title { get; private set; }
 
     /// <summary>The file name as uploaded (shown only, never a path) or the page's URL.</summary>
@@ -143,8 +146,8 @@ internal sealed class KnowledgeSource : TenantEntity
             SizeBytes = sizeBytes,
         };
 
-    public static KnowledgeSource FromWebPage(Guid tenantId, string url, Guid userId) =>
-        new(tenantId, SourceKind.WebPage, Shorten(url, TitleMaxLength), url, userId);
+    public static KnowledgeSource FromWebPage(Guid tenantId, string url, Guid userId, Guid? siteId = null) =>
+        new(tenantId, SourceKind.WebPage, Shorten(url, TitleMaxLength), url, userId) { SiteId = siteId };
 
     private static string Shorten(string text, int max) => text.Length <= max ? text : text[..max];
 }

@@ -365,6 +365,78 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                     b.ToTable("knowledge_sections", "ai");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<int>("FindAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("find_attempts");
+
+                    b.Property<DateTimeOffset?>("FindLockUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("find_lock_until");
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("host");
+
+                    b.Property<string>("Pages")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("pages");
+
+                    b.Property<string>("RootUrl")
+                        .IsRequired()
+                        .HasMaxLength(265)
+                        .HasColumnType("character varying(265)")
+                        .HasColumnName("root_url");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_knowledge_sites");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_knowledge_sites_status")
+                        .HasFilter("status = 'finding'");
+
+                    b.HasIndex("TenantId", "Host")
+                        .IsUnique()
+                        .HasDatabaseName("ix_knowledge_sites_tenant_id_host");
+
+                    b.ToTable("knowledge_sites", "ai");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -417,6 +489,10 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_lock_until");
 
+                    b.Property<Guid?>("SiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("site_id");
+
                     b.Property<long?>("SizeBytes")
                         .HasColumnType("bigint")
                         .HasColumnName("size_bytes");
@@ -453,6 +529,9 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_knowledge_sources");
+
+                    b.HasIndex("SiteId")
+                        .HasDatabaseName("ix_knowledge_sources_site_id");
 
                     b.HasIndex("TenantId", "ContentHash")
                         .IsUnique()
@@ -644,6 +723,15 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_knowledge_sections_knowledge_sources_source_id");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSource", b =>
+                {
+                    b.HasOne("Nihasdesk.Modules.AiAgent.Domain.KnowledgeSite", null)
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_knowledge_sources_knowledge_sites_site_id");
                 });
 #pragma warning restore 612, 618
         }

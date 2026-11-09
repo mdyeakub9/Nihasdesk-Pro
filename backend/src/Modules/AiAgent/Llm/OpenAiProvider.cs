@@ -182,6 +182,9 @@ internal sealed class AiOptions
 
     public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(2);
 
+    /// <summary>The pause between requests to a site while finding its pages (ADR 0030).</summary>
+    public TimeSpan SiteRequestDelay { get; set; } = TimeSpan.FromSeconds(1);
+
     public sealed class OpenAiOptions
     {
         public string ApiKey { get; set; } = string.Empty;

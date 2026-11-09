@@ -49,6 +49,15 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         }
     }
 
+    /// <summary>Finds waiting sites' pages like the Workers job, until none is due now.</summary>
+    public async Task FindSitesAsync()
+    {
+        var processor = Services.GetRequiredService<SiteFindProcessor>();
+        while (await processor.ProcessOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+    }
+
     /// <summary>Uploaded files of this test run; nothing lands in the developer's own folder.</summary>
     public string FilesFolder { get; } = Path.Combine(Path.GetTempPath(), "nihasdesk-tests", Guid.NewGuid().ToString("N"));
 
@@ -70,6 +79,7 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         // Tests run the webhook processor and the sender step by step.
         builder.UseSetting("Channels:BackgroundProcessing", "false");
         builder.UseSetting("Ai:BackgroundProcessing", "false");
+        builder.UseSetting("Ai:SiteRequestDelay", "00:00:00");
         builder.UseSetting("Storage:LocalPath", FilesFolder);
         // Low enough for the limit test to reach.
         builder.UseSetting("Ai:MaxRepliesPerConversationPerHour", "3");

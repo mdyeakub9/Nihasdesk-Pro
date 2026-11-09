@@ -44,6 +44,8 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<IValidator<AssistRequest>, AssistValidator>();
         services.AddScoped<IValidator<FeedbackRequest>, FeedbackValidator>();
         services.AddScoped<IValidator<WebPageRequest>, WebPageValidator>();
+        services.AddScoped<IValidator<SiteRequest>, SiteValidator>();
+        services.AddScoped<IValidator<SitePagesRequest>, SitePagesValidator>();
         services.AddScoped<IValidator<SectionTextRequest>, SectionTextValidator>();
         services.AddScoped<IValidator<SearchTestRequest>, SearchTestValidator>();
         AddSourceReading(services, configuration);
@@ -67,6 +69,7 @@ public sealed class AiAgentModule : IModule
         if (configuration.GetValue($"{AiOptions.SectionName}:{nameof(AiOptions.BackgroundProcessing)}", true))
         {
             services.AddHostedService(sp => sp.GetRequiredService<SourceReadProcessor>());
+            services.AddHostedService(sp => sp.GetRequiredService<SiteFindProcessor>());
             services.AddHostedService(sp => sp.GetRequiredService<ConversationSummaryProcessor>());
         }
     }
@@ -102,6 +105,8 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<KnowledgeSearch>();
         services.AddScoped<SourceReader>();
         services.AddSingleton<SourceReadProcessor>();
+        services.AddScoped<SiteFinder>();
+        services.AddSingleton<SiteFindProcessor>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -112,6 +117,7 @@ public sealed class AiAgentModule : IModule
         AssistantEndpoints.Map(endpoints);
         TraceEndpoints.Map(endpoints);
         SourceEndpoints.Map(endpoints);
+        SiteEndpoints.Map(endpoints);
         ReviewEndpoints.Map(endpoints);
     }
 }
