@@ -2,6 +2,9 @@
 
 Weekly, 3–5 lines: done, blocked, decisions.
 
+## 2026-W46
+- Requirements (PRD v0.9, ADR 0031 proposed): customer media. Photos, voice notes, video and files are downloaded from Meta, checked and kept, and shown in the inbox; the team can send images; voice notes are transcribed and answered; the AI sorts photos (product / complaint / payment screenshot / unclear) and matches products with the catalog's images, always asking "is it this one?"; product images in the catalog and CSV import. Build order: media in the inbox → voice → product images → photo understanding. Issues #53, #55 and #56 are paused until after this.
+
 ## 2026-W45
 - Website import screen (Issue #80 PR 2): Settings → Shop knowledge → Your website: enter a domain, confirm it's yours, the main pages come ticked, add them, "Use all for AI" says first how many differences the settings have; delete a site with its pages. Also fixed the old text saying the AI doesn't use sources yet. Real site test still to do.
 - Website import backend (Issue #80 PR 1, ADR 0030): the owner gives a domain, a Workers job reads `robots.txt` and the sitemap or the links, and code chooses the main pages (English and Italian, at most 15). API to add chosen pages as web page sources, use them all and delete a site. No screen yet (PR 2); not tried on a real site.
