@@ -37,6 +37,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 
     public DbSet<ConversationMemory> Memory => Set<ConversationMemory>();
 
+    public DbSet<KnowledgeSite> Sites => Set<KnowledgeSite>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -146,6 +148,27 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             section.HasIndex(s => new { s.TenantId, s.SourceId, s.Position });
             // Deleting a source deletes its sections and search data (SEC-45).
             section.HasOne<KnowledgeSource>().WithMany().HasForeignKey(s => s.SourceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KnowledgeSite>(site =>
+        {
+            site.ToTable("knowledge_sites");
+            site.Property(s => s.Id).ValueGeneratedNever();
+            site.Property(s => s.Host).HasMaxLength(KnowledgeSite.HostMaxLength);
+            site.Property(s => s.RootUrl).HasMaxLength(KnowledgeSite.HostMaxLength + 10);
+            site.Property(s => s.FailureReason).HasMaxLength(KnowledgeSite.FailureMaxLength);
+            LowerCaseText(site.Property(s => s.Status));
+            site.Property(s => s.Pages)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    pages => JsonSerializer.Serialize(pages, TraceJson),
+                    json => JsonSerializer.Deserialize<List<FoundPage>>(json, TraceJson) ?? new List<FoundPage>());
+            // The same site once per workspace.
+            site.HasIndex(s => new { s.TenantId, s.Host }).IsUnique();
+            // The job looks for waiting sites every few seconds; almost none are.
+            site.HasIndex(s => s.Status).HasFilter("status = 'finding'");
+            // Deleting a site deletes its pages and their search data (SEC-45).
+            site.HasMany<KnowledgeSource>().WithOne().HasForeignKey(s => s.SiteId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ConversationMemory>(memory =>
