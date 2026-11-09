@@ -1,7 +1,7 @@
 # PRD — Phase 1 MVP (E-commerce)
 
-_Status: draft v0.9 · 2026-11-09 · Owner: Yeakub_
-_Related: `docs/project-brief.md`, ADR 0003, ADR 0026 (AI knowledge and memory), ADR 0031 (customer media, images and voice)._
+_Status: draft v0.10 · 2026-11-09 · Owner: Yeakub_
+_Related: `docs/project-brief.md`, ADR 0003, ADR 0026 (AI knowledge and memory), ADR 0031 (customer media, images and voice), ADR 0032 (rich messages: carousels and buttons)._
 
 ## 1. Problem
 Owners of small online shops in Italy sell through Instagram, Facebook and WhatsApp. Customers ask the same questions all day and night (price, size, colour, stock, delivery, returns). If nobody answers quickly, the sale is lost. Owners can't be online 24/7, and messages are spread across three apps, so leads get forgotten.
@@ -30,6 +30,16 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - Facebook Messenger, Instagram DM, WhatsApp (official Cloud API, business brings its own WABA).
 - Text, images, voice notes received; text, images, buttons/quick replies sent where the channel supports them.
 - Respect Meta rules (24-hour window, templates for WhatsApp outside the window).
+
+**Rich messages (carousels, buttons, quick replies)** — technical design: ADR 0032
+- Besides text and images, Nihasdesk sends three kinds of interactive messages, used by both the AI and the team:
+  - **Product carousel:** up to 10 product cards the customer swipes left/right. Each card: image (the variant's image if one fits), name, price and short info from the catalog (e.g. "€89 · Nero disponibile" or "Simile"), and up to 3 buttons: **🛒 Lo voglio / I want it**, **📏 Taglie e colori / Sizes and colours**, **🔍 Simili / Similar**.
+  - **Quick replies:** up to 13 short choices under a message (e.g. sizes in stock, "Altri prodotti", "Parla con una persona"). They disappear after a tap.
+  - **Buttons:** up to 3 under a message (e.g. **✅ Conferma** / **✏️ Modifica** under the order summary, **Apri il modulo** for the checkout form).
+- Button labels are in the customer's language; product data always comes from the catalog at send time (rule 5).
+- Each channel shows them its own way: Messenger and Instagram natively; WhatsApp with reply buttons (≤ 3) or a list message (≤ 10 rows) and product messages later. If a channel can't show it, the same content is sent as a numbered text list ("Rispondi 1, 2 o 3").
+- **Taps are customer messages:** a tap is shown in the conversation ("👆 Lo voglio — Borsa Milano"), opens the 24-hour window like a message, and is handled by code first (see 4.9); the AI answers only what code can't.
+- A button only works for the conversation and product it was sent for, and only while the product is still active; old or changed buttons answer with the current state ("Questo prodotto non è più disponibile — ecco simili").
 
 ### 4.4 Unified inbox
 - All conversations in one list; filters by channel, status (waiting / open / done, ADR 0016), unread, assignee, AI vs human, tag.
@@ -67,11 +77,16 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - Suggestions follow the same rules as the AI agent (prices and stock only from tools, rule 5). After sending an edited suggestion the team can **Save as knowledge** (4.7).
 
 **+ Actions menu**
-- **Send products**: search the catalog, send a card or carousel with in-stock variants.
+- **Send products**: search the catalog, pick up to 10 products (and optionally a variant), preview and send them as a **carousel** with the standard buttons (4.3); a single product goes as one card.
 - **Create order**: opens an order **modal** with name and phone pre-filled from the chat; the full field set is defined with the Orders module (4.9). An order created by a team member is a confirmed order (a human created it). The AI agent still only creates **order requests** that a human approves (rule 5).
 - **Send image or file**: pick from the computer (image, PDF), shown in the chat after delivery.
 - **Saved reply** (same list as `/`).
 - Later: send checkout link, send payment link.
+
+**Rich messages in the inbox**
+- Carousels, quick replies and buttons are shown to the team as the customer sees them (cards with image, price and buttons; quick replies as chips).
+- Customer taps appear as their own bubble ("👆 Lo voglio — Borsa Milano"), linked to the card.
+- If a rich message failed and was sent as a numbered text list instead, the bubble says so.
 
 **Photos, voice notes and files in the inbox** — technical design: ADR 0031
 - Media the customer sends is kept by Nihasdesk (the channel's own links expire), so the team always sees it in the conversation:
@@ -89,6 +104,7 @@ A shop owner connects their channels, adds products and shop info, and within ~1
 - AI classification per conversation: new lead, hot lead, customer, support, spam (editable by team members).
 - Contact fields: name, phone, email, language, channels, tags, notes, products of interest.
 - Simple lead list with filters (no pipeline board yet).
+- **Interest from taps:** tapping **Lo voglio** on a product marks the conversation as **hot lead** (unless it's already a customer) and adds the product to the contact's **products of interest**; tapping **Taglie e colori** or **Simili** adds the product to products of interest. The team sees why ("Tapped 'Lo voglio' on Borsa Milano, 9 Nov 20:14").
 
 ### 4.6 Product catalog (native)
 - Add/edit products manually: name, code/SKU, description, category, price, currency, images, variants (e.g. size, colour) with optional stock quantity, active/inactive.
@@ -164,13 +180,18 @@ These values are used by **code**: order totals, shipping cost and delivery esti
 
 **Voice notes** — technical design: ADR 0031
 - A voice note is transcribed to text in its language (Italian and English first) within a few seconds; the transcription is shown to the team under the player.
-- The AI answers the transcription like a written message, in the customer's language.
+- The AI answers the transcription like a written message, in the customer's language, with the same tools: a spoken product question ("avete una borsa nera?") gets the same product carousel as a written one. The conversation continues normally; a voice note is not a reason to hand off.
 - Hand off instead of answering when: the voice note is longer than **2 minutes**, the transcription is empty or unclear, or the language is not supported. Reason "voice note" is shown to the team.
 - If the customer wrote text and sent a voice note together, the AI reads both in order.
 
 **Photos** — technical design: ADR 0031
 - The AI looks at the customer's latest photo (with the text sent with it) and first decides what kind of photo it is:
-  - **a product the customer wants** ("do you have this?", a screenshot of a post or another shop): the AI describes it (type, colour, material, details), searches the catalog and compares the best 2–3 products with their images. It then **always asks**, never claims: "Is it this one?" with the product card(s), or says it doesn't have it and suggests similar products. Prices, sizes and stock come only from the catalog tools (rule 5), never from the photo.
+  - **a product the customer wants** ("do you have this?", a screenshot of a post or another shop): the AI describes it (type, colour, material, details), searches the catalog and compares the best candidates with their images. It **continues the conversation** (no handoff) with a short line and a **product carousel** (4.3):
+    - best matches first, marked as a likely match ("Sembra questo"), with the matching variant's image and "Nero disponibile" when the colour/variant exists; then up to 5 similar products marked **"Simile"**;
+    - it **never claims** it is the same product: "Sembra uno di questi 👇", never "È questo";
+    - no close match → "Non abbiamo esattamente questo, ma ecco i più simili" with the similar ones; nothing similar → one short question ("È per uomo o donna?") or handoff (reason "no match");
+    - quick replies under the carousel: **Altri prodotti**, **Parla con una persona**.
+    - Prices, sizes and stock come only from the catalog tools (rule 5), never from the photo.
   - **a damaged or wrong product, a complaint:** hand off at once (reason "complaint"), with a short note for the team.
   - **a payment, order or shipping screenshot:** hand off (reason "payment or order screenshot"); the AI never confirms a payment from a picture.
   - **unclear or anything else:** ask one short question, or hand off.
@@ -194,11 +215,11 @@ These values are used by **code**: order totals, shipping cost and delivery esti
 **Rule: the AI never creates a confirmed order.** It collects the order and creates an *order request*; an order exists only after a human approves it.
 
 Flow:
-1. Customer shows interest → AI shows matching products (cards with image, price, code) from the catalog.
-2. AI offers the **available options as buttons** (e.g. sizes/colours in stock) via `get_product_options`. Only in-stock variants are offered.
+1. Customer shows interest (text, voice note or photo) → AI shows matching products as a **carousel** (4.3) from the catalog.
+2. Customer taps **🛒 Lo voglio** on a card (or writes "voglio quella nera") → **code** (not the model) offers the **available options as quick replies** (e.g. colours, then sizes in stock; only in-stock variants; a variant already chosen from the photo is preselected and only confirmed). Taps on options are handled by code too; free text goes to the AI, which uses `get_product_options`.
 3. The remaining details are collected according to the shop's **order template** (see below) — **either in chat or through a checkout form**, whichever the customer prefers.
-4. AI shows an **order summary** (items, variant, unit prices, shipping cost from shop policy, total) and asks the customer to confirm.
-5. On customer confirmation → `create_order_request` → status **Pending approval**. Customer is told the shop will confirm shortly.
+4. AI shows an **order summary** (items, variant, unit prices, shipping cost from shop policy, total) with the buttons **✅ Conferma** and **✏️ Modifica**.
+5. On **Conferma** (tap, or a clear written yes) → `create_order_request` → status **Pending approval**. Customer is told the shop will confirm shortly. **Modifica** asks what to change. The summary buttons stop working if the cart, prices or address changed since the summary was sent.
 6. Team is notified. In the dashboard a team member can **Approve**, **Edit then approve**, or **Reject** (with reason).
 7. On approval: stock is re-checked, an **Order** is created (status Confirmed), stock is decremented, and the customer receives a confirmation message on the same channel. On rejection: customer receives a polite message; conversation goes to the team if needed.
 
@@ -214,7 +235,8 @@ Flow:
 Rules:
 - All prices, variants, stock and shipping costs come from the catalog/policies — never from the model.
 - `TenantId` and contact come from the conversation context, not from model output.
-- Buttons follow channel capabilities (Messenger/Instagram quick replies; WhatsApp reply buttons for ≤3 options, list message for more). If buttons aren't possible, use a numbered text list.
+- Buttons follow channel capabilities (ADR 0032: Messenger/Instagram carousels, buttons and quick replies; WhatsApp reply buttons for ≤3 options, list message for more). If buttons aren't possible, use a numbered text list.
+- **🔍 Simili** on any card shows a new carousel of similar products (same category, close price and attributes), without asking the customer for another photo.
 - If the approval happens after the 24-hour window, WhatsApp confirmation uses an approved utility template.
 - Pending requests older than a configurable time are highlighted; optional reminder to the team.
 
@@ -274,7 +296,8 @@ Dashboard: **Orders** page with tabs Pending approval / Confirmed / Rejected; or
 - Handoff works end to end with notification and return-to-AI timer.
 - An order flows end to end via chat and via form: product → option buttons → details (messy chat input correctly extracted, only missing fields asked) → summary → customer confirm → pending request → approve → order created + customer notified. The AI can never create a confirmed order (critical test).
 - No cross-workspace data access possible (critical tests) — for every module with tenant data (Identity, Contacts, Inbox, Channels, AiAgent, Commerce, Shipping), including knowledge sections and their search data.
-- Media: photos, voice notes, video and files sent on Messenger are saved and shown in the inbox; the team can send an image. Voice notes in Italian and English are transcribed; in the eval set (≥ 10 photo and ≥ 10 voice cases) the right product is offered among the first 3 for ≥ 80% of product photos, complaints and payment screenshots always hand off, and 0 prices come from a photo.
+- Rich messages: the AI and the team send product carousels with buttons and quick replies on Messenger (and Instagram when connected); a tap on **Lo voglio** leads to in-stock options, summary with **Conferma**, and a pending order request, with no free text needed except the delivery details; forged or old button payloads never act on another conversation or product (test); the customer's view and the team's view match.
+- Media: photos, voice notes, video and files sent on Messenger are saved and shown in the inbox; the team can send an image. Voice notes in Italian and English are transcribed; in the eval set (≥ 10 photo and ≥ 10 voice cases) the right product is offered among the first 3 for ≥ 80% of product photos and the conversation continues with a carousel (no handoff), complaints and payment screenshots always hand off, and 0 prices come from a photo.
 - Knowledge: a PDF, DOCX and web page can be imported, reviewed and published; in the eval set the right section is among the found ones for ≥ 85% of questions, and questions without an answer in the knowledge hand off instead of guessing (0 made-up policies).
 - Customers never get unpublished (draft) knowledge or instructions (test).
 - Usage limits enforced and visible.
