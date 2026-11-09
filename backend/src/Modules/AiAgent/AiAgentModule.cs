@@ -34,6 +34,7 @@ public sealed class AiAgentModule : IModule
         services.AddScoped<AgentTools>();
         services.AddScoped<AgentBrain>();
         services.AddScoped<AiSettingsStore>();
+        services.AddScoped<TapHandler>();
         services.AddScoped<ReplyAgent>();
         services.AddScoped<SuggestionAgent>();
         services.AddScoped<IValidator<TeachRequest>, TeachValidator>();

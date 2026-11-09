@@ -83,7 +83,11 @@ internal sealed class Conversation : TenantEntity
     public bool AiAnswers => Responder == Responder.Ai && AiEnabled;
 
     /// <summary>A customer wrote: reopen when done; wait for the team when a human is answering.</summary>
-    public void Received(Message message, Guid? connectionId, DateTimeOffset now)
+    /// <param name="codeAnswers">
+    /// A tap code still answers while the team has the conversation (product options, ADR 0032 §7):
+    /// it becomes due for tap code, never for the model.
+    /// </param>
+    public void Received(Message message, Guid? connectionId, DateTimeOffset now, bool codeAnswers = false)
     {
         Touch(message);
         ChannelConnectionId = connectionId ?? ChannelConnectionId;
@@ -97,7 +101,7 @@ internal sealed class Conversation : TenantEntity
             Status = ConversationStatus.Open;
         }
 
-        AiReplyDueAt = AiAnswers ? now + AiReplyDelay : null;
+        AiReplyDueAt = AiAnswers || (codeAnswers && AiEnabled) ? now + AiReplyDelay : null;
     }
 
     /// <summary>A team member replied: they take over, and the customer no longer waits.</summary>

@@ -97,6 +97,15 @@ internal sealed class TaughtAnswer : TenantEntity
     }
 }
 
+/// <summary>Who answered in a run. Stored as lower-case text.</summary>
+internal enum RunSource
+{
+    Model,
+
+    /// <summary>Code answered a button tap (ADR 0032 §4).</summary>
+    Tap,
+}
+
 internal enum RunOutcome
 {
     Replied,
@@ -158,12 +167,16 @@ internal sealed class AiRun : TenantEntity
     /// <summary>Tool calls and checks; cleared after the retention period (SEC-40), the row stays for metering.</summary>
     public RunTrace? Trace { get; private set; }
 
+    /// <summary>Who answered: the model, or code for a button tap (ADR 0032 §4; no tokens, no cost).</summary>
+    public RunSource Source { get; private set; }
+
     public static AiRun Finish(
         Guid tenantId, Guid conversationId, string model, int inputTokens, int outputTokens,
         IEnumerable<string> tools, RunOutcome outcome, string? detail, TimeSpan duration, IEnumerable<string>? sources = null,
-        RunTrace? trace = null, string? instructionVersion = null) =>
+        RunTrace? trace = null, string? instructionVersion = null, RunSource source = RunSource.Model) =>
         new(tenantId, conversationId)
         {
+            Source = source,
             Model = model.Length <= ModelMaxLength ? model : model[..ModelMaxLength],
             InputTokens = inputTokens,
             OutputTokens = outputTokens,

@@ -83,9 +83,18 @@ public static class RichAction
     public const string TalkToHuman = "talk_to_human";
     public const string OpenForm = "open_form";
 
+    /// <summary>A free choice from <c>show_choices</c> (e.g. a delivery zone): the label is the customer's answer, for the AI.</summary>
+    public const string Choose = "choose";
+
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
     {
-        Buy, Options, Similar, PickVariant, ConfirmSummary, EditSummary, MoreProducts, TalkToHuman, OpenForm,
+        Buy, Options, Similar, PickVariant, ConfirmSummary, EditSummary, MoreProducts, TalkToHuman, OpenForm, Choose,
+    };
+
+    /// <summary>Taps code answers even while the team has the conversation (ADR 0032 §7).</summary>
+    public static readonly IReadOnlySet<string> CodeAnswersForTeam = new HashSet<string>(StringComparer.Ordinal)
+    {
+        Options, PickVariant,
     };
 
     /// <summary>Buttons a product card may have.</summary>

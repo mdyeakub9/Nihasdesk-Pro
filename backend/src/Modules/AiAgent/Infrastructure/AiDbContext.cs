@@ -39,6 +39,8 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
 
     public DbSet<KnowledgeSite> Sites => Set<KnowledgeSite>();
 
+    public DbSet<OrderDraft> Drafts => Set<OrderDraft>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -68,6 +70,7 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             run.Property(r => r.Model).HasMaxLength(AiRun.ModelMaxLength);
             run.Property(r => r.Detail).HasMaxLength(AiRun.DetailMaxLength);
             LowerCaseText(run.Property(r => r.Outcome));
+            LowerCaseText(run.Property(r => r.Source));
             // Limits count replies per workspace per day and per conversation per hour.
             run.HasIndex(r => new { r.TenantId, r.CreatedAt });
             run.HasIndex(r => new { r.ConversationId, r.CreatedAt });
@@ -182,6 +185,34 @@ internal sealed class AiDbContext(DbContextOptions<AiDbContext> options, ITenant
             memory.HasIndex(m => new { m.TenantId, m.ContactId });
             // The job looks for due summaries every few seconds; almost none are.
             memory.HasIndex(m => m.SummaryDueAt).HasFilter("summary_due_at IS NOT NULL");
+        });
+
+        modelBuilder.Entity<OrderDraft>(draft =>
+        {
+            draft.ToTable("order_drafts");
+            draft.Property(d => d.Id).ValueGeneratedNever();
+            draft.Property(d => d.LastQuery).HasMaxLength(OrderDraft.QueryMaxLength);
+            draft.Property(d => d.SummaryHash).HasMaxLength(OrderDraft.SummaryHashLength).IsFixedLength();
+            draft.Property(d => d.ChosenValues).HasDefaultValueSql("'{}'::text[]");
+            draft.Property(d => d.ShownProductIds).HasDefaultValueSql("'{}'::uuid[]");
+            draft.Property(d => d.Lines)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    lines => JsonSerializer.Serialize(lines, TraceJson),
+                    json => JsonSerializer.Deserialize<List<DraftLine>>(json, TraceJson) ?? new List<DraftLine>(),
+                    new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<DraftLine>>(
+                        (a, b) => a!.SequenceEqual(b!), l => l.Aggregate(0, (h, x) => HashCode.Combine(h, x)), l => l.ToList()));
+            draft.Property(d => d.Summary)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    summary => JsonSerializer.Serialize(summary, TraceJson),
+                    json => JsonSerializer.Deserialize<DraftSummary>(json, TraceJson));
+            // One draft per conversation (owner decision B).
+            draft.HasIndex(d => new { d.TenantId, d.ConversationId }).IsUnique();
+            // Erasure finds a contact's drafts (SEC-45).
+            draft.HasIndex(d => new { d.TenantId, d.ContactId });
+            // The retention job removes old drafts.
+            draft.HasIndex(d => d.UpdatedAt);
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);

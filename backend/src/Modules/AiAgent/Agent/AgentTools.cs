@@ -49,7 +49,7 @@ internal static class KnowledgeSources
 /// also remembers which prices tools returned, for the reply check (SEC-38), and which knowledge
 /// the answer used.
 /// </summary>
-internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, IContactOrders contactOrders, IContactProfile profiles, AiDbContext db, KnowledgeSearch documents)
+internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, IContactOrders contactOrders, IContactProfile profiles, AiDbContext db, KnowledgeSearch documents)
 {
     public const int ProfileOrders = 3;
 
@@ -109,11 +109,17 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
         Tool("get_customer_profile",
             "About the customer you are talking to: first name, language and their last 3 orders and order requests (number, status, date). Use it when they ask about their order or earlier orders. Status: pending = waiting for the shop to confirm, confirmed, rejected.",
             """{"type":"object","properties":{},"additionalProperties":false}"""),
+        Tool(ShowProductsTool,
+            "Show products to the customer as cards they can swipe, each with the current price and buttons 'I want it', 'Sizes and colours' and 'Similar'. Use it whenever you suggest or list products, instead of writing them in your message: then write only one short line (no product list, no prices). Only ids from search_products or get_product_options in this conversation turn.",
+            """{"type":"object","properties":{"product_ids":{"type":"array","minItems":1,"maxItems":10,"items":{"type":"string"},"description":"Product ids, best first"},"intro":{"type":"string","description":"Optional short line shown above the cards"},"match_labels":{"type":"array","maxItems":10,"items":{"type":"string","enum":["likely","similar"]},"description":"Optional, one per product: 'similar' when it is only close to what the customer asked for"}},"required":["product_ids"],"additionalProperties":false}"""),
+        Tool(ShowChoicesTool,
+            "Offer the customer short choices as buttons under your message (ask the question in your message; e.g. the delivery zones from get_shipping_options). Not for product sizes or colours (the product cards do that). Every choice must be a value a tool returned in this turn, at most 20 characters.",
+            """{"type":"object","properties":{"options":{"type":"array","minItems":1,"maxItems":13,"items":{"type":"string"}}},"required":["options"],"additionalProperties":false}"""),
     ];
 
-    /// <summary>The team's AI assistant only reads (ADR 0023): no handoff, no orders, no leads.</summary>
+    /// <summary>The team's AI assistant only reads (ADR 0023): no handoff, no orders, no leads, nothing sent to the customer.</summary>
     public static readonly IReadOnlyList<LlmTool> ReadOnlyDefinitions =
-        [.. Definitions.Where(t => t.Name is not ("handoff_to_human" or "create_order_request"))];
+        [.. Definitions.Where(t => t.Name is not ("handoff_to_human" or "create_order_request" or ShowProductsTool or ShowChoicesTool))];
 
     /// <summary><paramref name="readOnly"/>: tools that change something are refused, whatever the model asks.</summary>
     public async Task<ToolOutcome> RunAsync(LlmToolCall call, CancellationToken ct, bool readOnly = false)
@@ -135,7 +141,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
             return Error("Arguments must be an object.");
         }
 
-        return call.Name switch
+        var outcome = call.Name switch
         {
             "search_products" => await SearchProductsAsync(args, ct),
             "get_product_options" => await ProductOptionsAsync(args, ct),
@@ -145,8 +151,18 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
             "quote_order" => await QuoteOrderAsync(args, ct),
             "create_order_request" when !readOnly => await CreateOrderRequestAsync(args, ct),
             "handoff_to_human" when !readOnly => Handoff(args),
+            ShowProductsTool when !readOnly => ShowProducts(args),
+            ShowChoicesTool when !readOnly => ShowChoices(args),
             _ => Error("Unknown tool."),
         };
+
+        if (call.Name is not (ShowProductsTool or ShowChoicesTool))
+        {
+            // What tools said this turn: show_choices may offer only values from here (ADR 0032 §5).
+            _toolText.Append(outcome.Json).Append('\n');
+        }
+
+        return outcome;
     }
 
     private async Task<ToolOutcome> SearchProductsAsync(JsonElement args, CancellationToken ct)
@@ -157,6 +173,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
         }
 
         var products = await catalog.SearchAsync(query, 5, ct);
+        Seen(products, query);
         return Result(new
         {
             products = products.Select(p => new
@@ -209,6 +226,7 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
             return Error("Product not found.");
         }
 
+        Seen([product], query: null);
         return Result(new
         {
             id = product.Id,
@@ -385,6 +403,13 @@ internal sealed class AgentTools(ICatalog catalog, IShippingRates shipping, IOrd
 
         var order = created.Value;
         OrderNumber = order.Number;
+
+        // The request now holds the order: the draft and any delivery details in it go (SEC-44).
+        if (await db.Drafts.SingleOrDefaultAsync(d => d.ConversationId == conversationId, ct) is { } draft)
+        {
+            db.Drafts.Remove(draft);
+        }
+
         return Result(new
         {
             ok = true,

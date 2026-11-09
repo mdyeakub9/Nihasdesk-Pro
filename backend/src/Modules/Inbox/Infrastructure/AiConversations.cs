@@ -39,12 +39,27 @@ internal sealed class AiConversations(
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        if (!conversation.AiAnswers || !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
+        if (!CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
         {
             return null;
         }
 
-        return await ContextAsync(conversation, historySize, cancellationToken);
+        if (conversation.AiAnswers)
+        {
+            return await ContextAsync(conversation, historySize, cancellationToken);
+        }
+
+        if (!conversation.AiEnabled)
+        {
+            return null;
+        }
+
+        // The team has it: only a tap on product options is still answered, by code (ADR 0032 §7).
+        var context = await ContextAsync(conversation, historySize, cancellationToken);
+        var last = context.Messages.Count > 0 ? context.Messages[^1] : null;
+        return last is { Author: "customer", Tap: { } tap } && RichAction.CodeAnswersForTeam.Contains(tap.Action)
+            ? context with { CodeOnly = true }
+            : null;
     }
 
     public async Task<AiConversation?> HistoryAsync(Guid conversationId, int historySize, CancellationToken cancellationToken)
@@ -62,8 +77,9 @@ internal sealed class AiConversations(
             .OrderByDescending(m => m.SentAt)
             .ThenByDescending(m => m.Id)
             .Take(historySize)
-            .Select(m => new { m.Id, m.Author, m.Text, m.SentAt, HasMedia = db.Attachments.Any(a => a.MessageId == m.Id) })
+            .Select(m => new { m.Id, m.Author, m.Text, m.SentAt, m.ActionId, HasMedia = db.Attachments.Any(a => a.MessageId == m.Id) })
             .ToListAsync(cancellationToken);
+        var taps = await TapsAsync([.. history.Where(m => m.ActionId is not null).Select(m => m.ActionId!.Value)], cancellationToken);
         var aiHasReplied = await db.Messages.AnyAsync(m => m.ConversationId == conversation.Id && m.Author == MessageAuthor.Ai && !m.Internal, cancellationToken);
 
         return new AiConversation(
@@ -76,27 +92,68 @@ internal sealed class AiConversations(
                 m.Text.Length > 0 ? m.Text : AiHistoryMessage.MediaOnlyText,
                 m.SentAt,
                 m.Id,
-                m.HasMedia)).ToList());
+                m.HasMedia,
+                m.ActionId is { } actionId ? taps.GetValueOrDefault(actionId) : null)).ToList());
+    }
+
+    /// <summary>What each tapped button acts on, read from this workspace's own rows (ADR 0032 §3).</summary>
+    private async Task<Dictionary<Guid, AiTap>> TapsAsync(List<Guid> actionIds, CancellationToken ct)
+    {
+        if (actionIds.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await db.MessageActions.AsNoTracking()
+            .Where(a => actionIds.Contains(a.Id))
+            .Select(a => new
+            {
+                a.Id,
+                a.Action,
+                a.ProductId,
+                a.VariantId,
+                a.Value,
+                FromTeam = db.Messages.Any(m => m.Id == a.MessageId && m.Author == MessageAuthor.Agent),
+            })
+            .ToListAsync(ct);
+        return rows.ToDictionary(a => a.Id, a => new AiTap(a.Action, a.ProductId, a.VariantId, a.Value, a.FromTeam));
     }
 
     public async Task<bool> ReplyAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken) =>
         await ReplyWithIdsAsync(conversationId, messages, cancellationToken) is not null;
 
-    public async Task<IReadOnlyList<Guid>?> ReplyWithIdsAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<Guid>?> ReplyWithIdsAsync(Guid conversationId, IReadOnlyList<string> messages, CancellationToken cancellationToken) =>
+        ReplyRichAsync(conversationId, [.. messages.Select(m => new AiReply(m))], codeOnly: false, cancellationToken);
+
+    public async Task<IReadOnlyList<Guid>?> ReplyRichAsync(Guid conversationId, IReadOnlyList<AiReply> messages, bool codeOnly, CancellationToken cancellationToken)
     {
         var conversation = await db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
         var now = time.GetUtcNow();
-        // The team may have taken over while the AI was thinking: then the AI stays silent.
-        if (conversation is null || !conversation.AiAnswers || !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
+        // The team may have taken over while the AI was thinking: then the AI stays silent. Tap code may
+        // still answer product options in a team conversation (ADR 0032 §7), and nothing else.
+        if (conversation is null
+            || !(conversation.AiAnswers || (codeOnly && conversation.AiEnabled))
+            || !CustomerWindow.IsOpen(conversation.Channel, conversation.LastInboundAt, now))
         {
             return null;
         }
 
+        if (codeOnly && messages.Any(m => m.Rich is not null && m.Rich.QuickReplies is null))
+        {
+            throw new InvalidOperationException("Tap code answers a team conversation only with options.");
+        }
+
         var ids = new List<Guid>();
         var sentAt = now;
-        foreach (var text in messages)
+        foreach (var reply in messages)
         {
-            var message = Message.FromAi(tenant.TenantId, conversation.Id, text, sentAt);
+            var message = Message.FromAi(tenant.TenantId, conversation.Id, reply.Text, sentAt);
+            if (reply.Rich is { } rich)
+            {
+                // Checked against the limits of ADR 0032 §1: content that breaks one is never stored.
+                message.AttachRich(rich.Kind, RichContentJson.Serialize(rich));
+            }
+
             db.Messages.Add(message);
             ids.Add(message.Id);
             conversation.RepliedByAi(message);

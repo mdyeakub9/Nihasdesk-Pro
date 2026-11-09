@@ -139,7 +139,10 @@ for (var i = 0; i < cases.Count; i++)
             shopFacts,
             outcome switch
             {
-                "reply" => $"Replied to the customer: {reply}",
+                "reply" => turn.TryGetProperty("shown", out var shown) && shown.ValueKind == JsonValueKind.Array && shown.GetArrayLength() > 0
+                    // show_products / show_choices: the cards or buttons are part of what the customer sees (ADR 0032).
+                    ? $"Replied to the customer: {reply}\nWith these buttons or product cards (name · current price from the catalog): {string.Join("; ", shown.EnumerateArray().Select(s => s.GetString()))}"
+                    : $"Replied to the customer: {reply}",
                 "handoff" => $"Handed the conversation to the team (reason: {handoff}).",
                 _ => $"Its draft was held back by the reply check ({blocked}); the team answers instead.",
             },

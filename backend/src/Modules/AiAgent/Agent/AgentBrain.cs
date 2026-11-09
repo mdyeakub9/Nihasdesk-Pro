@@ -39,12 +39,19 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
     /// <paramref name="readOnly"/>: the team's assistant (ADR 0023) gets only the tools that read.
     /// <paramref name="summary"/>: the conversation's older part; <paramref name="history"/> is the part within the budget.
     /// </summary>
-    public async Task<Thought> ThinkAsync(string systemPrompt, IReadOnlyList<AiHistoryMessage> history, CancellationToken ct, bool readOnly = false, string? summary = null)
+    public async Task<Thought> ThinkAsync(
+        string systemPrompt, IReadOnlyList<AiHistoryMessage> history, CancellationToken ct, bool readOnly = false, string? summary = null, string? orderSoFar = null)
     {
         var messages = new List<LlmMessage> { LlmMessage.System(systemPrompt) };
         if (summary is not null)
         {
             messages.Add(LlmMessage.System(Prompt.Memory(summary)));
+        }
+
+        // Written by code from the catalog (ADR 0032 §4), so it is shop data, not customer text.
+        if (orderSoFar is not null)
+        {
+            messages.Add(LlmMessage.System(orderSoFar));
         }
 
         messages.AddRange(history.Select(m => m.Author == "customer" ? LlmMessage.User(m.Text) : LlmMessage.Assistant(m.Text)));
@@ -88,7 +95,9 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
                     reply = await InCustomersLanguageAsync(reply!, language, ct);
                 }
 
-                var blocked = Guardrails.Check(reply, tools.AllowedPrices);
+                // Products belong in cards, not in text (ADR 0032 §5); the team's assistant can't send cards.
+                var blocked = Guardrails.Check(reply, tools.AllowedPrices)
+                    ?? (!readOnly && tools.ProductsNamedIn(reply!) > Guardrails.MaxProductsInText ? "products_in_text" : null);
                 check = blocked ?? RunTraces.Passed;
                 return blocked is not null ? Done(blocked: blocked) : Done(reply: reply);
             }
