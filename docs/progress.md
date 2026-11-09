@@ -3,6 +3,7 @@
 Weekly, 3–5 lines: done, blocked, decisions.
 
 ## 2026-W46
+- Requirements (PRD v0.9, ADR 0031 proposed): customer media. Photos, voice notes, video and files are downloaded from Meta, checked and kept, and shown in the inbox; the team can send images; voice notes are transcribed and answered; the AI sorts photos (product / complaint / payment screenshot / unclear) and matches products with the catalog's images, always asking "is it this one?"; product images in the catalog and CSV import. Build order: media in the inbox → voice → product images → photo understanding. Issues #53, #55 and #56 are paused until after this.
 - Customer media (Issue #84 PR 1, ADR 0031): Messenger photos, voice notes, video and files are parsed into `inbox.message_attachments`; a Workers job downloads them from Meta's CDN only, checks the type by content, re-encodes images with SkiaSharp (no EXIF or GPS, 40 MP limit, thumbnail and AI copy) and keeps them; team members read them through `GET /api/v1/media/{id}`. The AI hands off when any message of the turn has media. Decided: other types are refused and not kept; the dashboard refreshes while media is pending, as Workers has no SignalR. No screen yet (PR 2), so media messages look empty until then; sending and retention come in PR 3. Not tried on real Messenger media; HEIC not tested.
 
 ## 2026-W45
