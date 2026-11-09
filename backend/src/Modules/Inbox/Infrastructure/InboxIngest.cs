@@ -35,9 +35,26 @@ internal sealed class InboxIngest(
             return new InboundResult(conversation.Id, knownId, Duplicate: true);
         }
 
-        var stored = Message.FromCustomer(tenant.TenantId, conversation.Id, message.Text, message.ExternalMessageId, sentAt);
+        var now = time.GetUtcNow();
+        var media = message.Attachments ?? [];
+        var kinds = media.Select(a => KindOf(a.Kind)).ToList();
+        var stored = kinds.Count == 0
+            ? Message.FromCustomer(tenant.TenantId, conversation.Id, message.Text, message.ExternalMessageId, sentAt)
+            : Message.FromCustomerWithMedia(tenant.TenantId, conversation.Id, message.Text, kinds[0], message.ExternalMessageId, sentAt);
         db.Messages.Add(stored);
-        conversation.Received(stored, message.ConnectionId, time.GetUtcNow());
+        // Saved with the message, so a repeated webhook can't add them twice (it stops at the check above).
+        for (var i = 0; i < media.Count; i++)
+        {
+            var attachment = MessageAttachment.Incoming(tenant.TenantId, stored.Id, i, kinds[i], Usable(media[i].SourceUrl), now);
+            if (attachment.SourceUrl is null)
+            {
+                attachment.Failed(AttachmentFailure.Expired);
+            }
+
+            db.Attachments.Add(attachment);
+        }
+
+        conversation.Received(stored, message.ConnectionId, now);
         try
         {
             await db.SaveChangesAsync(cancellationToken);
@@ -56,6 +73,19 @@ internal sealed class InboxIngest(
         await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, cancellationToken);
         return new InboundResult(conversation.Id, stored.Id, Duplicate: false);
     }
+
+    private static AttachmentKind KindOf(string kind) => kind switch
+    {
+        InboundAttachmentKind.Image => AttachmentKind.Image,
+        InboundAttachmentKind.Audio => AttachmentKind.Audio,
+        InboundAttachmentKind.Video => AttachmentKind.Video,
+        InboundAttachmentKind.File => AttachmentKind.File,
+        InboundAttachmentKind.Sticker => AttachmentKind.Sticker,
+        _ => throw new ArgumentException($"Unknown attachment kind '{kind}'.", nameof(kind)),
+    };
+
+    private static string? Usable(string? url) =>
+        string.IsNullOrEmpty(url) || url.Length > MessageAttachment.SourceUrlMaxLength ? null : url;
 
     private async Task<Conversation> FindOrStartAsync(Guid contactId, string channel, Guid? connectionId, DateTimeOffset now, CancellationToken cancellationToken)
     {

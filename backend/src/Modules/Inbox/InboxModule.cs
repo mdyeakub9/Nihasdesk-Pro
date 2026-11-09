@@ -5,9 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
+using Nihasdesk.Infrastructure.Storage;
 using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.Modules.Inbox.Features.Conversations;
+using Nihasdesk.Modules.Inbox.Features.Media;
 using Nihasdesk.Modules.Inbox.Features.Notes;
 using Nihasdesk.Modules.Inbox.Features.Products;
 using Nihasdesk.Modules.Inbox.Features.SavedReplies;
@@ -43,18 +45,31 @@ public sealed class InboxModule : IModule
         services.AddScoped<IValidator<SavedReplyRequest>, SavedReplyValidator>();
         services.AddScoped<ProductMessagesHandler>();
         services.AddScoped<IValidator<SendProductsRequest>, SendProductsValidator>();
+        AddMedia(services, configuration);
     }
 
-    /// <summary>Workers: the AI's summary job reads messages. Replies and SignalR stay in the API.</summary>
+    /// <summary>Workers: the AI's summary job reads messages, and media is downloaded here. Replies and SignalR stay in the API.</summary>
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddModuleDbContext<InboxDbContext>(configuration, InboxDbContext.Schema);
         services.AddScoped<IAiMessageReader, AiMessageReader>();
+        AddMedia(services, configuration);
+        services.AddHostedService(sp => sp.GetRequiredService<MediaDownloadProcessor>());
+    }
+
+    /// <summary>In the API too, without running: tests run the job step by step, and the API serves the files.</summary>
+    private static void AddMedia(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<InboxMediaOptions>().Bind(configuration.GetSection(InboxMediaOptions.SectionName));
+        services.AddFileStore(configuration);
+        services.AddScoped<MediaDownloader>();
+        services.AddSingleton<MediaDownloadProcessor>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         ConversationEndpoints.Map(endpoints);
+        MediaEndpoints.Map(endpoints);
         NoteEndpoints.Map(endpoints);
         SavedReplyEndpoints.Map(endpoints);
         ProductMessageEndpoints.Map(endpoints);

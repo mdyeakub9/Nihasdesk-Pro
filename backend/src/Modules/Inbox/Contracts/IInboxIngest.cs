@@ -9,6 +9,7 @@ namespace Nihasdesk.Modules.Inbox.Contracts;
 /// <param name="ContactName">Profile name from the channel, if any.</param>
 /// <param name="ExternalMessageId">The channel's message ID; repeats are ignored.</param>
 /// <param name="ConnectionId">The channel connection (e.g. Facebook Page) that received it; replies go out through it.</param>
+/// <param name="Attachments">Media of the message; with them <paramref name="Text"/> may be empty.</param>
 public sealed record InboundMessage(
     string Channel,
     string ExternalContactId,
@@ -16,7 +17,22 @@ public sealed record InboundMessage(
     string Text,
     string? ExternalMessageId,
     DateTimeOffset SentAt,
-    Guid? ConnectionId = null);
+    Guid? ConnectionId = null,
+    IReadOnlyList<InboundAttachment>? Attachments = null);
+
+/// <summary>Media as the channel announced it. The Workers job downloads and checks it (ADR 0031 §2).</summary>
+/// <param name="Kind">One of <see cref="InboundAttachmentKind"/>.</param>
+/// <param name="SourceUrl">Where the channel offers it; null when the channel gave no usable link.</param>
+public sealed record InboundAttachment(string Kind, string? SourceUrl);
+
+public static class InboundAttachmentKind
+{
+    public const string Image = "image";
+    public const string Audio = "audio";
+    public const string Video = "video";
+    public const string File = "file";
+    public const string Sticker = "sticker";
+}
 
 public sealed record InboundResult(Guid ConversationId, Guid MessageId, bool Duplicate);
 

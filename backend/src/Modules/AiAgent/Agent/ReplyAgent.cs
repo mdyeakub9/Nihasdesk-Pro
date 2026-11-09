@@ -94,7 +94,7 @@ internal sealed partial class ReplyAgent(
     TimeProvider time,
     ILogger<ReplyAgent> logger)
 {
-    public const string AttachmentText = "[attachment]";
+    public const string AttachmentText = AiHistoryMessage.MediaOnlyText;
 
     private AiOptions Options => options.Value;
 
@@ -143,13 +143,14 @@ internal sealed partial class ReplyAgent(
             return;
         }
 
-        var last = conversation.Messages.LastOrDefault(m => m.Author == "customer");
-        if (last?.Text == AttachmentText)
+        // The whole turn, not only the last message: "photo", then "do you have this?" needs the photo too.
+        if (conversation.Messages.Reverse().TakeWhile(m => m.Author == "customer").Any(m => m.HasMedia || m.Text == AttachmentText))
         {
             await HandOff(RunOutcome.HandedOff, "media", "The customer sent a photo, voice note or file. The AI can't open those yet.");
             return;
         }
 
+        var last = conversation.Messages.LastOrDefault(m => m.Author == "customer");
         var contact = (await contacts.GetAsync([conversation.ContactId], ct)).GetValueOrDefault(conversation.ContactId);
         var shop = await settingsStore.ShopNameAsync(ct);
         // Order requests belong to this conversation; the model never picks one (SEC-36).

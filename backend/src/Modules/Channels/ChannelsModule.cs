@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Nihasdesk.Infrastructure.Http;
 using Nihasdesk.Infrastructure.Modules;
 using Nihasdesk.Infrastructure.Persistence;
 using Nihasdesk.Modules.Channels.Features.Connections;
 using Nihasdesk.Modules.Channels.Features.Webhooks;
 using Nihasdesk.Modules.Channels.Infrastructure;
 using Nihasdesk.Modules.Channels.Infrastructure.Meta;
+using Nihasdesk.Modules.Inbox.Contracts;
 
 namespace Nihasdesk.Modules.Channels;
 
@@ -52,6 +54,17 @@ public sealed class ChannelsModule : IModule
             services.AddHostedService(sp => sp.GetRequiredService<MessengerWebhookProcessor>());
             services.AddHostedService(sp => sp.GetRequiredService<MessengerSender>());
         }
+
+        AddMediaFetchers(services);
+    }
+
+    /// <summary>Workers: the Inbox's download job fetches media through these (ADR 0031 §2). Webhooks and sending stay in the API.</summary>
+    public void AddWorkerServices(IServiceCollection services, IConfiguration configuration) => AddMediaFetchers(services);
+
+    private static void AddMediaFetchers(IServiceCollection services)
+    {
+        services.AddSingleton<SafeHttpClient>();
+        services.AddScoped<IChannelMediaFetcher, MessengerMediaFetcher>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

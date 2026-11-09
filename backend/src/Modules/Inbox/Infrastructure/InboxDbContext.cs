@@ -20,6 +20,8 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
 
     public DbSet<Message> Messages => Set<Message>();
 
+    public DbSet<MessageAttachment> Attachments => Set<MessageAttachment>();
+
     public DbSet<ReadMarker> ReadMarkers => Set<ReadMarker>();
 
     public DbSet<SavedReply> SavedReplies => Set<SavedReply>();
@@ -67,6 +69,29 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             message.HasIndex(m => new { m.TenantId, m.ConversationId, m.ExternalId })
                 .IsUnique()
                 .HasFilter("external_id IS NOT NULL");
+        });
+
+        modelBuilder.Entity<MessageAttachment>(attachment =>
+        {
+            attachment.ToTable("message_attachments");
+            attachment.Property(a => a.Kind)
+                .HasConversion(value => AttachmentText.Of(value), value => AttachmentText.Kind(value))
+                .HasMaxLength(20);
+            attachment.Property(a => a.Status)
+                .HasConversion(value => AttachmentText.Of(value), value => AttachmentText.Status(value))
+                .HasMaxLength(20);
+            attachment.Property(a => a.FailureCode).HasMaxLength(MessageAttachment.FailureCodeMaxLength);
+            attachment.Property(a => a.SourceUrl).HasMaxLength(MessageAttachment.SourceUrlMaxLength);
+            attachment.Property(a => a.ContentType).HasMaxLength(MessageAttachment.ContentTypeMaxLength);
+            attachment.Property(a => a.Sha256).HasMaxLength(MessageAttachment.Sha256Length);
+            attachment.Property(a => a.StorageKey).HasMaxLength(MessageAttachment.StorageKeyMaxLength);
+            attachment.Property(a => a.ThumbnailKey).HasMaxLength(MessageAttachment.StorageKeyMaxLength);
+            attachment.Property(a => a.AiImageKey).HasMaxLength(MessageAttachment.StorageKeyMaxLength);
+            attachment.Property(a => a.FileName).HasMaxLength(MessageAttachment.FileNameMaxLength);
+            attachment.HasOne<Message>().WithMany().HasForeignKey(a => a.MessageId).OnDelete(DeleteBehavior.Cascade);
+            attachment.HasIndex(a => new { a.MessageId, a.Position }).IsUnique();
+            // The download job's queue (ADR 0031 §2).
+            attachment.HasIndex(a => a.NextAttemptAt).HasFilter("status = 'pending'");
         });
 
         modelBuilder.Entity<ReadMarker>(marker =>

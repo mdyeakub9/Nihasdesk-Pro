@@ -4,7 +4,12 @@ namespace Nihasdesk.Modules.Inbox.Contracts;
 public sealed record DueAiReply(Guid TenantId, Guid ConversationId);
 
 /// <summary>One message of the history the AI may see: no internal notes, no team names.</summary>
-public sealed record AiHistoryMessage(string Author, string Text, DateTimeOffset SentAt, Guid Id = default);
+/// <param name="HasMedia">The message has a photo, voice note or file the AI can't see (ADR 0031).</param>
+public sealed record AiHistoryMessage(string Author, string Text, DateTimeOffset SentAt, Guid Id = default, bool HasMedia = false)
+{
+    /// <summary>The text of a message that is only media; also what older messages stored.</summary>
+    public const string MediaOnlyText = "[attachment]";
+}
 
 /// <summary>What the AI needs to answer one conversation, already limited to what it may see (GDPR).</summary>
 public sealed record AiConversation(

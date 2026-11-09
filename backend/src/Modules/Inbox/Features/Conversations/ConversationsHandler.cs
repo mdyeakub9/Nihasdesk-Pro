@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Modules.Contacts.Contracts;
 using Nihasdesk.Modules.Identity.Contracts;
 using Nihasdesk.Modules.Inbox.Domain;
+using Nihasdesk.Modules.Inbox.Features.Media;
 using Nihasdesk.Modules.Inbox.Infrastructure;
 using Nihasdesk.Modules.Inbox.Realtime;
 using Nihasdesk.SharedKernel;
@@ -115,7 +116,13 @@ internal sealed class ConversationsHandler(
 
         var items = page.Take(limit).Reverse().ToList();
         var older = page.Count > limit ? PageCursor.Encode(items[0].SentAt, items[0].Id) : null;
-        return new MessagePageResponse(items.Select(ToResponse).ToList(), older);
+        var ids = items.Select(m => m.Id).ToList();
+        var media = (await db.Attachments.AsNoTracking()
+                .Where(a => ids.Contains(a.MessageId))
+                .OrderBy(a => a.Position)
+                .ToListAsync(ct))
+            .ToLookup(a => a.MessageId);
+        return new MessagePageResponse(items.Select(m => ToResponse(m, [.. media[m.Id].Select(ToResponse)])).ToList(), older);
     }
 
     /// <summary>A reply to the customer. Team notes have their own endpoints (Features/Notes).</summary>
@@ -288,7 +295,26 @@ internal sealed class ConversationsHandler(
             c.LastMessageAt);
     }
 
-    internal static MessageResponse ToResponse(Message m) =>
+    private static AttachmentResponse ToResponse(MessageAttachment a)
+    {
+        var saved = a.Status == AttachmentStatus.Saved;
+        return new AttachmentResponse(
+            a.Id,
+            AttachmentText.Of(a.Kind),
+            AttachmentText.Of(a.Status),
+            a.FailureCode,
+            a.ContentType,
+            a.SizeBytes,
+            a.Width,
+            a.Height,
+            a.FileName,
+            saved ? MediaEndpoints.UrlOf(a.Id) : null,
+            saved && a.ThumbnailKey is not null ? $"{MediaEndpoints.UrlOf(a.Id)}?variant={MediaEndpoints.Thumbnail}" : null);
+    }
+
+    internal static MessageResponse ToResponse(Message m) => ToResponse(m, []);
+
+    private static MessageResponse ToResponse(Message m, IReadOnlyList<AttachmentResponse> attachments) =>
         new(
             m.Id,
             InboxValues.Text(m.Author),
@@ -301,7 +327,8 @@ internal sealed class ConversationsHandler(
             m.MentionedUserIds,
             m.ResolvedAt,
             m.ResolvedByUserId,
-            m.Product is { } p ? new ProductCardResponse(p.ProductId, p.VariantId, p.Title, p.Variant, p.Sku, p.Price, p.Currency) : null);
+            m.Product is { } p ? new ProductCardResponse(p.ProductId, p.VariantId, p.Title, p.Variant, p.Sku, p.Price, p.Currency) : null,
+            attachments);
 
     private sealed class ConversationRow
     {

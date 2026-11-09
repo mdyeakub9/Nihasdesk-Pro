@@ -2,6 +2,9 @@
 
 Weekly, 3–5 lines: done, blocked, decisions.
 
+## 2026-W46
+- Customer media (Issue #84 PR 1, ADR 0031): Messenger photos, voice notes, video and files are parsed into `inbox.message_attachments`; a Workers job downloads them from Meta's CDN only, checks the type by content, re-encodes images with SkiaSharp (no EXIF or GPS, 40 MP limit, thumbnail and AI copy) and keeps them; team members read them through `GET /api/v1/media/{id}`. The AI hands off when any message of the turn has media. Decided: other types are refused and not kept; the dashboard refreshes while media is pending, as Workers has no SignalR. No screen yet (PR 2), so media messages look empty until then; sending and retention come in PR 3. Not tried on real Messenger media; HEIC not tested.
+
 ## 2026-W45
 - Website import screen (Issue #80 PR 2): Settings → Shop knowledge → Your website: enter a domain, confirm it's yours, the main pages come ticked, add them, "Use all for AI" says first how many differences the settings have; delete a site with its pages. Also fixed the old text saying the AI doesn't use sources yet. Real site test still to do.
 - Website import backend (Issue #80 PR 1, ADR 0030): the owner gives a domain, a Workers job reads `robots.txt` and the sitemap or the links, and code chooses the main pages (English and Italian, at most 15). API to add chosen pages as web page sources, use them all and delete a site. No screen yet (PR 2); not tried on a real site.

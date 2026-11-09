@@ -23,11 +23,17 @@ public enum SafeHttpFailure
 
     /// <summary>The server answered with an error status.</summary>
     BadStatus,
+
+    /// <summary>The caller allows only certain hosts, and this URL or a redirect went elsewhere.</summary>
+    HostNotAllowed,
 }
 
-public sealed class SafeHttpException(SafeHttpFailure failure, string message) : Exception(message)
+public sealed class SafeHttpException(SafeHttpFailure failure, string message, int? status = null) : Exception(message)
 {
     public SafeHttpFailure Failure { get; } = failure;
+
+    /// <summary>The HTTP status, for <see cref="SafeHttpFailure.BadStatus"/>.</summary>
+    public int? Status { get; } = status;
 }
 
 public sealed record SafeHttpResponse(Uri FinalUrl, string? ContentType, byte[] Body);
@@ -105,16 +111,25 @@ public sealed class SafeHttpClient : IDisposable
     }
 
     /// <summary>GET with redirects followed by hand, so each hop is checked. Reads at most <paramref name="maxBytes"/>.</summary>
-    public async Task<SafeHttpResponse> GetAsync(Uri url, long maxBytes, CancellationToken ct)
+    public Task<SafeHttpResponse> GetAsync(Uri url, long maxBytes, CancellationToken ct) =>
+        GetAsync(url, maxBytes, allowed: null, TotalTimeout, ct);
+
+    /// <summary>Also refuses every hop that <paramref name="allowed"/> says no to, on top of the checks for all fetches.</summary>
+    public async Task<SafeHttpResponse> GetAsync(Uri url, long maxBytes, Func<Uri, bool>? allowed, TimeSpan totalTimeout, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(url);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeout.CancelAfter(TotalTimeout);
+        timeout.CancelAfter(totalTimeout);
         try
         {
             var current = url;
             for (var hop = 0; ; hop++)
             {
+                if (allowed is not null && !allowed(current))
+                {
+                    throw new SafeHttpException(SafeHttpFailure.HostNotAllowed, "This host isn't allowed here.");
+                }
+
                 await CheckAsync(current, timeout.Token);
                 using var request = new HttpRequestMessage(HttpMethod.Get, current);
                 using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
@@ -132,7 +147,7 @@ public sealed class SafeHttpClient : IDisposable
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new SafeHttpException(SafeHttpFailure.BadStatus, $"The server answered {(int)response.StatusCode}.");
+                    throw new SafeHttpException(SafeHttpFailure.BadStatus, $"The server answered {(int)response.StatusCode}.", (int)response.StatusCode);
                 }
 
                 var body = await ReadLimitedAsync(response.Content, maxBytes, timeout.Token);
