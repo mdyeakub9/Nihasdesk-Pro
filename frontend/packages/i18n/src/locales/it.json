@@ -594,7 +594,8 @@
       "inventoryPolicy": "Se esaurito",
       "trackInventory": "Monitora magazzino",
       "stock": "Disponibili",
-      "requiresShipping": "Richiede spedizione"
+      "requiresShipping": "Richiede spedizione",
+      "photo": "Foto"
     },
     "policy": {
       "deny": "Smetti di vendere",
@@ -642,6 +643,36 @@
       "errors": {
         "noFile": "Scegli prima un file CSV.",
         "notCsv": "Questo non è un file di testo CSV. Salvalo come CSV (UTF-8) e riprova."
+      }
+    },
+    "images": {
+      "title": "Foto ({{count}} di {{max}})",
+      "titleNew": "Foto",
+      "saveFirst": "Salva prima il prodotto, poi aggiungi le foto.",
+      "hint": "JPG, PNG o WebP, fino a 10 MB ciascuna. La prima foto è quella principale: compare nelle schede prodotto. Trascina per cambiare l'ordine.",
+      "add": "Aggiungi foto",
+      "choose": "Scegli le foto",
+      "none": "Ancora nessuna foto.",
+      "uploading_one": "Caricamento di 1 foto…",
+      "uploading_other": "Caricamento di {{count}} foto…",
+      "main": "Principale",
+      "photoNumber": "Foto {{number}}",
+      "moveLeft": "Sposta la foto {{number}} prima",
+      "moveRight": "Sposta la foto {{number}} dopo",
+      "delete": "Elimina la foto {{number}}",
+      "confirmDelete": "Elimina",
+      "useMain": "Foto principale",
+      "status": {
+        "pending": "Download in corso…",
+        "saved": "Salvata",
+        "failed": "Impossibile caricarla"
+      },
+      "errors": {
+        "image_too_large": "Più grande di 10 MB o 40 megapixel.",
+        "image_type_not_allowed": "Solo foto JPG, PNG o WebP.",
+        "too_many_images": "Un prodotto ha al massimo 8 foto.",
+        "image_not_found": "Questa foto non esiste più. Ricarica la pagina.",
+        "failed": "Non è stato possibile salvare la foto. Riprova."
       }
     }
   },

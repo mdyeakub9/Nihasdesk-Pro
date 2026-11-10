@@ -13,10 +13,13 @@ import {
   productStatuses,
   useProduct,
   useSaveProduct,
+  imageSrc,
   type Product,
+  type ProductImage,
   type ProductInput,
 } from './api';
 import { moneyInput, parseMoney } from './money';
+import { ProductImages } from './ProductImages';
 import { canManageCatalog, statusTone } from './roles';
 
 const maxOptions = 3;
@@ -38,6 +41,8 @@ type VariantForm = {
   weightGrams: string;
   requiresShipping: boolean;
   currency: string;
+  /** A photo ID, or empty for the main photo. */
+  imageId: string;
 };
 
 type FormValues = {
@@ -67,6 +72,7 @@ const emptyVariant = (): VariantForm => ({
   weightGrams: '',
   requiresShipping: true,
   currency: 'EUR',
+  imageId: '',
 });
 
 function toForm(product: Product | undefined): FormValues {
@@ -109,6 +115,7 @@ function toForm(product: Product | undefined): FormValues {
       weightGrams: v.weightGrams === null ? '' : String(v.weightGrams),
       requiresShipping: v.requiresShipping,
       currency: v.currency,
+      imageId: v.imageId ?? '',
     })),
   };
 }
@@ -116,7 +123,8 @@ function toForm(product: Product | undefined): FormValues {
 const text = (value: string) => value.trim() || null;
 const integer = (value: string) => (value.trim() ? Number(value) : null);
 
-function toInput(values: FormValues): ProductInput {
+/** `photos` are the saved photo IDs now: one deleted since the form opened goes back to the main photo. */
+function toInput(values: FormValues, photos: ReadonlySet<string>): ProductInput {
   const optionNames = values.optionNames.map((o) => o.name.trim()).filter(Boolean);
   return {
     title: values.title.trim(),
@@ -146,6 +154,7 @@ function toInput(values: FormValues): ProductInput {
       inventoryPolicy: v.inventoryPolicy,
       weightGrams: integer(v.weightGrams),
       requiresShipping: v.requiresShipping,
+      imageId: v.imageId && photos.has(v.imageId) ? v.imageId : null,
     })),
   };
 }
@@ -266,6 +275,7 @@ function ProductForm({ product }: { product: Product | undefined }) {
           weightGrams: whole,
           requiresShipping: z.boolean(),
           currency: z.string().regex(/^[A-Za-z]{3}$/, t('products.errors.currency')),
+          imageId: z.string(),
         }),
       )
       .min(1)
@@ -278,9 +288,11 @@ function ProductForm({ product }: { product: Product | undefined }) {
   const optionNames = useWatch({ control: form.control, name: 'optionNames' });
   const watchedVariants = useWatch({ control: form.control, name: 'variants' });
   const errors = form.formState.errors;
+  const photos = (product?.images ?? []).filter((i) => i.status === 'saved');
+  const savedPhotos = new Set(photos.map((i) => i.id));
 
   const submit = form.handleSubmit((values) =>
-    save.mutate(toInput(values), {
+    save.mutate(toInput(values, savedPhotos), {
       onSuccess: (saved) => {
         if (!product) void navigate(`/products/${saved.id}`, { replace: true });
       },
@@ -374,6 +386,15 @@ function ProductForm({ product }: { product: Product | undefined }) {
             )}
           </Card>
 
+          {product ? (
+            <ProductImages productId={product.id} images={product.images} manage={manage} />
+          ) : (
+            <Card className="flex flex-col gap-2">
+              <h2 className="text-base font-semibold">{t('products.images.titleNew')}</h2>
+              <p className="text-[13px] text-secondary-foreground">{t('products.images.saveFirst')}</p>
+            </Card>
+          )}
+
           <Card className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <h2 className="flex-1 text-base font-semibold">{t('products.sections.options')}</h2>
@@ -459,6 +480,13 @@ function ProductForm({ product }: { product: Product | undefined }) {
                         </Button>
                       )}
                     </div>
+                    {photos.length > 0 && (
+                      <VariantPhoto
+                        photos={photos}
+                        selected={watchedVariants[index]?.imageId ?? ''}
+                        registration={form.register(`variants.${index}.imageId`)}
+                      />
+                    )}
                     {optionNames.length > 0 && (
                       <div className="grid gap-3 md:grid-cols-3">
                         {optionNames.map((option, o) => (
@@ -558,6 +586,45 @@ function ProductForm({ product }: { product: Product | undefined }) {
           </Card>
         </fieldset>
       </form>
+    </div>
+  );
+}
+
+/** Which photo a card shows for this variant: its own, or the product's main photo (ADR 0032 §2). */
+function VariantPhoto({
+  photos,
+  selected,
+  registration,
+}: {
+  photos: ProductImage[];
+  selected: string;
+  registration: UseFormRegisterReturn;
+}) {
+  const { t } = useTranslation();
+  const shown = photos.find((p) => p.id === selected) ?? photos[0];
+  return (
+    <div className="flex items-end gap-3">
+      {shown?.thumbnailUrl && (
+        <img
+          src={imageSrc(shown.thumbnailUrl)}
+          alt=""
+          className="size-9 shrink-0 rounded-md border object-cover"
+        />
+      )}
+      <div className="flex-1 md:max-w-xs">
+        <Field label={t('products.fields.photo')}>
+          {(id) => (
+            <NativeSelect id={id} className="h-9" {...registration}>
+              <option value="">{t('products.images.useMain')}</option>
+              {photos.map((photo, index) => (
+                <option key={photo.id} value={photo.id}>
+                  {t('products.images.photoNumber', { number: index + 1 })}
+                </option>
+              ))}
+            </NativeSelect>
+          )}
+        </Field>
+      </div>
     </div>
   );
 }

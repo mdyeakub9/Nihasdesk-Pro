@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { useSession } from '../session/useSession';
 import { productStatuses, useProducts, type ProductStatus, type ProductSummary } from './api';
 import { formatMoney } from './money';
+import { ProductThumb } from './ProductImages';
 import { canManageCatalog, statusTone } from './roles';
 
 function Price({ product }: { product: ProductSummary }) {
@@ -120,13 +121,18 @@ export function ProductsPage() {
                 {items.map((product) => (
                   <tr key={product.id} className="border-b last:border-b-0 hover:bg-subtle">
                     <td className="px-4 py-3">
-                      <Link to={`/products/${product.id}`} className="font-medium hover:underline">
-                        {product.title}
-                      </Link>
-                      <div className="text-xs text-muted-foreground">
-                        {[product.vendor, product.category ?? product.productType]
-                          .filter(Boolean)
-                          .join(' · ') || product.handle}
+                      <div className="flex items-center gap-3">
+                        <ProductThumb url={product.thumbnailUrl} />
+                        <div className="min-w-0">
+                          <Link to={`/products/${product.id}`} className="font-medium hover:underline">
+                            {product.title}
+                          </Link>
+                          <div className="text-xs text-muted-foreground">
+                            {[product.vendor, product.category ?? product.productType]
+                              .filter(Boolean)
+                              .join(' · ') || product.handle}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">

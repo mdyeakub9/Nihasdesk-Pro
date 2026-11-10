@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Role } from '../session/types';
 import { callsTo, fakeApi, json, problem, testSession } from '../../test/fake-api';
 import { renderApp } from '../../test/render-app';
-import type { Product, ProductSummary } from './api';
+import type { Product, ProductImage, ProductSummary } from './api';
 import { formatMoney, moneyInput, parseMoney } from './money';
 
 const summary = (over: Partial<ProductSummary> = {}): ProductSummary => ({
@@ -21,6 +21,7 @@ const summary = (over: Partial<ProductSummary> = {}): ProductSummary => ({
   currency: 'EUR',
   stock: 16,
   updatedAt: '2026-10-28T10:00:00Z',
+  thumbnailUrl: null,
   ...over,
 });
 
@@ -53,8 +54,10 @@ const bag: Product = {
       weightGrams: 800,
       requiresShipping: true,
       available: true,
+      imageId: null,
     },
   ],
+  images: [],
   createdAt: '2026-10-28T10:00:00Z',
   updatedAt: '2026-10-28T10:00:00Z',
 };
@@ -254,6 +257,150 @@ describe('CSV import', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Check file' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Save it as CSV (UTF-8)');
+  });
+});
+
+const photo = (id: string, position: number): ProductImage => ({
+  id,
+  position,
+  status: 'saved',
+  failureCode: null,
+  width: 800,
+  height: 600,
+  url: `/api/v1/products/p-1/images/${id}`,
+  thumbnailUrl: `/api/v1/products/p-1/images/${id}?size=thumbnail`,
+});
+
+const withPhotos: Product = { ...bag, images: [photo('img-1', 1), photo('img-2', 2)] };
+
+describe('Product photos', () => {
+  it('uploads photos at once and shows the first as the main one', async () => {
+    const fetchMock = catalogApi('owner', {
+      post: { '/api/v1/products/p-1/images': () => json(photo('img-1', 1), 201) },
+    });
+    await renderApp('/products/p-1');
+
+    expect(await screen.findByText('No photos yet.')).toBeInTheDocument();
+    await userEvent.upload(
+      screen.getByLabelText('Choose photos'),
+      new File(['jpeg'], 'bag.jpg', { type: 'image/jpeg' }),
+    );
+
+    const photos = await screen.findByRole('listitem', { name: 'Photo 1' });
+    expect(within(photos).getByRole('img', { name: 'Photo 1' })).toHaveAttribute(
+      'src',
+      '/api/v1/products/p-1/images/img-1?size=thumbnail',
+    );
+    expect(within(photos).getByText('Main')).toBeInTheDocument();
+    expect(callsTo(fetchMock, '/api/v1/products/p-1/images')[0]?.body).toBeInstanceOf(FormData);
+  });
+
+  it('refuses other file types and files over 10 MB before sending them', async () => {
+    const fetchMock = catalogApi('owner');
+    await renderApp('/products/p-1');
+    const user = userEvent.setup({ applyAccept: false });
+
+    await user.upload(await screen.findByLabelText('Choose photos'), [
+      new File(['gif'], 'cat.gif', { type: 'image/gif' }),
+      new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'huge.jpg', { type: 'image/jpeg' }),
+    ]);
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('cat.gif: Only JPG, PNG or WebP photos.');
+    expect(alert).toHaveTextContent('huge.jpg: Larger than 10 MB');
+    expect(callsTo(fetchMock, '/api/v1/products/p-1/images')).toHaveLength(0);
+  });
+
+  it('shows the server’s reason when it refuses a photo', async () => {
+    catalogApi('owner', {
+      post: { '/api/v1/products/p-1/images': () => problem(400, 'catalog.image_type_not_allowed') },
+    });
+    await renderApp('/products/p-1');
+
+    await userEvent.upload(
+      await screen.findByLabelText('Choose photos'),
+      new File(['MZ'], 'program.jpg', { type: 'image/jpeg' }),
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('program.jpg: Only JPG, PNG or WebP photos.');
+  });
+
+  it('moves a photo and deletes one after asking', async () => {
+    const fetchMock = catalogApi('admin', {
+      routes: {
+        'GET /api/v1/products/p-1': () => json(withPhotos),
+        'PUT /api/v1/products/p-1/images/order': () => json([photo('img-2', 1), photo('img-1', 2)]),
+        'DELETE /api/v1/products/p-1/images/img-2': () => new Response(null, { status: 204 }),
+      },
+    });
+    await renderApp('/products/p-1');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Move photo 1 later' }));
+    await waitFor(() =>
+      expect(callsTo(fetchMock, '/api/v1/products/p-1/images/order')[0]?.body).toEqual({
+        imageIds: ['img-2', 'img-1'],
+      }),
+    );
+    const main = await screen.findByRole('listitem', { name: 'Photo 1' });
+    await waitFor(() =>
+      expect(within(main).getByRole('img')).toHaveAttribute('src', expect.stringContaining('img-2')),
+    );
+
+    await userEvent.click(within(main).getByRole('button', { name: 'Delete photo 1' }));
+    expect(callsTo(fetchMock, '/api/v1/products/p-1/images/img-2')).toHaveLength(0);
+    await userEvent.click(within(main).getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(callsTo(fetchMock, '/api/v1/products/p-1/images/img-2')).toHaveLength(1));
+  });
+
+  it('gives a variant its own photo and sends the choice with the product', async () => {
+    const fetchMock = catalogApi('owner', {
+      routes: {
+        'GET /api/v1/products/p-1': () => json(withPhotos),
+        'PUT /api/v1/products/p-1': () => json(withPhotos),
+      },
+    });
+    await renderApp('/products/p-1');
+
+    await userEvent.selectOptions(await screen.findByLabelText('Photo'), 'Photo 2');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(callsTo(fetchMock, '/api/v1/products/p-1').some((c) => c.body)).toBe(true));
+    const body = callsTo(fetchMock, '/api/v1/products/p-1').find((c) => c.body)?.body as {
+      variants: { id: string; imageId: string | null }[];
+    };
+    expect(body.variants).toEqual([expect.objectContaining({ id: 'v-1', imageId: 'img-2' })]);
+  });
+
+  it('asks to save a new product first and lets Members only look', async () => {
+    catalogApi('owner');
+    await renderApp('/products/new');
+    expect(await screen.findByText('Save the product first, then add its photos.')).toBeInTheDocument();
+
+    catalogApi('member', { routes: { 'GET /api/v1/products/p-1': () => json(withPhotos) } });
+    await renderApp('/products/p-1');
+    expect(await screen.findByRole('listitem', { name: 'Photo 1' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add photos' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete photo 1' })).not.toBeInTheDocument();
+  });
+
+  it('shows the main photo in the product list', async () => {
+    catalogApi('owner', {
+      routes: {
+        'GET /api/v1/products': () =>
+          json({
+            items: [summary({ thumbnailUrl: '/api/v1/products/p-1/images/img-1?size=thumbnail' })],
+            nextCursor: null,
+          }),
+      },
+    });
+    await renderApp('/products');
+
+    const table = await screen.findByRole('table', { name: 'Products' });
+    const row = within(table).getByRole('link', { name: 'Classic Leather Bag' }).closest('tr') as HTMLElement;
+    expect(row.querySelector('img')).toHaveAttribute(
+      'src',
+      '/api/v1/products/p-1/images/img-1?size=thumbnail',
+    );
   });
 });
 
