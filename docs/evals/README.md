@@ -25,6 +25,7 @@ Options:
 - `--search-only`: only the search, with the similarity of each hit, to tune `Ai:KnowledgeMinSimilarity` (set it to 0 for this, so nothing is cut). No reply model, no judge, nothing saved.
 - `--judge-model gpt-5`: the grading model. The default is `gpt-5`, a stronger model than the reply model.
 - `--set <path>` / `--shop <path>`: other files.
+- `--dump <path>`: writes every case (reply, tools, verdict) to that file, also when the run is not saved because a case failed. Keep it outside the repository.
 
 The reply model is the API's own setting (`Ai:ReplyModel`, by default `gpt-5-mini`). Change it with `Ai__ReplyModel=...` to compare models.
 

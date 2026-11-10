@@ -206,6 +206,47 @@ public sealed class TapAnswersTests(AuthFixture fixture)
         Assert.Contains(await RunsAsync(shop), r => r.Detail == "products_in_text");
     }
 
+    [Fact]
+    public async Task A_carousel_intro_with_a_price_no_tool_gave_is_held_back_like_the_reply()
+    {
+        var shop = await ShopAsync();
+        var marker = Marker();
+        Api.Ai.Respond = call => !Mine(call, marker) ? FakeAiAnswer.Say("ok") : call.ToolResults.Count switch
+        {
+            0 => FakeAiAnswer.Call("search_products", """{"query":"borsa"}"""),
+            1 => FakeAiAnswer.Call("show_products", JsonSerializer.Serialize(new { product_ids = new[] { shop.BagId }, intro = "Tutte sotto €50!" })),
+            _ => FakeAiAnswer.Say("Ecco 👇"),
+        };
+
+        var psid = await CustomerWritesAsync(shop, $"Borse economiche? {marker}");
+        await Api.RunAiAsync();
+
+        Assert.Contains(await RunsAsync(shop), r => r.Detail == "price_not_from_tool");
+        await Api.SendRepliesAsync();
+        Assert.DoesNotContain(Api.Meta.Sends, s => s.Body.Contains(psid, StringComparison.Ordinal) && s.Body.Contains("€50", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_model_call_that_runs_out_of_tokens_is_tried_once_more_before_handing_over()
+    {
+        var shop = await ShopAsync();
+        var once = Marker();
+        Api.Ai.Respond = call => FakeAiAnswer.Say("Certo, ti aiuto subito.");
+
+        Api.Ai.OutputLimits = 1;
+        var psid = await CustomerWritesAsync(shop, $"Ciao {once}");
+        await Api.RunAiAsync();
+        await Api.SendRepliesAsync();
+        Assert.Equal("Certo, ti aiuto subito.", LastSendTo(psid).GetProperty("message").GetProperty("text").GetString());
+
+        // Twice in a row: the team takes over, as before.
+        Api.Ai.OutputLimits = 2;
+        await CustomerWritesAsync(shop, $"E poi? {Marker()}", psid);
+        await Api.RunAiAsync();
+        Api.Ai.OutputLimits = 0;
+        Assert.Contains(await RunsAsync(shop), r => r.Outcome == RunOutcome.Failed && r.Detail == "output_limit");
+    }
+
     // --- shop and channel -------------------------------------------------------------------------
 
     private sealed record Shop(ApiClient Owner, string Workspace, string PageId, string BagId, string NeroL);

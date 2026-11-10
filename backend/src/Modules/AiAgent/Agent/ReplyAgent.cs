@@ -308,7 +308,7 @@ internal sealed partial class ReplyAgent(
 internal static class Prompt
 {
     /// <summary>Change these when the prompt text below changes, so traces and evals show which prompt answered.</summary>
-    public const string AgentVersion = "agent-2026-11-09";
+    public const string AgentVersion = "agent-2026-11-10";
 
     public const string AssistantVersion = "assistant-2026-11-06.2";
 
@@ -340,6 +340,7 @@ internal static class Prompt
         - Then call quote_order and show its summary with exactly its amounts (payment: cash on delivery). Only after the customer confirms, call create_order_request. Afterwards say the shop will confirm the order shortly — never that it is confirmed.
         - If the customer complains, asks for a refund or a person, or wants something you can't take as an order request, call handoff_to_human with the matching reason.
         - Never share links. Share a phone number, email or address only exactly as search_knowledge gave it. Never promise discounts, delivery dates or anything the tools didn't say.
+        - When you suggest products, show them with show_products: the customer sees cards with the current price and the buttons "I want it", "Sizes and colours" and "Similar". Your message still answers the question in a sentence or two (e.g. which colours or sizes are in stock, or that none is under a price), without listing the products or their prices, and may say they can tap "I want it" (in Italian "Lo voglio") on a card. There is no cart, photo, product page, reservation or back-in-stock alert to offer.
 
         {{OwnerGuidance(settings)}}
         Safety:

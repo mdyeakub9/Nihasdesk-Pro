@@ -33,6 +33,9 @@ internal sealed record Thought(
 /// </summary>
 internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<AiOptions> options)
 {
+    /// <summary>The provider's reason when the model ran out of output tokens before answering.</summary>
+    public const string OutputLimit = "output_limit";
+
     private AiOptions Options => options.Value;
 
     /// <summary>
@@ -71,14 +74,29 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
         Thought Done(string? reply = null, string? handoff = null, string? question = null, string? blocked = null, string? failed = null) =>
             new(reply, handoff, question, blocked, failed, input, output, usedTools, [.. tools.Sources], new RunTrace(calls, check));
 
+        var retried = false;
         for (var round = 0; round <= Options.MaxToolRounds; round++)
         {
             LlmResponse response;
+            var request = new LlmRequest(Options.ReplyModel, messages, round < Options.MaxToolRounds ? offered : [], Options.MaxOutputTokens);
             try
             {
-                response = await llm.CompleteAsync(
-                    new LlmRequest(Options.ReplyModel, messages, round < Options.MaxToolRounds ? offered : [], Options.MaxOutputTokens),
-                    ct);
+                response = await llm.CompleteAsync(request, ct);
+            }
+            catch (LlmException ex) when (ex.Reason == OutputLimit && !retried)
+            {
+                // A reasoning model now and then thinks past its budget and says nothing: one more try
+                // usually answers (eval: about one case per run), instead of handing the customer over.
+                retried = true;
+                calls.Add(new ToolTrace("retry", OutputLimit, string.Empty));
+                try
+                {
+                    response = await llm.CompleteAsync(request, ct);
+                }
+                catch (LlmException again)
+                {
+                    return Done(failed: again.Reason);
+                }
             }
             catch (LlmException ex)
             {
@@ -96,7 +114,10 @@ internal sealed class AgentBrain(ILlmProvider llm, AgentTools tools, IOptions<Ai
                 }
 
                 // Products belong in cards, not in text (ADR 0032 §5); the team's assistant can't send cards.
+                // The carousel's intro reaches the customer too: it is checked like the reply (SEC-38).
+                var intro = tools.PendingRich?.Carousel?.Intro;
                 var blocked = Guardrails.Check(reply, tools.AllowedPrices)
+                    ?? (intro is null ? null : Guardrails.Check(intro, tools.AllowedPrices))
                     ?? (!readOnly && tools.ProductsNamedIn(reply!) > Guardrails.MaxProductsInText ? "products_in_text" : null);
                 check = blocked ?? RunTraces.Passed;
                 return blocked is not null ? Done(blocked: blocked) : Done(reply: reply);

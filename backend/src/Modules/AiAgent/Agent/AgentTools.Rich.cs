@@ -86,7 +86,7 @@ internal sealed partial class AgentTools
         return Result(new
         {
             shown = ids.Count,
-            note = "The cards will be sent right after your message, with current prices and buttons. Write only one short line: no product list, no prices.",
+            note = "The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.",
         });
     }
 

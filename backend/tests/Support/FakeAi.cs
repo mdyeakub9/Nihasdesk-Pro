@@ -28,6 +28,9 @@ public sealed class FakeAi
     /// <summary>When true, every call fails like a provider outage.</summary>
     public bool Fail { get; set; }
 
+    /// <summary>How many of the next calls run out of output tokens before answering (finish reason "length").</summary>
+    public int OutputLimits { get; set; }
+
     internal ILlmProvider Provider => new Adapter(this);
 
     private sealed class Adapter(FakeAi fake) : ILlmProvider
@@ -41,6 +44,12 @@ public sealed class FakeAi
             if (fake.Fail)
             {
                 throw new LlmException("http_503");
+            }
+
+            if (fake.OutputLimits > 0)
+            {
+                fake.OutputLimits--;
+                throw new LlmException("output_limit");
             }
 
             var call = new FakeAiCall(
