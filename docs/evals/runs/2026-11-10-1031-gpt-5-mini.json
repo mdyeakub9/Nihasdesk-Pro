@@ -1,0 +1,2114 @@
+{
+  "startedAt": "2026-11-10T10:31:48.4882537+00:00",
+  "replyModel": "gpt-5-mini",
+  "judgeModel": "gpt-5",
+  "instructionVersion": "agent-2026-11-10.2+5ce51546",
+  "setVersion": 2,
+  "totals": {
+    "cases": 60,
+    "correct": 46,
+    "acceptable": 9,
+    "wrong": 5,
+    "judgeErrors": 0,
+    "handoffCorrect": 54,
+    "madeUpPricesReached": 0,
+    "madeUpFacts": 0,
+    "heldBack": 1,
+    "providerFailures": 0,
+    "averageTokens": 6065,
+    "averageSeconds": 7.1,
+    "recallAt4": "10 / 10 (100%)",
+    "wrongLanguage": 0
+  },
+  "cases": [
+    {
+      "id": "products-01",
+      "topic": "products",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì, ce l'abbiamo: la Borsa a tracolla in pelle è disponibile in nero (5 pezzi in stock). Puoi toccare la scheda per vedere il prezzo e le opzioni o dirmi se la vuoi e la variante — la prendo per te. Vuoi che proceda con l'ordine?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Confirmed availability of the black variant with correct stock and price shown; all facts match shop data.",
+      "tools": [
+        "search_products",
+        "show_products"
+      ],
+      "tokens": 7932,
+      "durationMs": 9623,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"borsa a tracolla nero\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle italiana, cucita a mano. 28 × 20 cm, tracolla regolabile.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8cbf-7a50-8078-0236ef7770b0\",\"options\":[\"Nero\"],\"price\":\"89.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":5},{\"id\":\"01a1c503-8cc0-7837-bfe8-b7f81d464365\",\"options\":[\"Marrone\"],\"price\":\"89.00 EUR\",\"p…"
+        },
+        {
+          "name": "show_products",
+          "arguments": "{\"product_ids\":[\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\"],\"intro\":\"Ecco la borsa a tracolla in nero disponibile:\"}",
+          "result": "{\"shown\":1,\"note\":\"The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-02",
+      "topic": "products",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "We have a leather backpack available in Nero, with 4 units currently in stock. You can tap “Lo voglio” on the card to buy it. Do you want me to reserve one for you or help with sizes/checkout?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Gives correct price, color, and stock but omits the compare-at price (€149.00) mentioned in the expectation.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "search_products",
+        "show_products"
+      ],
+      "tokens": 12210,
+      "durationMs": 14954,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"leather backpack\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"leather bag\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"zaino pelle\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d67-752c-a72f-a255f4d16b1b\",\"title\":\"Zaino in pelle\",\"description\":\"Zaino in pelle con tasca per laptop da 14 pollici.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d67-7a6d-946f-4fb1e2c6feb3\",\"options\":[\"Nero\"],\"price\":\"129.00 EUR\",\"priceBeforeSale\":\"149.00 EUR\",\"available\":true,\"inStock\":4}]},{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle …"
+        },
+        {
+          "name": "show_products",
+          "arguments": "{\"product_ids\":[\"01a1c503-8d67-752c-a72f-a255f4d16b1b\"],\"intro\":\"Here’s the leather backpack\"}",
+          "result": "{\"shown\":1,\"note\":\"The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-03",
+      "topic": "products",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Mi dispiace, la Borsa a tracolla in pelle non è disponibile nella variante Marrone (0 pezzi). È invece disponibile in Nero (5 pezzi) e in Cuoio (3 pezzi). Vuoi scegliere una di queste varianti o preferisci che ti mostri altro?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Correct availability but missing the variant prices (expected to mention €89 Nero and €95 Cuoio).",
+      "tools": [
+        "search_products",
+        "show_products"
+      ],
+      "tokens": 7951,
+      "durationMs": 20316,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"borsa a tracolla marrone\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle italiana, cucita a mano. 28 × 20 cm, tracolla regolabile.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8cbf-7a50-8078-0236ef7770b0\",\"options\":[\"Nero\"],\"price\":\"89.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":5},{\"id\":\"01a1c503-8cc0-7837-bfe8-b7f81d464365\",\"options\":[\"Marrone\"],\"price\":\"89.00 EUR\",\"p…"
+        },
+        {
+          "name": "show_products",
+          "arguments": "{\"product_ids\":[\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\"],\"intro\":\"Ecco la tracolla che cerchi — Tocca la scheda per scegliere colore o acquistare.\"}",
+          "result": "{\"shown\":1,\"note\":\"The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-04",
+      "topic": "products",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Calling up the product for you — it comes in the colours \"Nero\" and \"Blu\", both currently available. Would you like me to show the product cards so you can tap \"Lo voglio\"? \uD83D\uDE0A",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Gave correct colors and availability but omitted the price requested by the expectation.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "search_products",
+        "search_products"
+      ],
+      "tokens": 10266,
+      "durationMs": 10963,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"men's wallet\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"men wallet\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"men's wallet leather\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"portafoglio uomo\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d94-7081-90fb-eae6e395fbeb\",\"title\":\"Portafoglio uomo in pelle\",\"description\":\"Portafoglio da uomo con 8 tasche per carte e portamonete.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d94-71a4-9901-61af8aee82d0\",\"options\":[\"Nero\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":12},{\"id\":\"01a1c503-8d94-7d04-9f2a-d0e5707a0247\",\"options\":[\"Blu\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"availabl…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-05",
+      "topic": "products",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Abbiamo la \"Cintura in pelle\", ma la taglia 110 al momento non è disponibile (in stock: 0). Sono invece disponibili la 90 (4 pezzi) e la 100 (6 pezzi), entrambe a €35.00. Vuoi che ti mostri queste opzioni o preferisci che verifichi con il negozio se possono procurare la 110?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Provides correct availability and price details for sizes 90, 100, and 110 per shop data, in Italian.",
+      "tools": [
+        "search_products"
+      ],
+      "tokens": 4894,
+      "durationMs": 11631,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"cintura taglia 110\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8db1-7fe4-82ea-818cef5543b1\",\"title\":\"Cintura in pelle\",\"description\":\"Cintura in pelle con fibbia in ottone, altezza 3,5 cm.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[\"Taglia\"],\"variants\":[{\"id\":\"01a1c503-8db1-7788-8bb0-792f48686330\",\"options\":[\"90\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":4},{\"id\":\"01a1c503-8db1-78ea-af84-612857e21f2e\",\"options\":[\"100\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStoc…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-06",
+      "topic": "products",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Yes — we have a silk scarf (180 × 70 cm) available in red and blue, both currently in stock. You can tap \"Lo voglio\" on the card to start an order, or tell me which colour you want and I’ll help you with the purchase.",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Mentions the silk scarf with correct size, colors, in-stock status, and shows the correct €35.00 price per shop data.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "search_products",
+        "show_products"
+      ],
+      "tokens": 10591,
+      "durationMs": 13361,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"silk scarf\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"silk\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"sciarpa seta\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8dd6-7be4-b355-96fa7f33447c\",\"title\":\"Sciarpa di seta\",\"description\":\"Sciarpa in pura seta, 180 × 70 cm.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8dd6-7b07-93c6-82c648d3f254\",\"options\":[\"Rosso\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":8},{\"id\":\"01a1c503-8dd6-7e2b-8f6a-93497d3e93af\",\"options\":[\"Blu\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":8}]}],\"note\":nu…"
+        },
+        {
+          "name": "show_products",
+          "arguments": "{\"product_ids\":[\"01a1c503-8dd6-7be4-b355-96fa7f33447c\"], \"intro\":\"We have this silk scarf available:\"}",
+          "result": "{\"shown\":1,\"note\":\"The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-07",
+      "topic": "products",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Il portachiavi in pelle costa €12.00 ed è disponibile (30 pezzi in magazzino). Vuoi che te lo mostri o lo aggiunga a un ordine?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Gives the correct €12.00 price and accurate stock from the shop data, in Italian.",
+      "tools": [
+        "search_products"
+      ],
+      "tokens": 4525,
+      "durationMs": 7082,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"portachiavi\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8dfa-7ebe-8362-6d5cf3f374d9\",\"title\":\"Portachiavi in pelle\",\"description\":\"Portachiavi in pelle con anello in acciaio.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[],\"variants\":[{\"id\":\"01a1c503-8dfa-77fc-8fc4-da460e053e45\",\"options\":[],\"price\":\"12.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":30}]}],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-08",
+      "topic": "products",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": false,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They handed over instead of stating the tote is not on sale, which is allowed but doesn’t answer the question.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "handoff_to_human"
+      ],
+      "tokens": 6598,
+      "durationMs": 7235,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"canvas tote bag\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"tote bag tela\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Do you have the canvas tote bag?\",\"summary\":\"Customer asked if the shop has a canvas tote bag; search_products returned no matches for 'canvas tote bag' or 'tote bag tela'.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-09",
+      "topic": "products",
+      "language": "it",
+      "outcome": "blocked",
+      "reply": null,
+      "handoff": null,
+      "blocked": "price_not_from_tool",
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": false,
+      "grade": "wrong",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "The assistant handed over despite the shop data clearly answering that all bags are over €50.",
+      "tools": [
+        "search_products",
+        "show_products"
+      ],
+      "tokens": 7560,
+      "durationMs": 7988,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"borsa\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle italiana, cucita a mano. 28 × 20 cm, tracolla regolabile.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8cbf-7a50-8078-0236ef7770b0\",\"options\":[\"Nero\"],\"price\":\"89.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":5},{\"id\":\"01a1c503-8cc0-7837-bfe8-b7f81d464365\",\"options\":[\"Marrone\"],\"price\":\"89.00 EUR\",\"p…"
+        },
+        {
+          "name": "show_products",
+          "arguments": "{\"product_ids\":[\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"01a1c503-8d67-752c-a72f-a255f4d16b1b\"], \"intro\":\"Al momento non abbiamo borse sotto €50; ecco le borse disponibili:\"}",
+          "result": "{\"shown\":2,\"note\":\"The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-10",
+      "topic": "products",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Yes — the Cuoio version is €95.00 while the black (Nero) is €89.00, so Cuoio is more expensive. Both variants are currently available. Interested in one of them?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Prices and availability match the shop data and answer the question clearly in English.",
+      "tools": [
+        "search_products"
+      ],
+      "tokens": 4688,
+      "durationMs": 5851,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"cuoio shoulder bag\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle italiana, cucita a mano. 28 × 20 cm, tracolla regolabile.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8cbf-7a50-8078-0236ef7770b0\",\"options\":[\"Nero\"],\"price\":\"89.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":5},{\"id\":\"01a1c503-8cc0-7837-bfe8-b7f81d464365\",\"options\":[\"Marrone\"],\"price\":\"89.00 EUR\",\"p…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-11",
+      "topic": "products",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì — usiamo solo vera pelle italiana conciata al vegetale e lavorata nel nostro laboratorio di Sassari. \uD83D\uDE0A  \nPer curarla: puliscila con un panno morbido e asciutto, evita acqua e solventi; ogni sei mesi applica una crema neutra in piccola quantità. Vuoi che controlli la pelle di un prodotto specifico o ti mando i modelli disponibili?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches shop data exactly and adds accurate care tips from the document without inventing facts.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4741,
+      "durationMs": 7571,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"pelle vera\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"La pelle è vera?\",\"answer\":\"Sì, usiamo solo vera pelle italiana conciata al vegetale, lavorata nel nostro laboratorio di Sassari.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Come si cura la pelle?\\nPulisci la pelle con un panno morbido e asciutto. Non usare acqua né solventi. Una volta ogni sei mesi applica una crema neutra in piccola quantità.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedT…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "products-12",
+      "topic": "products",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Yes — we can engrave initials on wallets for free (up to 3 letters). The engraving adds 2 days to the shipping time. \uD83D\uDE0A\n\nPlease tell me the initials exactly as you want them (max 3 letters) and which wallet you mean, so I can note it on the order.",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurate about free engraving up to 3 letters and +2 days, but doesn’t mention keyrings as in the full policy.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4449,
+      "durationMs": 5442,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"engrave initials wallet engraving personalization\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"Fate incisioni o personalizzazioni?\",\"answer\":\"Sì, su portafogli e portachiavi incidiamo gratis le iniziali (massimo 3 lettere). L'incisione aggiunge 2 giorni alla spedizione.\"}],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-01",
+      "topic": "shipping",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Per Cagliari (Sardegna) la spedizione costa 5.00 EUR; la spedizione è gratuita sopra i 70.00 EUR d'ordine e i tempi indicati sono 1-2 days. Vuoi che ti aiuti a prendere un articolo o ti serve altro sulla spedizione?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Gives the correct Sardegna shipping cost, free threshold, and delivery time in Italian matching shop data.",
+      "tools": [
+        "get_shipping_options"
+      ],
+      "tokens": 4657,
+      "durationMs": 7874,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-02",
+      "topic": "shipping",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Delivery to Milan (zone \"Italia\") takes 2–4 days. Would you like the shipping cost for Milan or help placing an order?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Gave the correct delivery time for Milan per shop data and didn’t add unsupported facts.",
+      "tools": [
+        "get_shipping_options"
+      ],
+      "tokens": 4554,
+      "durationMs": 4565,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-03",
+      "topic": "shipping",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì, spediamo in Germania: rientra nella zona \"Unione Europea\". Il costo di spedizione è 15.00 EUR, non c'è soglia per la spedizione gratuita, e i tempi stimati sono 4-7 days. Vuoi che ti aiuti con un ordine?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Gives accurate EU shipping details for Germany: €15, 4–7 days, no free-shipping threshold, in Italian.",
+      "tools": [
+        "get_shipping_options"
+      ],
+      "tokens": 4714,
+      "durationMs": 6809,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-04",
+      "topic": "shipping",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "At the moment we don’t ship to the USA. We only ship to these zones:\n\n- Sardinia (Sassari, Cagliari, Nuoro, Oristano and all Sardegna): shipping €5.00, free shipping from €70.00, delivery 1–2 days.  \n- Italy (rest of Italy — Milan, Rome, Naples, Turin…): shipping €7.90, free shipping from €99.00, delivery 2–4 days.  \n- European Union (France, Germany, Spain, Austria, Belgium, Netherlands): shipping €15.00, no free-shipping threshold, delivery 4–7 days.\n\nWould you like me to ask the team if they can make an exception or suggest alternatives?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states they don’t ship to the USA and lists exact EU shipping zones, prices, thresholds, and times per shop data.",
+      "tools": [
+        "get_shipping_options"
+      ],
+      "tokens": 4997,
+      "durationMs": 9912,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-05",
+      "topic": "shipping",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Per il resto d'Italia (Milano, Roma, Napoli, Torino…) la spedizione è gratis dagli €99.00 in su; il costo standard è €7.90 e i tempi indicativi sono 2–4 giorni.  \nPer la Sardegna la soglia di spedizione gratuita è diversa: gratis dagli €70.00, costo standard €5.00 e tempi 1–2 giorni. Vuoi che controlli la soglia per un prodotto specifico o il tuo carrello?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Riporta correttamente le soglie di spedizione gratuita, i costi e i tempi secondo i dati del negozio.",
+      "tools": [
+        "get_shipping_options"
+      ],
+      "tokens": 4889,
+      "durationMs": 7505,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-06",
+      "topic": "shipping",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Yes — the leather backpack (Zaino in pelle, Nero, €129.00) ships to Rome with free shipping because orders to Italy have free shipping from €99.00 and this item is €129.00. Want to buy it?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states free shipping threshold for Italy and the backpack price, matching the shop data.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "get_shipping_options",
+        "show_products"
+      ],
+      "tokens": 13543,
+      "durationMs": 13271,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"leather backpack\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"leather backpack translated to italian zaino in pelle\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d67-752c-a72f-a255f4d16b1b\",\"title\":\"Zaino in pelle\",\"description\":\"Zaino in pelle con tasca per laptop da 14 pollici.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d67-7a6d-946f-4fb1e2c6feb3\",\"options\":[\"Nero\"],\"price\":\"129.00 EUR\",\"priceBeforeSale\":\"149.00 EUR\",\"available\":true,\"inStock\":4}]},{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle …"
+        },
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "show_products",
+          "arguments": "{\"product_ids\":[\"01a1c503-8d67-752c-a72f-a255f4d16b1b\"],\"intro\":\"Here’s the leather backpack we found\"}",
+          "result": "{\"shown\":1,\"note\":\"The cards will be sent right after your message, with current prices and buttons. Still answer the question in a sentence or two (e.g. which sizes or colours are in stock), but don't list the products or their prices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-07",
+      "topic": "shipping",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": false,
+      "grade": "wrong",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "The shop data states they ship with a tracked courier, but the assistant handed over instead of answering.",
+      "tools": [
+        "get_shipping_options",
+        "handoff_to_human"
+      ],
+      "tokens": 4839,
+      "durationMs": 7185,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Con che corriere spedite?\",\"summary\":\"Il cliente chiede quale corriere viene usato per le spedizioni; le opzioni di spedizione disponibili non indicano il corriere.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "shipping-08",
+      "topic": "shipping",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "For Sassari (Sardegna) shipping is €5.00. Free shipping for orders from €70.00. Delivery time is 1–2 days. Would you like to add the wallet to your order or know available colours?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "All details (shipping cost €5.00, free over €70.00, 1–2 days) match the shop data for Sassari.",
+      "tools": [
+        "get_shipping_options",
+        "search_products",
+        "search_products"
+      ],
+      "tokens": 9676,
+      "durationMs": 6493,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"wallet\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"portafoglio\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d94-7081-90fb-eae6e395fbeb\",\"title\":\"Portafoglio uomo in pelle\",\"description\":\"Portafoglio da uomo con 8 tasche per carte e portamonete.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d94-71a4-9901-61af8aee82d0\",\"options\":[\"Nero\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":12},{\"id\":\"01a1c503-8d94-7d04-9f2a-d0e5707a0247\",\"options\":[\"Blu\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"availabl…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "returns-01",
+      "topic": "returns",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì — puoi restituire la borsa gratuitamente entro 14 giorni dalla consegna, a condizione che non sia stata usata e abbia ancora l'etichetta. Il rimborso viene emesso entro 7 giorni dal rientro del pacco. Nota: gli articoli in saldo si possono solo cambiare, non rimborsare. Vuoi che ti spieghi come avviare il reso o preferisci parlare con una persona del negozio?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the shop’s return policy exactly in Italian with no extra or incorrect facts.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4759,
+      "durationMs": 5136,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"restituire una borsa se non mi piace\",\"topic\":\"returns\"}",
+          "result": "{\"policy\":{\"returnWithinDaysOfDelivery\":14,\"rules\":\"Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.\"},\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Di che materiale è la fodera delle borse?\\nLe borse hanno la fodera in cotone naturale e le fibbie in ottone.\"},{\"source\":…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "returns-02",
+      "topic": "returns",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "You can return items free within 14 days of delivery, as long as the product hasn’t been used and still has its tags. Refunds are issued within 7 days after we receive the returned package. Sale items can only be exchanged, not refunded. \n\nWould you like help starting a return?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the shop’s return policy exactly and answers in the customer’s language.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4728,
+      "durationMs": 5150,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"How long to return an item\",\"topic\":\"returns\"}",
+          "result": "{\"policy\":{\"returnWithinDaysOfDelivery\":14,\"rules\":\"Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.\"},\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Cosa succede se il corriere non mi trova?\\nIl corriere prova a consegnare due volte. Dopo il secondo tentativo il pacco re…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "returns-03",
+      "topic": "returns",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Di solito il rimborso arriva entro 7 giorni dal rientro del pacco in negozio. Ricordati che il reso è gratuito entro 14 giorni dalla consegna solo se il prodotto non è stato usato e ha ancora l'etichetta; gli articoli in saldo si possono solo cambiare, non rimborsare. Vuoi che ti aiuti con la procedura di reso o con qualcos’altro?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "States refund within 7 days after parcel returns and adds accurate return policy details from shop data in Italian.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4653,
+      "durationMs": 5246,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"reso rimborso tempi dopo il reso quando arriva il rimborso\",\"topic\":\"returns\"}",
+          "result": "{\"policy\":{\"returnWithinDaysOfDelivery\":14,\"rules\":\"Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.\"},\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si può modificare un ordine dopo averlo fatto?\\nSì, entro due ore dall'ordine: scrivi al negozio. Dopo due ore l'ordine è …"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "returns-04",
+      "topic": "returns",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Yes — sale items cannot be refunded, but you can exchange them. Returns (for exchanges) are free within 14 days of delivery if the product is unused and still has its label. Refunds (when applicable) arrive within 7 days of the item coming back, but note that sale items are eligible only for exchange, not refund. \n\nWould you like help starting an exchange for your order?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states that sale items are exchange-only and includes correct return window and conditions per shop policy.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4547,
+      "durationMs": 5773,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"return item bought on sale\",\"topic\":\"returns\"}",
+          "result": "{\"policy\":{\"returnWithinDaysOfDelivery\":14,\"rules\":\"Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "returns-05",
+      "topic": "returns",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì — il reso è gratuito entro 14 giorni dalla consegna, a condizione che il prodotto non sia stato usato e abbia ancora l'etichetta. Il rimborso viene emesso entro 7 giorni dal rientro del pacco. Nota: gli articoli in saldo non vengono rimborsati, si possono solo cambiare. Vuoi che ti aiuti ad avviare il reso?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the return policy exactly and answers in Italian without adding unsupported facts.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4510,
+      "durationMs": 5075,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"reso gratuito\",\"topic\":\"returns\"}",
+          "result": "{\"policy\":{\"returnWithinDaysOfDelivery\":14,\"rules\":\"Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.\"},\"answers\":[{\"question\":\"Fate la confezione regalo?\",\"answer\":\"Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine.\"}],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "returns-06",
+      "topic": "returns",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "customer_asked_for_human",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": false,
+      "grade": "wrong",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They handed over instead of answering with the clear return policy provided in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4539,
+      "durationMs": 5681,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"return after wearing belt for a week\",\"topic\":\"returns\"}",
+          "result": "{\"policy\":{\"returnWithinDaysOfDelivery\":14,\"rules\":\"Reso gratuito entro 14 giorni dalla consegna, se il prodotto non è stato usato e ha ancora l'etichetta. Il rimborso arriva entro 7 giorni dal rientro del pacco. Gli articoli in saldo si possono solo cambiare, non rimborsare.\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"customer_asked_for_human\",\"summary\":\"Customer asks if they can return a belt after wearing it for a week; policy says returns only if not used and with tag within 14 days. They may request an exception.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "payment-01",
+      "topic": "payment",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Al momento accettiamo solo il contrassegno: paghi in contanti al corriere alla consegna. Vuoi che ti aiuti a fare un ordine?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Risponde correttamente in italiano che si paga solo in contrassegno, conforme ai dati del negozio.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4637,
+      "durationMs": 4119,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"pagamento con carta\",\"topic\":\"payment\"}",
+          "result": "{\"policy\":{\"methods\":[\"cash on delivery\"],\"notes\":\"Solo contrassegno: paghi in contanti al corriere alla consegna.\"},\"answers\":[{\"question\":\"Fate la confezione regalo?\",\"answer\":\"Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine.\"},{\"question\":\"La pelle è vera?\",\"answer\":\"Sì, usiamo solo vera pelle italiana conciata al vegetale, lavorata nel nostro laboratorio di Sassari.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Posso aggi…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "payment-02",
+      "topic": "payment",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "We only accept cash on delivery — you pay the courier in cash when your order is delivered. Would you like to place an order with COD or need help with anything else?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states the only payment method is cash on delivery as per shop data, in the customer’s language.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4515,
+      "durationMs": 6068,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"Do you accept PayPal?\",\"topic\":\"payment\"}",
+          "result": "{\"policy\":{\"methods\":[\"cash on delivery\"],\"notes\":\"Solo contrassegno: paghi in contanti al corriere alla consegna.\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "payment-03",
+      "topic": "payment",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Accettiamo solo il contrassegno: paghi in contanti al corriere al momento della consegna. Vuoi che ti metta in contatto con una persona del negozio per chiarire altro?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the shop’s payment policy exactly and is in Italian.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4635,
+      "durationMs": 4325,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"Come si paga?\",\"topic\":\"payment\"}",
+          "result": "{\"policy\":{\"methods\":[\"cash on delivery\"],\"notes\":\"Solo contrassegno: paghi in contanti al corriere alla consegna.\"},\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Posso aggiungere un biglietto per un regalo?\\nSì, aggiungiamo gratis un biglietto scritto a mano con il tuo messaggio: scrivilo nelle note dell'ordine.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si può modificare un ordine dopo averlo fatto?\\nSì, entro…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "payment-04",
+      "topic": "payment",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "We only accept cash on delivery — you pay the courier in cash when the order is delivered. Paying in instalments is not available. Would you like me to connect you with a team member to check for alternatives?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states cash on delivery only and no instalments, matching shop data.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4457,
+      "durationMs": 4348,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"pay in instalments\",\"topic\":\"payment\"}",
+          "result": "{\"policy\":{\"methods\":[\"cash on delivery\"],\"notes\":\"Solo contrassegno: paghi in contanti al corriere alla consegna.\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "payment-05",
+      "topic": "payment",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed over since the data doesn’t specify any fee for cash on delivery.",
+      "tools": [
+        "get_shipping_options",
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 5270,
+      "durationMs": 11375,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\": \"contrassegno costo\", \"topic\": \"payment\"}",
+          "result": "{\"policy\":{\"methods\":[\"cash on delivery\"],\"notes\":\"Solo contrassegno: paghi in contanti al corriere alla consegna.\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Il contrassegno costa qualcosa in più?\",\"summary\":\"Il cliente chiede se il pagamento in contrassegno comporta un costo aggiuntivo; non ci sono informazioni nei documenti tornati dagli strumenti.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "contact-01",
+      "topic": "contact",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Siamo aperti Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso. Vuoi anche l'indirizzo o il numero di telefono per venirci a trovare? \uD83D\uDCCD",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Provided exact opening hours matching shop data in Italian without adding unsupported facts.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4477,
+      "durationMs": 4374,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"orari\",\"topic\":\"contact\"}",
+          "result": "{\"policy\":{\"phone\":\"+39 079 000 0000\",\"email\":\"ciao@bottega-eval.example\",\"address\":\"Via Esempio 1, 07100 Sassari\",\"openingHours\":\"Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso\"},\"answers\":[{\"question\":\"Avete un negozio fisico?\",\"answer\":\"Sì, il nostro laboratorio-negozio è in Via Esempio 1 a Sassari, aperto negli orari indicati.\"}],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "contact-02",
+      "topic": "contact",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Our phone number is +39 079 000 0000. Need anything else or want to place an order?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Provided the exact phone number from shop data in the same language as the customer.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4405,
+      "durationMs": 3610,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"phone\",\"topic\":\"contact\"}",
+          "result": "{\"policy\":{\"phone\":\"+39 079 000 0000\",\"email\":\"ciao@bottega-eval.example\",\"address\":\"Via Esempio 1, 07100 Sassari\",\"openingHours\":\"Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "contact-03",
+      "topic": "contact",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì, abbiamo un laboratorio-negozio in Via Esempio 1, 07100 Sassari. Siamo aperti Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso. Vuoi che ti passo il numero di telefono o l'email per chiedere informazioni su modelli e disponibilità? \uD83D\uDCDE✉️\n\nTelefono: +39 079 000 0000\nEmail: ciao@bottega-eval.example",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Provides correct address and opening hours from shop data; phone and email also match policies.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4783,
+      "durationMs": 4803,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"negozio orari sede mostrare borse\",\"topic\":\"contact\"}",
+          "result": "{\"policy\":{\"phone\":\"+39 079 000 0000\",\"email\":\"ciao@bottega-eval.example\",\"address\":\"Via Esempio 1, 07100 Sassari\",\"openingHours\":\"Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso\"},\"answers\":[{\"question\":\"Avete un negozio fisico?\",\"answer\":\"Sì, il nostro laboratorio-negozio è in Via Esempio 1 a Sassari, aperto negli orari indicati.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Di che materiale è la fodera delle borse?\\nLe borse hanno la fodera in coto…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "contact-04",
+      "topic": "contact",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "We’re closed on Sundays. Our hours are Mon–Sat 9:30–13:00 and 16:00–19:30. If you need anything while we’re closed you can leave a message at +39 079 000 0000 or email ciao@bottega-eval.example — anything I can help with now?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states Sunday closure, correct opening hours, and provides contact details matching shop data.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4459,
+      "durationMs": 4758,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"opening hours Sunday\",\"topic\":\"contact\"}",
+          "result": "{\"policy\":{\"phone\":\"+39 079 000 0000\",\"email\":\"ciao@bottega-eval.example\",\"address\":\"Via Esempio 1, 07100 Sassari\",\"openingHours\":\"Lun–Sab 9:30–13:00 e 16:00–19:30, domenica chiuso\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-01",
+      "topic": "unknown",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed over since wholesale info isn’t in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4664,
+      "durationMs": 5344,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"prezzi all'ingrosso per negozi\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"Avete un negozio fisico?\",\"answer\":\"Sì, il nostro laboratorio-negozio è in Via Esempio 1 a Sassari, aperto negli orari indicati.\"},{\"question\":\"Fate incisioni o personalizzazioni?\",\"answer\":\"Sì, su portafogli e portachiavi incidiamo gratis le iniziali (massimo 3 lettere). L'incisione aggiunge 2 giorni alla spedizione.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Guida del negozio Bottega Eval. Documento inventato …"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Fate prezzi all'ingrosso per negozi?\",\"summary\":\"Cliente chiede se offriamo prezzi all'ingrosso per rivenditori; non ci sono informazioni nel knowledge base.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-02",
+      "topic": "unknown",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed off since loyalty program info isn’t in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4335,
+      "durationMs": 3576,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"loyalty card points programme\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[],\"note\":\"The shop hasn't written this down. Hand off with reason unknown_answer.\"}"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Do you have a loyalty card or a points programme?\",\"summary\":\"Customer asked whether Bottega Eval offers a loyalty card or points programme; knowledge base has no information.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-03",
+      "topic": "unknown",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed off the repair question since repairs aren’t covered in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4806,
+      "durationMs": 6181,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"riparazioni borse comprate tempo fa\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Di che materiale è la fodera delle borse?\\nLe borse hanno la fodera in cotone naturale e le fibbie in ottone.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si può modificare un ordine dopo averlo fatto?\\nSì, entro due ore dall'ordine: scrivi al negozio. Dopo due ore l'ordine è già in preparazione e non si può più cambiare.\"},{\"source\":\"test-shop-guide.txt…"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Riparate anche borse comprate da voi qualche anno fa?\",\"summary\":\"Il cliente chiede se il negozio effettua riparazioni di borse acquistate presso di noi alcuni anni fa; la policy sulle riparazioni non è nel knowledge base.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-04",
+      "topic": "unknown",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed the request to the team as invoicing details aren’t in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4665,
+      "durationMs": 6182,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"invoice with company's VAT number\",\"topic\":\"payment\"}",
+          "result": "{\"policy\":{\"methods\":[\"cash on delivery\"],\"notes\":\"Solo contrassegno: paghi in contanti al corriere alla consegna.\"},\"answers\":[],\"documents\":[],\"note\":null}"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Can I get an invoice with my company's VAT number?\",\"summary\":\"Customer asks if they can receive an invoice with their company's VAT number.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-05",
+      "topic": "unknown",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "The assistant correctly handed over because the product weight isn’t in the shop data.",
+      "tools": [
+        "search_products",
+        "handoff_to_human"
+      ],
+      "tokens": 5334,
+      "durationMs": 4329,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"zaino in pelle\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d67-752c-a72f-a255f4d16b1b\",\"title\":\"Zaino in pelle\",\"description\":\"Zaino in pelle con tasca per laptop da 14 pollici.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d67-7a6d-946f-4fb1e2c6feb3\",\"options\":[\"Nero\"],\"price\":\"129.00 EUR\",\"priceBeforeSale\":\"149.00 EUR\",\"available\":true,\"inStock\":4}]},{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle …"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Quanto pesa lo zaino in pelle?\",\"summary\":\"Cliente chiede il peso dello 'Zaino in pelle' (id 01a1c503-8d67-752c-a72f-a255f4d16b1b). Informazioni prodotto disponibili non indicano il peso; servono dettagli dal magazzino/produttore.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-06",
+      "topic": "unknown",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "I’m not sure — the product info doesn't say whether the \"Zaino in pelle\" is waterproof. I'll ask a team member to confirm. Should I pass this question to a human from the shop?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": false,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Did not provide false info but failed to directly hand over as required; asked for permission instead of handing off.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "search_products",
+        "search_knowledge"
+      ],
+      "tokens": 12075,
+      "durationMs": 10125,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"leather backpack\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"leather bag\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"zaino in pelle\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d67-752c-a72f-a255f4d16b1b\",\"title\":\"Zaino in pelle\",\"description\":\"Zaino in pelle con tasca per laptop da 14 pollici.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d67-7a6d-946f-4fb1e2c6feb3\",\"options\":[\"Nero\"],\"price\":\"129.00 EUR\",\"priceBeforeSale\":\"149.00 EUR\",\"available\":true,\"inStock\":4}]},{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle …"
+        },
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"waterproof zaino in pelle impermeabile\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"La pelle è vera?\",\"answer\":\"Sì, usiamo solo vera pelle italiana conciata al vegetale, lavorata nel nostro laboratorio di Sassari.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Come si cura la pelle?\\nPulisci la pelle con un panno morbido e asciutto. Non usare acqua né solventi. Una volta ogni sei mesi applica una crema neutra in piccola quantità.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedT…"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-07",
+      "topic": "unknown",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed over since discount codes aren’t in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4729,
+      "durationMs": 7043,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"codice sconto primo ordine\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"Fate la confezione regalo?\",\"answer\":\"Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si possono unire due ordini?\\nNo. Due ordini separati vengono preparati e spediti separatamente, anche se arrivano allo stesso indirizzo.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si può modificare un ordine dopo averlo fatt…"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Avete un codice sconto per il primo ordine?\",\"summary\":\"Cliente chiede se esiste un codice sconto per il primo ordine.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "unknown-08",
+      "topic": "unknown",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed the query to the team since pickup info isn’t in the shop data.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4747,
+      "durationMs": 5332,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"pick up order in store\",\"topic\":\"shipping\"}",
+          "result": "{\"policy\":{\"notes\":\"Spediamo con corriere tracciato. Non spediamo fuori dall'Unione Europea.\",\"costs\":\"Use get_shipping_options for costs and delivery times.\"},\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si può modificare un ordine dopo averlo fatto?\\nSì, entro due ore dall'ordine: scrivi al negozio. Dopo due ore l'ordine è già in preparazione e non si può più cambiare.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText…"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"Can I pick up my order at your shop instead of having it shipped?\",\"summary\":\"Customer asks if in-store pickup is possible instead of shipping. No info in knowledge base.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "handoff-01",
+      "topic": "handoff",
+      "language": "it",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "complaint",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Correctly handed off the damaged order complaint to the team without adding facts.",
+      "tools": [
+        "handoff_to_human"
+      ],
+      "tokens": 2155,
+      "durationMs": 1757,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"complaint\",\"summary\":\"Cliente segnala pacco arrivato rovinato e borsa graffiata, chiede di parlare con qualcuno.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "handoff-02",
+      "topic": "handoff",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "customer_asked_for_human",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": true,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "They correctly handed the conversation to a human as requested.",
+      "tools": [
+        "handoff_to_human"
+      ],
+      "tokens": 2194,
+      "durationMs": 2208,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"customer_asked_for_human\",\"summary\":\"Customer asked to speak to a real person.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "order-01",
+      "topic": "order",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Perfetto — ho questi dati: Nome: Giulia Prova; Telefono: 333 000 0001; Indirizzo: Via Prova 5, 07100 Sassari (SS), Italia. Vuoi la Borsa a tracolla in pelle, variante Nero (disponibile). Quale zona di consegna scegli: Sardegna, Italia o Unione Europea?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "No wrong facts, but it should have inferred Sardegna from the address and provided the full order summary and confirmation request.",
+      "tools": [
+        "search_products",
+        "get_product_options",
+        "get_shipping_options",
+        "show_choices"
+      ],
+      "tokens": 13714,
+      "durationMs": 10447,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"borsa a tracolla nera\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle italiana, cucita a mano. 28 × 20 cm, tracolla regolabile.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8cbf-7a50-8078-0236ef7770b0\",\"options\":[\"Nero\"],\"price\":\"89.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":5},{\"id\":\"01a1c503-8cc0-7837-bfe8-b7f81d464365\",\"options\":[\"Marrone\"],\"price\":\"89.00 EUR\",\"p…"
+        },
+        {
+          "name": "get_product_options",
+          "arguments": "{\"product_id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\"}",
+          "result": "{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"options\":[\"Colore\"],\"available\":[{\"id\":\"01a1c503-8cbf-7a50-8078-0236ef7770b0\",\"options\":[\"Nero\"],\"price\":\"89.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":5},{\"id\":\"01a1c503-8cc0-7f6b-8db7-cf9792cb710b\",\"options\":[\"Cuoio\"],\"price\":\"95.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":3}],\"soldOut\":[\"Marrone\"]}"
+        },
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "show_choices",
+          "arguments": "{\"options\":[\"Sardegna\",\"Italia\",\"Unione Europea\"]}",
+          "result": "{\"shown\":3,\"note\":\"The choices will be sent as buttons under your message. Ask the question in your message; don't repeat the choices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "order-02",
+      "topic": "order",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Thanks Marco — blue leather wallet is available (6 in stock). Here’s the order summary for two items to be delivered to Milano (zone: Italia):\n\n- Portafoglio uomo in pelle — Blu — 2 × €39.00 = €78.00\n- Shipping (Italia): €7.90\n- Subtotal: €78.00\n- Total: €85.90\n- Payment: cash on delivery\n\nI have your address as: Via Esempio 10, 20121 Milano MI, Italy and phone +39 333 000 0002. Do you confirm this order?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "All details (item, price, stock, shipping, total, payment) match the shop data and it asks for confirmation as expected.",
+      "tools": [
+        "search_products",
+        "get_product_options",
+        "get_shipping_options",
+        "quote_order"
+      ],
+      "tokens": 11771,
+      "durationMs": 12003,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"blue men's wallet\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d94-7081-90fb-eae6e395fbeb\",\"title\":\"Portafoglio uomo in pelle\",\"description\":\"Portafoglio da uomo con 8 tasche per carte e portamonete.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d94-71a4-9901-61af8aee82d0\",\"options\":[\"Nero\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":12},{\"id\":\"01a1c503-8d94-7d04-9f2a-d0e5707a0247\",\"options\":[\"Blu\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"availabl…"
+        },
+        {
+          "name": "get_product_options",
+          "arguments": "{\"product_id\": \"01a1c503-8d94-7081-90fb-eae6e395fbeb\"}",
+          "result": "{\"id\":\"01a1c503-8d94-7081-90fb-eae6e395fbeb\",\"title\":\"Portafoglio uomo in pelle\",\"options\":[\"Colore\"],\"available\":[{\"id\":\"01a1c503-8d94-71a4-9901-61af8aee82d0\",\"options\":[\"Nero\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":12},{\"id\":\"01a1c503-8d94-7d04-9f2a-d0e5707a0247\",\"options\":[\"Blu\"],\"price\":\"39.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":6}],\"soldOut\":[]}"
+        },
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "quote_order",
+          "arguments": "{\"items\":[{\"product_id\":\"01a1c503-8d94-7081-90fb-eae6e395fbeb\",\"variant_id\":\"01a1c503-8d94-7d04-9f2a-d0e5707a0247\",\"quantity\":2}],\"zone_id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"customer_name\":\"Marco Test\",\"phone\":\"+39 333 000 0002\",\"street\":\"Via Esempio 10\",\"postal_code\":\"20121\",\"city\":\"Milano\",\"province\":\"MI\",\"country\":\"IT\",\"notes\":\"\"}",
+          "result": "{\"summaryWithButtons\":false,\"details\":null,\"lines\":[{\"product\":\"Portafoglio uomo in pelle\",\"variant\":\"Blu\",\"quantity\":2,\"unitPrice\":\"39.00 EUR\",\"lineTotal\":\"78.00 EUR\"}],\"zone\":\"Italia\",\"shipping\":\"7.90 EUR\",\"subtotal\":\"78.00 EUR\",\"total\":\"85.90 EUR\",\"payment\":\"cash on delivery\",\"note\":\"Show this summary with exactly these amounts and ask the customer to confirm before create_order_request.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "order-03",
+      "topic": "order",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Perfetto — riepilogo ordine, confermi?\n\nProdotto: Zaino in pelle (Nero) — 1\nPrezzo unitario: €129.00\nSpedizione (zona: Italia): gratuita\nTotale: €129.00\nPagamento: contrassegno\n\nDestinatario: Luca Prova\nTelefono: 333 000 0003\nIndirizzo: Via delle Prove 3, 00184 Roma (RM), IT\n\nConfermi l'ordine così? (rispondi \"Confermo\" per procedere)",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches product price, free shipping to Italy threshold, total and payment method, and asks for confirmation in Italian.",
+      "tools": [
+        "search_products",
+        "get_shipping_options",
+        "quote_order"
+      ],
+      "tokens": 12669,
+      "durationMs": 8791,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"zaino in pelle\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8d67-752c-a72f-a255f4d16b1b\",\"title\":\"Zaino in pelle\",\"description\":\"Zaino in pelle con tasca per laptop da 14 pollici.\",\"category\":\"Borse\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8d67-7a6d-946f-4fb1e2c6feb3\",\"options\":[\"Nero\"],\"price\":\"129.00 EUR\",\"priceBeforeSale\":\"149.00 EUR\",\"available\":true,\"inStock\":4}]},{\"id\":\"01a1c503-8cb5-79e6-8f28-8e8ad81aacf0\",\"title\":\"Borsa a tracolla in pelle\",\"description\":\"Borsa a tracolla in vera pelle …"
+        },
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "quote_order",
+          "arguments": "{\"items\":[{\"product_id\":\"01a1c503-8d67-752c-a72f-a255f4d16b1b\",\"variant_id\":\"01a1c503-8d67-7a6d-946f-4fb1e2c6feb3\",\"quantity\":1}],\"zone_id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"customer_name\":\"Luca Prova\",\"phone\":\"333 000 0003\",\"street\":\"Via delle Prove 3\",\"postal_code\":\"00184\",\"city\":\"Roma\",\"province\":\"RM\",\"country\":\"IT\"}",
+          "result": "{\"summaryWithButtons\":false,\"details\":null,\"lines\":[{\"product\":\"Zaino in pelle\",\"variant\":\"Nero\",\"quantity\":1,\"unitPrice\":\"129.00 EUR\",\"lineTotal\":\"129.00 EUR\"}],\"zone\":\"Italia\",\"shipping\":\"free\",\"subtotal\":\"129.00 EUR\",\"total\":\"129.00 EUR\",\"payment\":\"cash on delivery\",\"note\":\"Show this summary with exactly these amounts and ask the customer to confirm before create_order_request.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "order-04",
+      "topic": "order",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Sorry — I couldn't find a brown shoulder bag in the catalog. I’ll connect you with a team member who can help locate it or offer alternatives. Would you like me to ask them to help find that exact item? I'll forward: \"Customer wants to order a brown shoulder bag but catalog search returned no matches.\"",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "wrong",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "It should have said the brown variant is sold out and offered black (€89.00) or cuoio (€95.00); instead it handed over and claimed it couldn’t find the item.",
+      "tools": [
+        "search_products",
+        "search_products",
+        "search_products",
+        "search_products"
+      ],
+      "tokens": 9914,
+      "durationMs": 6919,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"brown shoulder bag\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"brown bag\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"brown shoulder\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        },
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"shoulder bag\"}",
+          "result": "{\"products\":[],\"note\":\"No matching products. Try once more with translated or fewer words; don't invent any.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "order-05",
+      "topic": "order",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Perfetto — abbiamo la Sciarpa di seta rossa disponibile a €35.00. Per la spedizione in Germania usiamo la zona \"Unione Europea\" con costo di €15.00 (tempo di consegna stimato 4-7 days). Vuoi procedere con quest'articolo e spedizione?\n\nMi manca solo la provincia (Bundesland) per completare l'indirizzo: qual è la provincia? \uD83D\uDE0A\n\n(Se vuoi vedere il prodotto, puoi toccare la scheda qui sotto.)",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurate item and shipping details, but missed the total and payment method and asked an extra clarification not required by data.",
+      "tools": [
+        "search_products",
+        "get_product_options",
+        "get_shipping_options",
+        "show_choices"
+      ],
+      "tokens": 12361,
+      "durationMs": 15332,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_products",
+          "arguments": "{\"query\":\"sciarpa di seta rossa\"}",
+          "result": "{\"products\":[{\"id\":\"01a1c503-8dd6-7be4-b355-96fa7f33447c\",\"title\":\"Sciarpa di seta\",\"description\":\"Sciarpa in pura seta, 180 × 70 cm.\",\"category\":\"Accessori\",\"brand\":\"Bottega Eval\",\"options\":[\"Colore\"],\"variants\":[{\"id\":\"01a1c503-8dd6-7b07-93c6-82c648d3f254\",\"options\":[\"Rosso\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":8},{\"id\":\"01a1c503-8dd6-7e2b-8f6a-93497d3e93af\",\"options\":[\"Blu\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":8}]}],\"note\":nu…"
+        },
+        {
+          "name": "get_product_options",
+          "arguments": "{\"product_id\":\"01a1c503-8dd6-7be4-b355-96fa7f33447c\"}",
+          "result": "{\"id\":\"01a1c503-8dd6-7be4-b355-96fa7f33447c\",\"title\":\"Sciarpa di seta\",\"options\":[\"Colore\"],\"available\":[{\"id\":\"01a1c503-8dd6-7b07-93c6-82c648d3f254\",\"options\":[\"Rosso\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":8},{\"id\":\"01a1c503-8dd6-7e2b-8f6a-93497d3e93af\",\"options\":[\"Blu\"],\"price\":\"35.00 EUR\",\"priceBeforeSale\":null,\"available\":true,\"inStock\":8}],\"soldOut\":[]}"
+        },
+        {
+          "name": "get_shipping_options",
+          "arguments": "{}",
+          "result": "{\"zones\":[{\"id\":\"01a1c503-8e65-735f-9c5d-9f78295b06dd\",\"zone\":\"Sardegna\",\"areas\":\"Sassari, Cagliari, Nuoro, Oristano e tutta la Sardegna\",\"cost\":\"5.00 EUR\",\"freeShippingFromOrderValue\":\"70.00 EUR\",\"deliveryDays\":\"1-2 days\"},{\"id\":\"01a1c503-8e77-779c-88a5-cc92f171a05e\",\"zone\":\"Italia\",\"areas\":\"Resto d'Italia (Milano, Roma, Napoli, Torino…)\",\"cost\":\"7.90 EUR\",\"freeShippingFromOrderValue\":\"99.00 EUR\",\"deliveryDays\":\"2-4 days\"},{\"id\":\"01a1c503-8e77-7893-9b37-f939c57acc93\",\"zone\":\"Unione Europea\",\"ar…"
+        },
+        {
+          "name": "show_choices",
+          "arguments": "{\"options\":[\"Unione Europea\",\"Italia\",\"Sardegna\"]}",
+          "result": "{\"shown\":3,\"note\":\"The choices will be sent as buttons under your message. Ask the question in your message; don't repeat the choices.\"}"
+        }
+      ],
+      "foundInTop4": null
+    },
+    {
+      "id": "documents-01",
+      "topic": "documents",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Unfortunately we can’t combine two separate orders into a single shipment — each order is prepared and shipped separately, even to the same address. If you need to change or cancel an order, you can request a modification within two hours of placing it by writing to the shop. \n\nWould you like me to check your recent orders and see if one is still editable?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the shop doc: orders can’t be combined; the 2‑hour modification note is accurate and helpful.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4900,
+      "durationMs": 7041,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"combine two orders into one shipment\",\"topic\":\"shipping\"}",
+          "result": "{\"policy\":{\"notes\":\"Spediamo con corriere tracciato. Non spediamo fuori dall'Unione Europea.\",\"costs\":\"Use get_shipping_options for costs and delivery times.\"},\"answers\":[{\"question\":\"Fate la confezione regalo?\",\"answer\":\"Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine.\"},{\"question\":\"Fate incisioni o personalizzazioni?\",\"answer\":\"Sì, su portafogli e portachiavi incidiamo gratis le iniziali (massimo 3 lettere). L'incisione aggiunge 2 giorni alla spedizione.\"}],\"docume…"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-02",
+      "topic": "documents",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì — puoi modificare un ordine solo entro due ore dall'acquisto: scrivi al negozio entro quel termine. Dopo due ore l'ordine è già in preparazione e non si può più cambiare. Vuoi che ti aiuti a contattare il negozio per la modifica?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the shop’s policy exactly and responds in Italian with no extra claims.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4752,
+      "durationMs": 6015,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"cambiare ordine dopo averlo fatto\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"Fate la confezione regalo?\",\"answer\":\"Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si può modificare un ordine dopo averlo fatto?\\nSì, entro due ore dall'ordine: scrivi al negozio. Dopo due ore l'ordine è già in preparazione e non si può più cambiare.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Si possono un…"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-03",
+      "topic": "documents",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "All our products have a 24-month warranty for manufacturing defects. The warranty does not cover normal wear or damage from improper use. Would you like help with a warranty claim or more details?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Accurately states the 24‑month warranty for manufacturing defects and exclusions per shop data.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4485,
+      "durationMs": 4792,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"warranty on bags\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Di che materiale è la fodera delle borse?\\nLe borse hanno la fodera in cotone naturale e le fibbie in ottone.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Quanto dura la garanzia?\\nTutti i prodotti hanno una garanzia di ventiquattro mesi per i difetti di fabbricazione. La garanzia non copre l'usura normale e i danni da uso improprio.\"}],\"note\":null}"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-04",
+      "topic": "documents",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "La garanzia è di 24 mesi per i difetti di fabbricazione, ma NON copre l'usura normale né i danni da uso improprio. Vuoi che controlli qualcosa in particolare sul prodotto o su un difetto che hai riscontrato?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Stated exactly the policy: 24-month warranty for defects, excludes normal wear and misuse, in Italian.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4455,
+      "durationMs": 4715,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"garanzia usura\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Quanto dura la garanzia?\\nTutti i prodotti hanno una garanzia di ventiquattro mesi per i difetti di fabbricazione. La garanzia non copre l'usura normale e i danni da uso improprio.\"}],\"note\":null}"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-05",
+      "topic": "documents",
+      "language": "en",
+      "outcome": "handoff",
+      "reply": null,
+      "handoff": "unknown_answer",
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": false,
+      "grade": "wrong",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "The shop document clearly provides the leather care instructions, but the assistant handed over instead of answering.",
+      "tools": [
+        "search_knowledge",
+        "handoff_to_human"
+      ],
+      "tokens": 4616,
+      "durationMs": 6584,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"clean leather bag\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Di che materiale è la fodera delle borse?\\nLe borse hanno la fodera in cotone naturale e le fibbie in ottone.\"}],\"note\":null}"
+        },
+        {
+          "name": "handoff_to_human",
+          "arguments": "{\"reason\":\"unknown_answer\",\"question\":\"How should I clean my leather bag?\",\"summary\":\"Customer asks for cleaning instructions for a leather bag; shop knowledge search returned no guidance.\"}",
+          "result": "{\"ok\":true}"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-06",
+      "topic": "documents",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Per i nostri articoli in pelle: puliscila con un panno morbido e asciutto (niente acqua né solventi) e applica una crema neutra in piccola quantità circa una volta ogni sei mesi. Vuoi che ti consigli una crema adatta o hai un prodotto specifico da cui partire?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches the shop guide: neutral cream in small amount every six months, no added false facts.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4567,
+      "durationMs": 4357,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"Ogni quanto devo mettere la crema sulla pelle?\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"La pelle è vera?\",\"answer\":\"Sì, usiamo solo vera pelle italiana conciata al vegetale, lavorata nel nostro laboratorio di Sassari.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Come si cura la pelle?\\nPulisci la pelle con un panno morbido e asciutto. Non usare acqua né solventi. Una volta ogni sei mesi applica una crema neutra in piccola quantità.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedT…"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-07",
+      "topic": "documents",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "Yes — the shop says each product is shipped in a recycled cardboard box and inside a cotton bag that protects the item. Would you like details about a specific product’s packaging?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches shop doc: recycled cardboard box and cotton bag; no extra claims and correct language.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4415,
+      "durationMs": 4194,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"eco-friendly packaging\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Come sono imballati i prodotti?\\nOgni prodotto viene spedito in una scatola di cartone riciclato, dentro un sacchetto di cotone che protegge la pelle.\"}],\"note\":null}"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-08",
+      "topic": "documents",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Il corriere è tracciato: se non ti trova a casa prova a consegnare due volte. Dopo il secondo tentativo il pacco resta al deposito per cinque giorni lavorativi; se non viene ritirato, torna al negozio. Vuoi che controlli lo stato di una spedizione o che avvisi il team per istruzioni?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches shop guide: two delivery attempts, then 5 working days at depot before return; language is Italian.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4780,
+      "durationMs": 6278,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"cosa succede se non sono a casa quando passa il corriere\",\"topic\":\"shipping\"}",
+          "result": "{\"policy\":{\"notes\":\"Spediamo con corriere tracciato. Non spediamo fuori dall'Unione Europea.\",\"costs\":\"Use get_shipping_options for costs and delivery times.\"},\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Cosa succede se il corriere non mi trova?\\nIl corriere prova a consegnare due volte. Dopo il secondo tentativo il pacco resta al deposito per cinque giorni lavorativi, poi torna al negozio.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"p…"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-09",
+      "topic": "documents",
+      "language": "it",
+      "outcome": "reply",
+      "reply": "Sì, certo — aggiungiamo gratis un biglietto scritto a mano se lo scrivi nelle note dell'ordine. Vuoi che lo aggiunga io ora? Dimmi il testo del messaggio (o conferma che lo scrivo così com’è) e lo inserisco nelle note. \uD83D\uDE0A",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "correct",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Matches shop info: free handwritten note added if message is put in the order notes, in Italian.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4653,
+      "durationMs": 5534,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"biglietto di auguri nel pacco\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[{\"question\":\"Fate la confezione regalo?\",\"answer\":\"Sì, la confezione regalo è gratuita: basta scriverlo nelle note dell'ordine.\"},{\"question\":\"La pelle è vera?\",\"answer\":\"Sì, usiamo solo vera pelle italiana conciata al vegetale, lavorata nel nostro laboratorio di Sassari.\"}],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Posso aggiungere un biglietto per un regalo?\\nSì, aggiungiamo gratis un biglietto scritto a mano con il tuo mess…"
+        }
+      ],
+      "foundInTop4": true
+    },
+    {
+      "id": "documents-10",
+      "topic": "documents",
+      "language": "en",
+      "outcome": "reply",
+      "reply": "The bags have a lining made of natural cotton. Would you like to know about the hardware or packaging too?",
+      "handoff": null,
+      "blocked": null,
+      "failed": null,
+      "expectHandoff": false,
+      "handoffOk": true,
+      "grade": "acceptable",
+      "madeUpFact": false,
+      "madeUpPrices": [],
+      "reason": "Answered cotton lining correctly but omitted the brass buckles detail expected.",
+      "tools": [
+        "search_knowledge"
+      ],
+      "tokens": 4526,
+      "durationMs": 4491,
+      "wrongLanguage": false,
+      "calls": [
+        {
+          "name": "search_knowledge",
+          "arguments": "{\"query\":\"lining of the bags\",\"topic\":\"other\"}",
+          "result": "{\"policy\":null,\"answers\":[],\"documents\":[{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Di che materiale è la fodera delle borse?\\nLe borse hanno la fodera in cotone naturale e le fibbie in ottone.\"},{\"source\":\"test-shop-guide.txt\",\"heading\":null,\"page\":null,\"quotedText\":\"Come sono imballati i prodotti?\\nOgni prodotto viene spedito in una scatola di cartone riciclato, dentro un sacchetto di cotone che protegge la pelle.\"}],\"note\":null}"
+        }
+      ],
+      "foundInTop4": true
+    }
+  ],
+  "judgeRules": 2
+}

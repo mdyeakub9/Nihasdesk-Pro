@@ -52,6 +52,16 @@ public interface IOrderRequests
     Task<Result<OrderRequestCreated>> CreateAsync(Guid conversationId, IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Checks order details by the same rules as <see cref="IOrderRequests.CreateAsync"/>, without creating
+/// anything: the summary with Conferma is sent only for details that would be accepted (ADR 0032 §5).
+/// Apart from <see cref="IOrderRequests"/>, which stays the AI's only way to touch an order.
+/// </summary>
+public interface IOrderDetailsCheck
+{
+    Task<Result> ValidateAsync(IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken);
+}
+
 /// <summary>Read only and apart from <see cref="IOrderRequests"/>, which stays the AI's only way to touch an order.</summary>
 public interface IContactOrders
 {

@@ -26,6 +26,7 @@ public sealed class CommerceModule : IModule
         services.AddScoped<OrderPricer>();
         services.AddScoped<OrdersHandler>();
         services.AddScoped<IOrderRequests, OrderRequestsService>();
+        services.AddScoped<IOrderDetailsCheck, OrderRequestsService>();
         services.AddScoped<IContactOrders, ContactOrdersService>();
         services.AddScoped<IValidator<OrderRequest>, OrderValidator>();
         services.AddScoped<IValidator<RejectRequest>, RejectValidator>();

@@ -17,7 +17,7 @@ internal sealed record TapAnswer(IReadOnlyList<AiReply> Replies, string Action, 
 /// with prices, stock and options read from the catalog only (rule 5). What the tap acts on comes from
 /// the Inbox's own action rows, never from the payload (SEC-36). Free text after a tap goes to the model.
 /// </summary>
-internal sealed class TapHandler(ICatalog catalog, AiDbContext db, ITenantContext tenant, TimeProvider time)
+internal sealed class TapHandler(ICatalog catalog, IOrderRequests orders, AiDbContext db, ITenantContext tenant, TimeProvider time)
 {
     public const int SearchLimit = 20;
 
@@ -40,9 +40,65 @@ internal sealed class TapHandler(ICatalog catalog, AiDbContext db, ITenantContex
             RichAction.Similar => await SimilarAsync(draft, tap, words, ct),
             RichAction.MoreProducts => await MoreAsync(draft, tap, words, ct),
             RichAction.TalkToHuman => new TapAnswer([], tap.Action, "handoff", HandoffReason: "customer_asked_for_human"),
-            // choose, edit_summary, confirm_summary, open_form: the customer's words, for the model.
+            RichAction.ConfirmSummary => await ConfirmAsync(conversation, draft, tap, italian, ct),
+            RichAction.EditSummary => Edit(draft, tap, words),
+            // choose, open_form: the customer's words, for the model.
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// Conferma (PRD 4.9 step 5): only for this conversation's own summary, and only while items, prices,
+    /// shipping and address are what the customer saw; otherwise a fresh summary. Creates an order
+    /// <b>request</b> through the same code as <c>create_order_request</c> — never a confirmed order (rule 5).
+    /// </summary>
+    private async Task<TapAnswer?> ConfirmAsync(AiConversation conversation, OrderDraft draft, AiTap tap, bool italian, CancellationToken ct)
+    {
+        if (draft.Summary is not { } summary || draft.SummaryHash is not { } sent || draft.Lines.Count == 0)
+        {
+            // No summary of this conversation to confirm: the customer's "Conferma" goes to the model.
+            return null;
+        }
+
+        var lines = draft.Lines.Select(l => new OrderRequestLine(l.ProductId, l.VariantId, l.Quantity)).ToList();
+        var details = OrderSummaries.FromDraft(summary);
+        var quote = await orders.QuoteAsync(lines, summary.ZoneId, ct);
+        if (!quote.IsSuccess)
+        {
+            return null;
+        }
+
+        var now = OrderSummaries.Hash(quote.Value, details);
+        if (!string.Equals(tap.Value, sent, StringComparison.Ordinal) || !string.Equals(now, sent, StringComparison.Ordinal))
+        {
+            // An older summary, or something changed since it was sent: show the current one again.
+            draft.Summarized([.. quote.Value.Lines.Select(l => new DraftLine(l.ProductId, l.VariantId, l.Quantity))], summary, now);
+            var lead = italian ? "Il riepilogo è cambiato, controlla di nuovo:" : "The summary has changed, please check it again:";
+            return new TapAnswer(OrderSummaries.Replies(quote.Value, details, now, italian, lead), tap.Action, "summary_changed");
+        }
+
+        var created = await orders.CreateAsync(conversation.ConversationId, lines, details, ct);
+        if (!created.IsSuccess)
+        {
+            // E.g. a request is already pending: the model explains with its tools.
+            return null;
+        }
+
+        // The request holds the order now: the draft and its delivery details go (SEC-44).
+        db.Drafts.Remove(draft);
+        var order = created.Value;
+        var total = OrderSummaries.Money(order.Total, order.Currency);
+        var text = italian
+            ? $"Grazie! Abbiamo ricevuto la tua richiesta d'ordine n. {order.Number}: totale {total} da pagare alla consegna. Il negozio la confermerà a breve."
+            : $"Thank you! We received your order request no. {order.Number}: total {total}, cash on delivery. The shop will confirm it shortly.";
+        return new TapAnswer([new AiReply(text)], tap.Action, string.Create(CultureInfo.InvariantCulture, $"order_request:{order.Number}"));
+    }
+
+    /// <summary>Modifica: the summary no longer counts; the customer says what to change.</summary>
+    private static TapAnswer Edit(OrderDraft draft, AiTap tap, Words words)
+    {
+        draft.ClearSummary();
+        return new TapAnswer([new AiReply(words.WhatToChange)], tap.Action, "edit");
     }
 
     /// <summary>The conversation's draft; an old one (7 days) starts over.</summary>
@@ -321,6 +377,8 @@ internal sealed class TapHandler(ICatalog catalog, AiDbContext db, ITenantContex
 
         public string SoldOut(string title) =>
             Italian ? $"Mi dispiace, {title} al momento è esaurito." : $"Sorry, {title} is sold out at the moment.";
+
+        public string WhatToChange => Italian ? "Certo! Cosa vuoi cambiare?" : "Sure! What would you like to change?";
 
         public string Chosen(string item, string price) => Italian
             ? $"Perfetto: {item}, {price}. Per la consegna mi servono nome e cognome, telefono e indirizzo (via e numero, CAP, città, provincia)."

@@ -271,6 +271,16 @@ internal sealed partial class ReplyAgent(
                 break;
         }
 
+        // quote_order with all details: code sends the summary with Conferma / Modifica and keeps what
+        // the customer confirms in the draft (PRD 4.9 steps 4–5). Not when a request was already created.
+        if (tools.PendingSummary is { } summary && tools.OrderNumber is null)
+        {
+            var hash = OrderSummaries.Hash(summary.Quote, summary.Details);
+            (draft ?? await taps.DraftAsync(conversation, ct)).Summarized(
+                [.. summary.Quote.Lines.Select(l => new DraftLine(l.ProductId, l.VariantId, l.Quantity))], OrderSummaries.ToDraft(summary.Details), hash);
+            replies.AddRange(OrderSummaries.Replies(summary.Quote, summary.Details, hash, italian));
+        }
+
         var sent = await conversations.ReplyRichAsync(conversationId, replies, codeOnly: false, ct);
         await Finish(sent is null ? RunOutcome.Dropped : RunOutcome.Replied, sent is null ? "team_took_over" : null, thought, sent?[answerIndex]);
     }
@@ -308,7 +318,7 @@ internal sealed partial class ReplyAgent(
 internal static class Prompt
 {
     /// <summary>Change these when the prompt text below changes, so traces and evals show which prompt answered.</summary>
-    public const string AgentVersion = "agent-2026-11-10";
+    public const string AgentVersion = "agent-2026-11-10.2";
 
     public const string AssistantVersion = "assistant-2026-11-06.2";
 
@@ -340,6 +350,7 @@ internal static class Prompt
         - Then call quote_order and show its summary with exactly its amounts (payment: cash on delivery). Only after the customer confirms, call create_order_request. Afterwards say the shop will confirm the order shortly — never that it is confirmed.
         - If the customer complains, asks for a refund or a person, or wants something you can't take as an order request, call handoff_to_human with the matching reason.
         - Never share links. Share a phone number, email or address only exactly as search_knowledge gave it. Never promise discounts, delivery dates or anything the tools didn't say.
+        - Don't conclude what the tools don't state (a description without "waterproof" doesn't mean it isn't waterproof: then call handoff_to_human with "unknown_answer"), and don't offer products, services or recommendations the tools didn't return.
         - When you suggest products, show them with show_products: the customer sees cards with the current price and the buttons "I want it", "Sizes and colours" and "Similar". Your message still answers the question in a sentence or two (e.g. which colours or sizes are in stock, or that none is under a price), without listing the products or their prices, and may say they can tap "I want it" (in Italian "Lo voglio") on a card. There is no cart, photo, product page, reservation or back-in-stock alert to offer.
 
         {{OwnerGuidance(settings)}}
