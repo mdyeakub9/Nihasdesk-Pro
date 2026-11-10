@@ -124,6 +124,68 @@ namespace Nihasdesk.Modules.Contacts.Infrastructure.Migrations
                     b.ToTable("contact_identities", "contacts");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.Contacts.Domain.ProductInterest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("contact_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("FirstAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_at");
+
+                    b.Property<string>("LastAction")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("last_action");
+
+                    b.Property<DateTimeOffset>("LastAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_at");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<int>("Taps")
+                        .HasColumnType("integer")
+                        .HasColumnName("taps");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<bool>("Wanted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("wanted");
+
+                    b.HasKey("Id")
+                        .HasName("pk_product_interests");
+
+                    b.HasIndex("ContactId", "LastAt")
+                        .HasDatabaseName("ix_product_interests_contact_id_last_at");
+
+                    b.HasIndex("TenantId", "ContactId", "ProductId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_product_interests_tenant_id_contact_id_product_id");
+
+                    b.ToTable("product_interests", "contacts");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.Contacts.Domain.ContactIdentity", b =>
                 {
                     b.HasOne("Nihasdesk.Modules.Contacts.Domain.Contact", null)
@@ -132,6 +194,16 @@ namespace Nihasdesk.Modules.Contacts.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_contact_identities_contacts_contact_id");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.Contacts.Domain.ProductInterest", b =>
+                {
+                    b.HasOne("Nihasdesk.Modules.Contacts.Domain.Contact", null)
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_product_interests_contacts_contact_id");
                 });
 #pragma warning restore 612, 618
         }

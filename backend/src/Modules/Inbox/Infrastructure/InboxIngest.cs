@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Contacts.Contracts;
 using Nihasdesk.Modules.Inbox.Contracts;
@@ -9,13 +10,15 @@ using Npgsql;
 
 namespace Nihasdesk.Modules.Inbox.Infrastructure;
 
-internal sealed class InboxIngest(
+internal sealed partial class InboxIngest(
     InboxDbContext db,
     IContactDirectory contacts,
+    IContactInterest interests,
     ICatalog catalog,
     ITenantContext tenant,
     InboxNotifier notifier,
-    TimeProvider time) : IInboxIngest
+    TimeProvider time,
+    ILogger<InboxIngest> logger) : IInboxIngest
 {
     public async Task<InboundResult> ReceiveAsync(InboundMessage message, CancellationToken cancellationToken)
     {
@@ -47,6 +50,11 @@ internal sealed class InboxIngest(
                 ? Message.FromCustomer(tenant.TenantId, conversation.Id, TextOf(message), message.ExternalMessageId, sentAt)
                 : Message.FromCustomerWithMedia(tenant.TenantId, conversation.Id, message.Text, kinds[0], message.ExternalMessageId, sentAt);
         tap?.Action.MarkUsed(now);
+        if (tap is { Action: { Action: RichAction.Buy, ProductId: { } wantedId } })
+        {
+            conversation.WantedProduct(wantedId, sentAt);
+        }
+
         db.Messages.Add(stored);
         // Saved with the message, so a repeated webhook can't add them twice (it stops at the check above).
         for (var i = 0; i < media.Count; i++)
@@ -74,6 +82,11 @@ internal sealed class InboxIngest(
                 .Select(m => m.Id)
                 .SingleAsync(cancellationToken);
             return new InboundResult(conversation.Id, existing, Duplicate: true);
+        }
+
+        if (tap is { } tapped)
+        {
+            await RecordInterestAsync(contactId, tapped.Action, sentAt, cancellationToken);
         }
 
         await notifier.ConversationChangedAsync(tenant.TenantId, conversation.Id, cancellationToken);
@@ -108,6 +121,31 @@ internal sealed class InboxIngest(
         var text = productTitle is null ? action.Label : $"{action.Label} — {productTitle}";
         return (action, text.Length <= Message.TextMaxLength ? text : text[..Message.TextMaxLength]);
     }
+
+    /// <summary>
+    /// "Lo voglio", "Taglie e colori" and "Simili" add the product to the contact's products of interest
+    /// (PRD 4.5). After the message is saved, so a repeated webhook doesn't count twice; if it fails the
+    /// message still stands and only the interest is missing.
+    /// </summary>
+    private async Task RecordInterestAsync(Guid contactId, MessageAction action, DateTimeOffset at, CancellationToken ct)
+    {
+        if (action.ProductId is not { } productId || !InterestAction.All.Contains(action.Action))
+        {
+            return;
+        }
+
+        try
+        {
+            await interests.RecordAsync(contactId, productId, action.Action, at, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            LogInterestFailed(logger, action.Id, ex.GetType().Name);
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Recording product interest for action {ActionId} failed ({Error})")]
+    private static partial void LogInterestFailed(ILogger logger, Guid actionId, string error);
 
     /// <summary>A tap we can't use still reads as what the customer saw (the button's title).</summary>
     private static string TextOf(InboundMessage message) =>

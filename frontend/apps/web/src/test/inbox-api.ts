@@ -76,7 +76,24 @@ export function attachment(
 
 export type FakeConversation = Summary & {
   contact: { phone: string | null; email: string | null; language: string | null };
+  /** Lead reason and products of interest (PRD 4.5); absent = none. */
+  lead?: FakeLead;
   messages: ApiMessage[];
+};
+
+export type FakeLead = {
+  reason: 'tapped_buy' | null;
+  reasonProductId: string | null;
+  reasonProductTitle: string | null;
+  reasonAt: string | null;
+  interests: {
+    productId: string;
+    title: string;
+    lastAction: 'buy' | 'options' | 'similar';
+    wanted: boolean;
+    taps: number;
+    lastAt: string;
+  }[];
 };
 
 export const teamMembers = [
@@ -198,6 +215,7 @@ function summary(conversation: FakeConversation): Summary {
   const copy: Partial<FakeConversation> = { ...conversation };
   delete copy.contact;
   delete copy.messages;
+  delete copy.lead;
   return copy as Summary;
 }
 
@@ -267,6 +285,13 @@ export function fakeInboxApi({
       json({
         conversation: summary(c),
         contact: { id: c.contactId, name: c.contactName, createdAt: minutesAgo(600), ...c.contact },
+        lead: c.lead ?? {
+          reason: null,
+          reasonProductId: null,
+          reasonProductTitle: null,
+          reasonAt: null,
+          interests: [],
+        },
       }),
     );
     routes[`GET ${base}/messages`] = withConversation((c, _body, url) => {

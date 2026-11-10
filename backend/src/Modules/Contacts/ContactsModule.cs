@@ -19,6 +19,7 @@ public sealed class ContactsModule : IModule
         services.AddModuleDbContext<ContactsDbContext>(configuration, ContactsDbContext.Schema);
         services.AddScoped<IContactDirectory, ContactDirectory>();
         services.AddScoped<IContactProfile, ContactProfiles>();
+        services.AddScoped<IContactInterest, ContactInterests>();
         services.AddScoped<IValidator<UpdateContactRequest>, UpdateContactValidator>();
     }
 

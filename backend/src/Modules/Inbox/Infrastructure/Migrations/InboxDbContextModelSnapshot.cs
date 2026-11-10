@@ -69,6 +69,19 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_message_at");
 
+                    b.Property<string>("LeadReason")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("lead_reason");
+
+                    b.Property<DateTimeOffset?>("LeadReasonAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lead_reason_at");
+
+                    b.Property<Guid?>("LeadReasonProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lead_reason_product_id");
+
                     b.Property<string>("LeadStatus")
                         .IsRequired()
                         .HasMaxLength(20)

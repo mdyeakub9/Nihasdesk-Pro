@@ -45,7 +45,23 @@ internal sealed record ConversationSummaryResponse(
 
 internal sealed record ConversationPageResponse(IReadOnlyList<ConversationSummaryResponse> Items, string? NextCursor);
 
-internal sealed record ConversationResponse(ConversationSummaryResponse Conversation, ContactSummary? Contact);
+internal sealed record ConversationResponse(ConversationSummaryResponse Conversation, ContactSummary? Contact, LeadResponse Lead);
+
+/// <summary>
+/// Why the lead status is what it is, and the contact's products of interest (PRD 4.5). Product names come
+/// from the catalog now; products no longer active are left out.
+/// </summary>
+/// <param name="Reason">e.g. <c>tapped_buy</c>; null when the team set the status.</param>
+internal sealed record LeadResponse(
+    string? Reason,
+    Guid? ReasonProductId,
+    string? ReasonProductTitle,
+    DateTimeOffset? ReasonAt,
+    IReadOnlyList<InterestResponse> Interests);
+
+/// <param name="LastAction">buy | options | similar.</param>
+/// <param name="Wanted">Tapped "Lo voglio" on it at least once.</param>
+internal sealed record InterestResponse(Guid ProductId, string Title, string LastAction, bool Wanted, int Taps, DateTimeOffset LastAt);
 
 internal sealed record MessageResponse(
     Guid Id,

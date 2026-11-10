@@ -3,11 +3,11 @@ import { ChevronDown, Mail, MapPin, Phone, StickyNote, Target, ShoppingBag, User
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChannelIcon } from '../../components/ChannelIcon';
-import { formatAge } from '../../lib/format';
+import { formatAge, formatDay, formatTime } from '../../lib/format';
 import { useUpdateConversation } from './api';
 import { ConversationOrderCount, ConversationOrders } from './ConversationOrders';
 import { NoteCount, TeamNotes } from './TeamNotes';
-import type { Conversation, LeadStatus } from './types';
+import type { Conversation, LeadInfo, LeadStatus } from './types';
 
 const leadTone: Record<LeadStatus, 'ai' | 'success' | 'info' | 'neutral' | 'warning'> = {
   new: 'info',
@@ -45,6 +45,42 @@ function Section({
 }
 
 const iconClass = 'size-4 text-secondary-foreground';
+
+/** Why the lead is hot, and the products the customer tapped on (PRD 4.5). */
+function LeadDetails({ lead, language }: { lead: LeadInfo; language: string }) {
+  const { t } = useTranslation();
+  const when = (iso: string) => `${formatDay(iso, language)} ${formatTime(iso, language)}`;
+  return (
+    <div className="flex flex-col gap-2">
+      {lead.reason === 'tapped_buy' && lead.reasonProductTitle && lead.reasonAt ? (
+        <p className="text-foreground">
+          {t('customer.leadReason.tapped_buy', {
+            product: lead.reasonProductTitle,
+            when: when(lead.reasonAt),
+          })}
+        </p>
+      ) : (
+        <p>{t('customer.leadHint')}</p>
+      )}
+      {lead.interests.length > 0 && (
+        <>
+          <h3 className="pt-1 text-xs font-medium text-muted-foreground">{t('customer.interests')}</h3>
+          <ul aria-label={t('customer.interests')} className="flex flex-col gap-1.5">
+            {lead.interests.map((interest) => (
+              <li key={interest.productId} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-foreground">{interest.title}</span>
+                {interest.wanted && <Badge tone="ai">{t('customer.interestWanted')}</Badge>}
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {t('customer.interestTaps', { count: interest.taps })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function CustomerPanel({ conversation }: { conversation: Conversation }) {
   const { t, i18n } = useTranslation();
@@ -113,7 +149,7 @@ export function CustomerPanel({ conversation }: { conversation: Conversation }) 
           <Badge tone={leadTone[conversation.leadStatus]}>{t(`leadStatus.${conversation.leadStatus}`)}</Badge>
         }
       >
-        {t('customer.leadHint')}
+        <LeadDetails lead={conversation.lead} language={language} />
       </Section>
 
       <Section

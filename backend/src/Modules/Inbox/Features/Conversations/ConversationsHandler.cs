@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Contacts.Contracts;
 using Nihasdesk.Modules.Identity.Contracts;
 using Nihasdesk.Modules.Inbox.Domain;
@@ -17,6 +18,8 @@ namespace Nihasdesk.Modules.Inbox.Features.Conversations;
 internal sealed class ConversationsHandler(
     InboxDbContext db,
     IContactDirectory contacts,
+    IContactInterest interests,
+    ICatalog catalog,
     ITeamDirectory team,
     ITenantContext tenant,
     InboxNotifier notifier,
@@ -90,7 +93,27 @@ internal sealed class ConversationsHandler(
         }
 
         var contact = (await contacts.GetAsync([row.Conversation.ContactId], ct)).GetValueOrDefault(row.Conversation.ContactId);
-        return new ConversationResponse(ToSummary(row, contact?.Name), contact);
+        return new ConversationResponse(ToSummary(row, contact?.Name), contact, await LeadAsync(row.Conversation, ct));
+    }
+
+    private async Task<LeadResponse> LeadAsync(Conversation conversation, CancellationToken ct)
+    {
+        var interested = await interests.ListAsync(conversation.ContactId, ct);
+        var ids = interested.Select(i => i.ProductId).ToHashSet();
+        if (conversation.LeadReasonProductId is { } reasonId)
+        {
+            ids.Add(reasonId);
+        }
+
+        var titles = await catalog.TitlesAsync(ids, ct);
+        return new LeadResponse(
+            conversation.LeadReason,
+            conversation.LeadReasonProductId,
+            conversation.LeadReasonProductId is { } id ? titles.GetValueOrDefault(id) : null,
+            conversation.LeadReasonAt,
+            [.. interested
+                .Where(i => titles.ContainsKey(i.ProductId))
+                .Select(i => new InterestResponse(i.ProductId, titles[i.ProductId], i.LastAction, i.Wanted, i.Taps, i.LastAt))]);
     }
 
     public async Task<MessagePageResponse?> MessagesAsync(Guid conversationId, ListMessagesQuery query, CancellationToken ct)
