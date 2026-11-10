@@ -409,7 +409,7 @@ internal sealed class ContactOrdersService(CommerceDbContext db) : IContactOrder
 }
 
 /// <summary>The AI's entry point (PRD 4.9): same validation and prices as the team's, result is a pending request.</summary>
-internal sealed class OrderRequestsService(OrdersHandler orders, OrderPricer pricer, FluentValidation.IValidator<OrderRequest> validator) : IOrderRequests
+internal sealed class OrderRequestsService(OrdersHandler orders, OrderPricer pricer, FluentValidation.IValidator<OrderRequest> validator) : IOrderRequests, IOrderDetailsCheck
 {
     public async Task<Result<OrderQuote>> QuoteAsync(IReadOnlyList<OrderRequestLine> lines, Guid shippingZoneId, CancellationToken cancellationToken)
     {
@@ -434,24 +434,39 @@ internal sealed class OrderRequestsService(OrdersHandler orders, OrderPricer pri
             p.Currency));
     }
 
+    public async Task<Result> ValidateAsync(IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken)
+    {
+        var invalid = await InvalidAsync(Request(null, lines, details), cancellationToken);
+        return invalid is null ? Result.Success() : Result.Failure(invalid);
+    }
+
     public async Task<Result<OrderRequestCreated>> CreateAsync(
         Guid conversationId, IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details, CancellationToken cancellationToken)
     {
-        var request = new OrderRequest(
-            conversationId, details.CustomerName, details.Phone, details.Street, details.PostalCode, details.City,
-            details.Province, details.Country, details.ShippingZoneId, details.Notes,
-            lines.Select(l => new OrderItemRequest(l.ProductId, l.VariantId, l.Quantity)).ToList());
-        var validation = await validator.ValidateAsync(request, cancellationToken);
-        if (!validation.IsValid)
+        var request = Request(conversationId, lines, details);
+        if (await InvalidAsync(request, cancellationToken) is { } invalid)
         {
-            // Field names only, so the AI knows what to ask again; never the customer's values.
-            var fields = string.Join(", ", validation.Errors.Select(e => e.PropertyName).Distinct());
-            return Error.Validation("order.invalid", $"Ask the customer again for: {fields}.");
+            return invalid;
         }
 
         var created = await orders.CreateRequestAsync(conversationId, request, cancellationToken);
         return created.IsSuccess
             ? Result.Success(new OrderRequestCreated(created.Value.Id, created.Value.Number, created.Value.Subtotal, created.Value.ShippingCost, created.Value.Total, created.Value.Currency))
             : created.Error;
+    }
+
+    private static OrderRequest Request(Guid? conversationId, IReadOnlyList<OrderRequestLine> lines, OrderRequestDetails details) =>
+        new(
+            conversationId, details.CustomerName, details.Phone, details.Street, details.PostalCode, details.City,
+            details.Province, details.Country, details.ShippingZoneId, details.Notes,
+            lines.Select(l => new OrderItemRequest(l.ProductId, l.VariantId, l.Quantity)).ToList());
+
+    /// <summary>Field names only, so the AI knows what to ask again; never the customer's values.</summary>
+    private async Task<Error?> InvalidAsync(OrderRequest request, CancellationToken ct)
+    {
+        var validation = await validator.ValidateAsync(request, ct);
+        return validation.IsValid
+            ? null
+            : Error.Validation("order.invalid", $"Ask the customer again for: {string.Join(", ", validation.Errors.Select(e => e.PropertyName).Distinct())}.");
     }
 }

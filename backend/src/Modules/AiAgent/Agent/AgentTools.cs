@@ -49,7 +49,7 @@ internal static class KnowledgeSources
 /// also remembers which prices tools returned, for the reply check (SEC-38), and which knowledge
 /// the answer used.
 /// </summary>
-internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, IContactOrders contactOrders, IContactProfile profiles, AiDbContext db, KnowledgeSearch documents)
+internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shipping, IOrderRequests orders, IOrderDetailsCheck orderDetails, IContactOrders contactOrders, IContactProfile profiles, AiDbContext db, KnowledgeSearch documents)
 {
     public const int ProfileOrders = 3;
 
@@ -98,8 +98,8 @@ internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shippi
             "The shop's own rules and answers: returns, payment, contact details and opening hours, answers the team wrote for customer questions, and passages from the shop's documents. Use it for any question that is not about a product or shipping cost.",
             """{"type":"object","properties":{"query":{"type":"string","description":"The customer's question in a few words"},"topic":{"type":"string","enum":["shipping","returns","payment","contact","other"],"description":"What the question is about"}},"required":["query","topic"],"additionalProperties":false}"""),
         Tool("quote_order",
-            "The order summary for chosen variants and a delivery zone: unit prices, subtotal, shipping and total, computed by the shop's system. Use it before asking the customer to confirm, and show exactly these amounts.",
-            """{"type":"object","properties":{"items":{"type":"array","maxItems":20,"items":{"type":"object","properties":{"product_id":{"type":"string"},"variant_id":{"type":"string","description":"An available variant id from get_product_options"},"quantity":{"type":"integer","minimum":1,"maximum":99}},"required":["product_id","variant_id","quantity"],"additionalProperties":false}},"zone_id":{"type":"string","description":"The id from get_shipping_options"}},"required":["items","zone_id"],"additionalProperties":false}"""),
+            "The order summary for chosen variants and a delivery zone: unit prices, subtotal, shipping and total, computed by the shop's system. Use it before asking the customer to confirm. When you also send all the delivery details, the shop's system sends the customer the summary with the buttons Conferma / Modifica itself: then write only a short line, without the amounts. Otherwise show exactly these amounts.",
+            """{"type":"object","properties":{"items":{"type":"array","maxItems":20,"items":{"type":"object","properties":{"product_id":{"type":"string"},"variant_id":{"type":"string","description":"An available variant id from get_product_options"},"quantity":{"type":"integer","minimum":1,"maximum":99}},"required":["product_id","variant_id","quantity"],"additionalProperties":false}},"zone_id":{"type":"string","description":"The id from get_shipping_options"},"customer_name":{"type":"string"},"phone":{"type":"string"},"street":{"type":"string","description":"Street and number"},"postal_code":{"type":"string"},"city":{"type":"string"},"province":{"type":"string"},"country":{"type":"string","description":"Two-letter code, e.g. IT"},"notes":{"type":"string"}},"required":["items","zone_id"],"additionalProperties":false}"""),
         Tool("create_order_request",
             "Create an order request for the shop's team to approve, only after the customer confirmed the summary from quote_order. It is NOT a confirmed order: tell the customer the shop will confirm it shortly. Payment is cash on delivery.",
             """{"type":"object","properties":{"items":{"type":"array","maxItems":20,"items":{"type":"object","properties":{"product_id":{"type":"string"},"variant_id":{"type":"string"},"quantity":{"type":"integer","minimum":1,"maximum":99}},"required":["product_id","variant_id","quantity"],"additionalProperties":false}},"zone_id":{"type":"string"},"customer_name":{"type":"string"},"phone":{"type":"string"},"street":{"type":"string","description":"Street and number"},"postal_code":{"type":"string"},"city":{"type":"string"},"province":{"type":"string"},"country":{"type":"string","description":"Two-letter code, e.g. IT"},"notes":{"type":"string"}},"required":["items","zone_id","customer_name","phone","street","postal_code","city","country"],"additionalProperties":false}"""),
@@ -350,8 +350,27 @@ internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shippi
         }
 
         var q = quote.Value;
+
+        // With every delivery detail, code sends the summary with Conferma / Modifica (ADR 0032 §5).
+        string? detailsProblem = null;
+        if (ConversationId is not null && Text(args, "customer_name", 100) is not null)
+        {
+            var details = Details(args, zoneId);
+            var valid = await orderDetails.ValidateAsync(lines, details, ct);
+            if (valid.IsSuccess)
+            {
+                PendingSummary = new OrderSummaryToSend(lines, q, details);
+            }
+            else
+            {
+                detailsProblem = valid.Error.Message;
+            }
+        }
+
         return Result(new
         {
+            summaryWithButtons = PendingSummary is not null,
+            details = detailsProblem,
             lines = q.Lines.Select(l => new
             {
                 product = l.Title,
@@ -365,9 +384,26 @@ internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shippi
             subtotal = Allowed(q.Subtotal, q.Currency),
             total = Allowed(q.Total, q.Currency),
             payment = "cash on delivery",
-            note = "Show this summary with exactly these amounts and ask the customer to confirm before create_order_request.",
+            note = PendingSummary is not null
+                ? "The shop's system sends this summary to the customer with the buttons Conferma / Modifica right after your message. Write only one short line (no amounts) asking them to check it and tap Conferma."
+                : "Show this summary with exactly these amounts and ask the customer to confirm before create_order_request.",
         });
     }
+
+    /// <summary>A checked summary the reply carries, with Conferma / Modifica (ADR 0032 §5).</summary>
+    public OrderSummaryToSend? PendingSummary { get; private set; }
+
+    private static OrderRequestDetails Details(JsonElement args, Guid zoneId) =>
+        new(
+            Text(args, "customer_name", 100) ?? string.Empty,
+            Text(args, "phone", 30) ?? string.Empty,
+            Text(args, "street", 200) ?? string.Empty,
+            Text(args, "postal_code", 12) ?? string.Empty,
+            Text(args, "city", 100) ?? string.Empty,
+            Text(args, "province", 50),
+            Text(args, "country", 2) ?? string.Empty,
+            zoneId,
+            Text(args, "notes", 500));
 
     /// <summary>
     /// Creates an order request — never a confirmed order (CLAUDE.md rule 5). The conversation comes
@@ -385,17 +421,7 @@ internal sealed partial class AgentTools(ICatalog catalog, IShippingRates shippi
             return Error("Send items (product_id, variant_id, quantity 1-99) and the zone_id from get_shipping_options.");
         }
 
-        var details = new OrderRequestDetails(
-            Text(args, "customer_name", 100) ?? string.Empty,
-            Text(args, "phone", 30) ?? string.Empty,
-            Text(args, "street", 200) ?? string.Empty,
-            Text(args, "postal_code", 12) ?? string.Empty,
-            Text(args, "city", 100) ?? string.Empty,
-            Text(args, "province", 50),
-            Text(args, "country", 2) ?? string.Empty,
-            zoneId,
-            Text(args, "notes", 500));
-        var created = await orders.CreateAsync(conversationId, lines, details, ct);
+        var created = await orders.CreateAsync(conversationId, lines, Details(args, zoneId), ct);
         if (!created.IsSuccess)
         {
             return OrderError(created.Error.Code, created.Error.Message);

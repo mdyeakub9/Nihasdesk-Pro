@@ -247,9 +247,158 @@ public sealed class TapAnswersTests(AuthFixture fixture)
         Assert.Contains(await RunsAsync(shop), r => r.Outcome == RunOutcome.Failed && r.Detail == "output_limit");
     }
 
+    // --- summary with Conferma / Modifica (PR 2b) -------------------------------------------------
+
+    [Fact]
+    public async Task The_summary_comes_with_Conferma_and_a_tap_creates_a_pending_request_from_the_catalog_prices()
+    {
+        var shop = await ShopAsync();
+        var psid = await QuoteWithDetailsAsync(shop, quantity: 2);
+        var summary = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload");
+        Assert.Equal("button", summary.GetProperty("template_type").GetString());
+        var text = summary.GetProperty("text").GetString()!;
+        Assert.Contains("2 × Borsa Milano — Nero / L: €178.00", text, StringComparison.Ordinal);
+        Assert.Contains("Spedizione (Sardegna): €7.00", text, StringComparison.Ordinal);
+        Assert.Contains("Totale da pagare alla consegna: €185.00", text, StringComparison.Ordinal);
+        var buttons = summary.GetProperty("buttons");
+        Assert.Equal(["✅ Conferma", "✏️ Modifica"], buttons.EnumerateArray().Select(b => b.GetProperty("title").GetString()));
+        var aiCalls = Api.Ai.Calls.Count;
+
+        await TapAsync(shop, psid, "✅ Conferma", postback: buttons[0].GetProperty("payload").GetString()!);
+
+        var thanks = LastSendTo(psid).GetProperty("message").GetProperty("text").GetString()!;
+        Assert.StartsWith("Grazie! Abbiamo ricevuto la tua richiesta d'ordine n. ", thanks, StringComparison.Ordinal);
+        Assert.Contains("totale €185.00 da pagare alla consegna", thanks, StringComparison.Ordinal);
+        Assert.DoesNotContain("confermato", thanks, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(aiCalls, Api.Ai.Calls.Count);
+        var order = Assert.Single((await shop.Owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/orders?status=pending")).GetProperty("items").EnumerateArray());
+        Assert.Equal("pending", order.GetProperty("status").GetString());
+        Assert.Equal(18500, order.GetProperty("total").GetInt64());
+        Assert.Empty(await DraftsAsync(shop));
+
+        // The same Conferma again: nothing more is created.
+        await TapAsync(shop, psid, "✅ Conferma", postback: buttons[0].GetProperty("payload").GetString()!);
+        Assert.Single((await shop.Owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/orders?status=pending")).GetProperty("items").EnumerateArray());
+        await Api.SendRepliesAsync();
+    }
+
+    [Fact]
+    public async Task A_changed_price_or_an_old_summary_answers_with_a_fresh_summary_and_creates_nothing()
+    {
+        var shop = await ShopAsync();
+        var psid = await QuoteWithDetailsAsync(shop, quantity: 1);
+        var first = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload").GetProperty("buttons")[0].GetProperty("payload").GetString()!;
+
+        await SetPriceAsync(shop, shop.NeroL, 9900);
+        await TapAsync(shop, psid, "✅ Conferma", postback: first);
+        var fresh = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload");
+        Assert.StartsWith("Il riepilogo è cambiato, controlla di nuovo:", fresh.GetProperty("text").GetString(), StringComparison.Ordinal);
+        Assert.Contains("€99.00", fresh.GetProperty("text").GetString(), StringComparison.Ordinal);
+        Assert.Empty((await shop.Owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/orders?status=pending")).GetProperty("items").EnumerateArray());
+
+        // The first summary's button is old now: again only the current summary.
+        await TapAsync(shop, psid, "✅ Conferma", postback: first);
+        Assert.Empty((await shop.Owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/orders?status=pending")).GetProperty("items").EnumerateArray());
+
+        // The current one works.
+        var current = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload").GetProperty("buttons")[0].GetProperty("payload").GetString()!;
+        await TapAsync(shop, psid, "✅ Conferma", postback: current);
+        Assert.Equal(10600, Assert.Single((await shop.Owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/orders?status=pending")).GetProperty("items").EnumerateArray()).GetProperty("total").GetInt64());
+        await Api.SendRepliesAsync();
+    }
+
+    [Fact]
+    public async Task Modifica_asks_what_to_change_and_the_old_Conferma_no_longer_creates_anything()
+    {
+        var shop = await ShopAsync();
+        var psid = await QuoteWithDetailsAsync(shop, quantity: 1);
+        var buttons = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload").GetProperty("buttons");
+
+        await TapAsync(shop, psid, "✏️ Modifica", postback: buttons[1].GetProperty("payload").GetString()!);
+        Assert.Equal("Certo! Cosa vuoi cambiare?", LastSendTo(psid).GetProperty("message").GetProperty("text").GetString());
+
+        // Conferma after Modifica reaches the model as words; code creates nothing.
+        Api.Ai.Respond = _ => FakeAiAnswer.Say("Dimmi pure cosa cambiare.");
+        await TapAsync(shop, psid, "✅ Conferma", postback: buttons[0].GetProperty("payload").GetString()!);
+        Assert.Empty((await shop.Owner.Http.GetFromJsonAsync<JsonElement>("/api/v1/orders?status=pending")).GetProperty("items").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Details_the_order_rules_refuse_get_no_buttons_and_the_model_asks_again()
+    {
+        var shop = await ShopAsync();
+        var marker = Marker();
+        Api.Ai.Respond = call => !Mine(call, marker) ? FakeAiAnswer.Say("ok") : call.ToolResults.Count switch
+        {
+            0 => FakeAiAnswer.Call("quote_order", QuoteArgs(shop, 1, phone: "chiamami")),
+            _ => FakeAiAnswer.Say("Mi lasci un numero di telefono valido?"),
+        };
+
+        var psid = await CustomerWritesAsync(shop, $"Ordino! {marker}");
+        await Api.RunAiAsync();
+        var result = Api.Ai.Calls.Last(c => Mine(c, marker)).ToolResults.Single();
+        Assert.Contains("\"summaryWithButtons\":false", result, StringComparison.Ordinal);
+        Assert.Contains("Ask the customer again for: Phone", result, StringComparison.Ordinal);
+        await Api.SendRepliesAsync();
+        Assert.False(LastSendTo(psid).GetProperty("message").TryGetProperty("attachment", out _));
+    }
+
+    /// <summary>The AI quotes Nero / L with all delivery details; returns the customer's PSID, the summary sent.</summary>
+    private async Task<string> QuoteWithDetailsAsync(Shop shop, int quantity)
+    {
+        var marker = Marker();
+        Api.Ai.Respond = call => !Mine(call, marker) ? FakeAiAnswer.Say("ok") : call.ToolResults.Count switch
+        {
+            0 => FakeAiAnswer.Call("quote_order", QuoteArgs(shop, quantity)),
+            _ => FakeAiAnswer.Say("Ecco il riepilogo: controlla e tocca Conferma 👇"),
+        };
+
+        var psid = await CustomerWritesAsync(shop, $"Giulia Rossi, via Roma 12, 07100 Sassari SS, +39 333 1234567 {marker}");
+        await Api.RunAiAsync();
+        await Api.SendRepliesAsync();
+        return psid;
+    }
+
+    private static string QuoteArgs(Shop shop, int quantity, string phone = "+39 333 1234567") =>
+        JsonSerializer.Serialize(new
+        {
+            items = new[] { new { product_id = shop.BagId, variant_id = shop.NeroL, quantity } },
+            zone_id = shop.ZoneId,
+            customer_name = "Giulia Rossi",
+            phone,
+            street = "Via Roma 12",
+            postal_code = "07100",
+            city = "Sassari",
+            province = "SS",
+            country = "IT",
+        });
+
+    private static async Task SetPriceAsync(Shop shop, string variantId, long price)
+    {
+        var current = await shop.Owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/products/{shop.BagId}");
+        var body = System.Text.Json.Nodes.JsonNode.Parse(current.GetRawText())!.AsObject();
+        foreach (var variant in body["variants"]!.AsArray())
+        {
+            if (variant!["id"]!.GetValue<string>() == variantId)
+            {
+                variant["price"] = price;
+            }
+        }
+
+        await shop.Owner.RefreshCsrfAsync();
+        (await shop.Owner.Http.PutAsJsonAsync($"/api/v1/products/{shop.BagId}", body)).EnsureSuccessStatusCode();
+    }
+
+    private async Task<List<OrderDraft>> DraftsAsync(Shop shop)
+    {
+        await using var scope = Api.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TenantContext>().SetTenant(Guid.Parse(shop.Workspace));
+        return await scope.ServiceProvider.GetRequiredService<AiDbContext>().Drafts.AsNoTracking().ToListAsync();
+    }
+
     // --- shop and channel -------------------------------------------------------------------------
 
-    private sealed record Shop(ApiClient Owner, string Workspace, string PageId, string BagId, string NeroL);
+    private sealed record Shop(ApiClient Owner, string Workspace, string PageId, string BagId, string NeroL, string ZoneId = "");
 
     private async Task<Shop> ShopAsync()
     {
@@ -267,13 +416,13 @@ public sealed class TapAnswersTests(AuthFixture fixture)
         await ProductAsync(owner, "Borsa Roma", ("Nero", "M", 7900, 4));
         await ProductAsync(owner, "Borsa Napoli", ("Nero", "M", 6900, 4));
         await owner.RefreshCsrfAsync();
-        await owner.Http.PutAsJsonAsync("/api/v1/shipping/zones", new
+        var zones = await (await owner.Http.PutAsJsonAsync("/api/v1/shipping/zones", new
         {
             zones = new[] { new { name = "Sardegna", areas = "SS", price = 700, currency = "EUR", freeOver = (long?)null, minDays = 2, maxDays = 4 } },
-        });
+        })).Content.ReadFromJsonAsync<JsonElement>();
         var variants = bag.GetProperty("variants").EnumerateArray().ToList();
         return new Shop(owner, me.GetProperty("workspace").GetProperty("id").GetString()!, pageId,
-            bag.GetProperty("id").GetString()!, variants[1].GetProperty("id").GetString()!);
+            bag.GetProperty("id").GetString()!, variants[1].GetProperty("id").GetString()!, zones[0].GetProperty("id").GetString()!);
     }
 
     private static Task<JsonElement> ProductAsync(ApiClient owner, string title, params (string Colour, string Size, long Price, int Stock)[] variants) =>
