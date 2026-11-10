@@ -75,7 +75,8 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
     /// <summary>Where Meta would fetch product images from.</summary>
     public const string PublicUrl = "https://public.nihasdesk.test";
 
-    public const string ImageSigningKey = "dGVzdC1vbmx5LXByb2R1Y3QtaW1hZ2Utc2lnbmluZy1rZXktMzJieXRlcw==";
+    /// <summary>A fixed test-only key (bytes 1…32), built at run time so no key-like text sits in the repo.</summary>
+    public static readonly string ImageSigningKey = Convert.ToBase64String(Enumerable.Range(1, 32).Select(i => (byte)i).ToArray());
 
     /// <summary>Uploaded files of this test run; nothing lands in the developer's own folder.</summary>
     public string FilesFolder { get; } = Path.Combine(Path.GetTempPath(), "nihasdesk-tests", Guid.NewGuid().ToString("N"));

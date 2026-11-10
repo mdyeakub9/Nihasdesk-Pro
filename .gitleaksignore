@@ -1,0 +1,2 @@
+# Test-only product image signing key in an old commit of PR #97 (not a real secret; replaced by a key built at run time).
+bab6820c76330e3c70f5fabd8a4e77a7f456b31a:backend/tests/Support/NihasdeskApiFactory.cs:generic-api-key:78
