@@ -51,14 +51,16 @@ internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
             .Take(MaxCandidates)
             .ToListAsync(cancellationToken);
 
-        return candidates
+        var ranked = candidates
             .Select(p => (Product: p, Rank: Rank(p, stems)))
             .OrderByDescending(x => x.Rank.Words)
             .ThenByDescending(x => x.Rank.Score)
             .ThenBy(x => x.Product.Title, StringComparer.OrdinalIgnoreCase)
             .Take(Math.Clamp(limit, 1, MaxResults))
-            .Select(x => ToContract(x.Product))
+            .Select(x => x.Product)
             .ToList();
+        var images = await SavedImagesAsync(ranked.Select(p => p.Id).ToList(), cancellationToken);
+        return ranked.Select(p => ToContract(p, images)).ToList();
     }
 
     /// <summary>
@@ -102,10 +104,20 @@ internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
             .AsNoTracking()
             .Include(p => p.Variants)
             .SingleOrDefaultAsync(p => p.Id == productId && p.Status == ProductStatus.Active, cancellationToken);
-        return product is null ? null : ToContract(product);
+        return product is null ? null : ToContract(product, await SavedImagesAsync([product.Id], cancellationToken));
     }
 
-    private static CatalogProduct ToContract(Product p) => new(
+    /// <summary>Saved images only (ADR 0031 §7), by product in position order.</summary>
+    private async Task<ILookup<Guid, Guid>> SavedImagesAsync(List<Guid> productIds, CancellationToken ct) =>
+        (await db.ProductImages
+            .AsNoTracking()
+            .Where(i => productIds.Contains(i.ProductId) && i.Status == ProductImageStatus.Saved)
+            .OrderBy(i => i.Position)
+            .Select(i => new { i.ProductId, i.Id })
+            .ToListAsync(ct))
+        .ToLookup(i => i.ProductId, i => i.Id);
+
+    private static CatalogProduct ToContract(Product p, ILookup<Guid, Guid> images) => new(
         p.Id,
         p.Title,
         p.Description,
@@ -123,6 +135,8 @@ internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
                 v.CompareAtPrice,
                 v.Currency,
                 v.Available,
-                v.TrackInventory ? v.Stock : null))
-            .ToList());
+                v.TrackInventory ? v.Stock : null,
+                v.ImageId is { } image && images[p.Id].Contains(image) ? image : null))
+            .ToList(),
+        images[p.Id].Cast<Guid?>().FirstOrDefault());
 }

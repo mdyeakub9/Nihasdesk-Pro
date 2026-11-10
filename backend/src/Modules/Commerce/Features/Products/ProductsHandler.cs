@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Nihasdesk.Modules.Commerce.Domain;
+using Nihasdesk.Modules.Commerce.Features.Images;
 using Nihasdesk.Modules.Commerce.Infrastructure;
 using Nihasdesk.SharedKernel;
 using Npgsql;
@@ -66,6 +67,11 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
                 Currency = p.Variants.OrderBy(v => v.Position).Select(v => v.Currency).FirstOrDefault(),
                 Tracked = p.Variants.Any(v => v.TrackInventory),
                 Stock = p.Variants.Where(v => v.TrackInventory).Sum(v => v.Stock ?? 0),
+                MainImageId = db.ProductImages
+                    .Where(i => i.ProductId == p.Id && i.Status == ProductImageStatus.Saved)
+                    .OrderBy(i => i.Position)
+                    .Select(i => (Guid?)i.Id)
+                    .FirstOrDefault(),
             })
             .ToListAsync(ct);
 
@@ -74,18 +80,28 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
         return new ProductPageResponse(
             items.Select(p => new ProductSummaryResponse(
                 p.Id, p.Title, p.Handle, CatalogInput.Text(p.Status), p.ProductType, p.Category, p.Vendor,
-                p.VariantCount, p.PriceMin, p.PriceMax, p.Currency, p.Tracked ? p.Stock : null, p.UpdatedAt)).ToList(),
+                p.VariantCount, p.PriceMin, p.PriceMax, p.Currency, p.Tracked ? p.Stock : null, p.UpdatedAt,
+                p.MainImageId is { } image ? ProductImagesHandler.UrlOf(p.Id, image) + "?size=" + ProductImagesHandler.Thumbnail : null)).ToList(),
             next);
     }
 
     public async Task<ProductResponse?> GetAsync(Guid id, CancellationToken ct)
     {
         var product = await db.Products.AsNoTracking().Include(p => p.Variants).SingleOrDefaultAsync(p => p.Id == id, ct);
-        return product is null ? null : ToResponse(product);
+        return product is null ? null : ToResponse(product, await ImagesOfAsync(product.Id, ct));
     }
+
+    private async Task<List<ProductImage>> ImagesOfAsync(Guid productId, CancellationToken ct) =>
+        await db.ProductImages.AsNoTracking().Where(i => i.ProductId == productId).OrderBy(i => i.Position).ToListAsync(ct);
 
     public async Task<Result<ProductResponse>> CreateAsync(ProductRequest request, CancellationToken ct)
     {
+        if (request.Variants!.Any(v => v.ImageId is not null))
+        {
+            // A new product has no photos yet: they are uploaded once it exists.
+            return ImageErrors.NotFound;
+        }
+
         var data = CatalogInput.Product(request);
         var variants = request.Variants!.Select(CatalogInput.Variant).ToList();
         if (await SkusTakenAsync(variants, productId: null, ct) is { Count: > 0 } taken)
@@ -111,7 +127,7 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
         var product = Product.Create(tenant.TenantId, handle, data);
         product.ReplaceVariants(variants.Select(v => ((Guid?)null, v)).ToList());
         db.Products.Add(product);
-        return await SaveAsync(product, ct);
+        return await SaveAsync(product, [], ct);
     }
 
     public async Task<Result<ProductResponse>> UpdateAsync(Guid id, ProductRequest request, CancellationToken ct)
@@ -140,9 +156,23 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
             return Error.Validation("catalog.handle_fixed", "A product's handle can't be changed.");
         }
 
+        var images = await ImagesOfAsync(product.Id, ct);
+        var saved = images.Where(i => i.Status == ProductImageStatus.Saved).Select(i => i.Id).ToHashSet();
+        if (request.Variants!.Any(v => v.ImageId is { } imageId && !saved.Contains(imageId)))
+        {
+            // Another product's (or workspace's) photo is treated like any unknown ID.
+            return ImageErrors.NotFound;
+        }
+
         product.Update(CatalogInput.Product(request));
         product.ReplaceVariants(variants.Select(v => (v.Id, v.Data)).ToList());
-        return await SaveAsync(product, ct);
+        // ReplaceVariants keeps the request's order as positions 1, 2, 3…
+        foreach (var variant in product.Variants)
+        {
+            variant.SetImage(request.Variants![variant.Position - 1].ImageId);
+        }
+
+        return await SaveAsync(product, images, ct);
     }
 
     /// <summary>The first free handle: <c>bag</c>, <c>bag-2</c>, <c>bag-3</c>, …</summary>
@@ -182,7 +212,7 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
             .ToListAsync(ct);
     }
 
-    private async Task<Result<ProductResponse>> SaveAsync(Product product, CancellationToken ct)
+    private async Task<Result<ProductResponse>> SaveAsync(Product product, IReadOnlyList<ProductImage> images, CancellationToken ct)
     {
         try
         {
@@ -196,10 +226,10 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
                 : CatalogErrors.SkuTaken(product.Variants.Select(v => v.Sku).OfType<string>());
         }
 
-        return Result.Success(ToResponse(product));
+        return Result.Success(ToResponse(product, images));
     }
 
-    internal static ProductResponse ToResponse(Product p) => new(
+    internal static ProductResponse ToResponse(Product p, IReadOnlyList<ProductImage> images) => new(
         p.Id,
         p.Title,
         p.Handle,
@@ -212,7 +242,8 @@ internal sealed class ProductsHandler(CommerceDbContext db, ITenantContext tenan
         p.OptionNames,
         p.Variants.OrderBy(v => v.Position).Select(v => new VariantResponse(
             v.Id, v.Sku, v.Barcode, v.Option1, v.Option2, v.Option3, v.Price, v.CompareAtPrice, v.Cost, v.Currency,
-            v.TrackInventory, v.Stock, CatalogInput.Text(v.InventoryPolicy), v.WeightGrams, v.RequiresShipping, v.Available)).ToList(),
+            v.TrackInventory, v.Stock, CatalogInput.Text(v.InventoryPolicy), v.WeightGrams, v.RequiresShipping, v.Available, v.ImageId)).ToList(),
+        images.Select(ProductImagesHandler.ToResponse).ToList(),
         p.CreatedAt,
         p.UpdatedAt);
 

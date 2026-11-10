@@ -87,6 +87,9 @@ internal sealed class ProductVariant : TenantEntity
 
     public int Position { get; private set; }
 
+    /// <summary>The picture of this variant (e.g. the black one), an image of the same product; null = the main image.</summary>
+    public Guid? ImageId { get; private set; }
+
     /// <summary>Whether a customer can order it now (the AI uses this, never a guess).</summary>
     public bool Available => !TrackInventory || InventoryPolicy == InventoryPolicy.Continue || Stock > 0;
 
@@ -126,6 +129,9 @@ internal sealed class ProductVariant : TenantEntity
         RequiresShipping = data.RequiresShipping;
         Position = position;
     }
+
+    /// <summary>The caller checks that the image belongs to this variant's product.</summary>
+    public void SetImage(Guid? imageId) => ImageId = imageId;
 
     public bool HasOptions(string? option1, string? option2, string? option3) =>
         Same(Option1, option1) && Same(Option2, option2) && Same(Option3, option3);

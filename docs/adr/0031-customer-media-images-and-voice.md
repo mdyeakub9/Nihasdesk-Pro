@@ -93,6 +93,24 @@ Also:
 - **Retention lookup:** `inbox.expired_media(before, limit)`, `SECURITY DEFINER`, IDs only, like `due_media`. Files are deleted before the row changes, so a failure leaves the row due again instead of a forgotten file.
 - **The + menu** switches "Send photo" off when the newest customer message on screen is more than 24 hours old; the server still decides (SEC-43).
 
+### 12. As built in Issue #86 PR 1 (2026-11-10)
+Decided by the owner:
+- **Variant photo is a column on the variant** (`product_variants.image_id`, `ON DELETE SET NULL`), not `variant_id` on the image as planned in §1: in Shopify files one photo serves several variants (all sizes of the black one). Deleting a photo puts its variants back on the main photo.
+- **8 photos per product everywhere**, the CSV import too (PRD 4.6). The "20 per product" of §7 is dropped; extra photos in a file will be warnings (PR 3).
+- **Public links open active products only**: a draft or archived product's photos can't be fetched from outside.
+- **Critical test** `ProductImageIsolationTests` is a new file; no existing Critical file changed.
+
+Also:
+- **Upload in the API**, like the team's photos (§11): `POST /api/v1/products/{id}/images`, Owner and Admin (`catalog.manage`), own rate limit `product-images` (300 per hour per user) because a catalog needs many. JPEG, PNG and WebP by content only; GIF and HEIC are refused for products. Stored copies: card (≤ 1200 px, served), thumbnail (320 px), AI copy (1024 px, never served). The file as sent is not kept.
+- **Order:** `PUT /images/order` with every photo once; delete moves the rest up. The lowest position that is saved is the main photo. Two uploads at once can't pass 8: the product row is locked while the row is added.
+- **Dashboard links** `GET /api/v1/products/{id}/images/{imageId}[?size=thumbnail]` for signed-in members only, `private` cache. Product detail returns `images` and each variant's `imageId`; the list returns `thumbnailUrl`.
+- **Signed links** `/media/p/{token}`: the token holds version, workspace, image and expiry (Unix seconds), with an HMAC-SHA256 over a purpose string (`nihasdesk/product-image/v1`), base64url, 99 characters. Key: `Commerce:Images:SigningKey` (secret, base64, ≥ 32 bytes; same in API and Workers). Base: `App:PublicUrl`, which must be https (locally the ngrok domain). Without either, no links are made and cards go without pictures, as before. The endpoint is anonymous with rate limit `public-media` (600 per minute per IP), reads `commerce.product_images` only, in the signed workspace with RLS, so no token opens customer media; every refusal is the same 404. `public, max-age=86400`, `nosniff`, sandbox CSP.
+- **Rule 1:** the public endpoint sets the workspace from the token. The token is not user input: only our key can make one, and changing a byte breaks it. It runs in its own scope, so a signed-in browser's workspace can't mix in.
+- **`ICatalog`** gives saved image IDs only (`CatalogProduct.MainImageId`, `CatalogVariant.ImageId`); `IProductImageLinks.CardUrlAsync` makes the link. Storage keys never leave Commerce. `RichRenderer` uses the variant photo, else the main photo.
+- **Rendered cards keep the link** they were sent with (7 days). The team's view of older carousels shows the card without the picture once it expires; the inbox screen (Issue #91 PR 4) will use the dashboard link instead.
+- **Ready for PR 3:** `source_url`, `source_line`, `import_batch_id`, `attempts`, `next_attempt_at` and `commerce.due_product_images(now, limit)` (`SECURITY DEFINER`, IDs only, like `inbox.due_media`) are already in this migration.
+- **Not yet:** deleting product photos with a workspace (#75) — the files must go with the workspace's other files.
+
 ## Alternatives considered
 - **Image embeddings (CLIP-style) for product matching:** better at large catalogs, but needs an extra model and index. Phase 1 catalogs are small; text search + visual comparison of the top 5 is simpler. Revisit if catalogs grow past a few thousand products.
 - **Sending the photo straight to the reply model with all tools:** fewer calls, but the model would decide alone whether a photo is a complaint. The two-step design lets code hand off reliably.

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using FluentValidation;
 using Nihasdesk.Modules.Commerce.Domain;
+using Nihasdesk.Modules.Commerce.Features.Images;
 using Nihasdesk.SharedKernel;
 
 namespace Nihasdesk.Modules.Commerce.Features.Products;
@@ -21,7 +22,9 @@ internal sealed record VariantRequest(
     int? Stock,
     string? InventoryPolicy,
     int? WeightGrams,
-    bool? RequiresShipping);
+    bool? RequiresShipping,
+    // A photo of the same product (ADR 0031 §7); null or left out = the main photo.
+    Guid? ImageId = null);
 
 /// <summary>
 /// Create or replace a product with its variants (ADR 0018). The handle is derived from the title when
@@ -55,7 +58,8 @@ internal sealed record VariantResponse(
     string InventoryPolicy,
     int? WeightGrams,
     bool RequiresShipping,
-    bool Available);
+    bool Available,
+    Guid? ImageId);
 
 internal sealed record ProductResponse(
     Guid Id,
@@ -69,6 +73,8 @@ internal sealed record ProductResponse(
     IReadOnlyList<string> Tags,
     IReadOnlyList<string> OptionNames,
     IReadOnlyList<VariantResponse> Variants,
+    // In position order; the first saved one is the main photo.
+    IReadOnlyList<ProductImageResponse> Images,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
@@ -86,7 +92,9 @@ internal sealed record ProductSummaryResponse(
     string? Currency,
     // Sum over tracked variants; null when none is tracked.
     int? Stock,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    // The main photo's thumbnail (signed-in members only), or null.
+    string? ThumbnailUrl);
 
 internal sealed record ProductPageResponse(IReadOnlyList<ProductSummaryResponse> Items, string? NextCursor);
 
