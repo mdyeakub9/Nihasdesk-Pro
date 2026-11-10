@@ -71,6 +71,55 @@ public sealed class RichMessagesTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Cards_show_the_variant_photo_else_the_main_photo_through_a_signed_link()
+    {
+        var (owner, pageId) = await ConnectedOwnerAsync();
+        var (id, _) = await ConversationAsync(owner, pageId);
+        var bag = await CreateProductAsync(owner, "Borsa Milano", ("Nero", 8900), ("Rosso", 8900));
+        var scarf = await CreateProductAsync(owner, "Sciarpa", ("Blu", 2500));
+        var main = await PhotoAsync(owner, bag.Id, SkiaSharp.SKColors.Black);
+        var red = await PhotoAsync(owner, bag.Id, SkiaSharp.SKColors.Red);
+        var current = await owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/products/{bag.Id}");
+        var body = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(current.GetRawText())!;
+        var variants = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(body["variants"].GetRawText())!;
+        variants[1]["imageId"] = JsonSerializer.SerializeToElement(red);
+        body["variants"] = JsonSerializer.SerializeToElement(variants);
+        await owner.RefreshCsrfAsync();
+        (await owner.Http.PutAsJsonAsync($"/api/v1/products/{bag.Id}", body)).EnsureSuccessStatusCode();
+
+        await owner.PostAsync($"/api/v1/conversations/{id}/products", new
+        {
+            items = new object[] { new { productId = bag.Id, variantId = bag.Variants[0] }, new { productId = bag.Id, variantId = bag.Variants[1] }, new { productId = scarf.Id } },
+        });
+        Assert.Equal(1, await Api.SendRepliesAsync());
+
+        using var sent = JsonDocument.Parse(Api.Meta.Sends[^1].Body);
+        var elements = sent.RootElement.GetProperty("message").GetProperty("attachment").GetProperty("payload").GetProperty("elements").EnumerateArray().ToList();
+        var black = elements[0].GetProperty("image_url").GetString()!;
+        var redLink = elements[1].GetProperty("image_url").GetString()!;
+        Assert.StartsWith(NihasdeskApiFactory.PublicUrl + "/media/p/", black, StringComparison.Ordinal);
+        // No photo, no image: Meta never gets a broken link.
+        Assert.False(elements[2].TryGetProperty("image_url", out var none) && none.ValueKind != JsonValueKind.Null);
+
+        // Meta fetches the links without signing in; each opens its own photo.
+        using var meta = Api.CreateClient();
+        Assert.Equal(
+            await owner.Http.GetByteArrayAsync($"/api/v1/products/{bag.Id}/images/{main}"),
+            await meta.GetByteArrayAsync(new Uri(black).AbsolutePath));
+        Assert.Equal(
+            await owner.Http.GetByteArrayAsync($"/api/v1/products/{bag.Id}/images/{red}"),
+            await meta.GetByteArrayAsync(new Uri(redLink).AbsolutePath));
+        Assert.DoesNotContain(main, black, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task<string> PhotoAsync(ApiClient owner, string productId, SkiaSharp.SKColor colour)
+    {
+        var response = await Catalog.ProductImagesTests.UploadAsync(owner, productId, Inbox.MediaImageTests.Png(30, 20, colour));
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString()!;
+    }
+
+    [Fact]
     public async Task A_tap_on_our_button_is_a_customer_message_and_anything_else_is_plain_text()
     {
         var (owner, pageId) = await ConnectedOwnerAsync();

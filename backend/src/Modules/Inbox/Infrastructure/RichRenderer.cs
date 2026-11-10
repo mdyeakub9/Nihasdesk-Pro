@@ -15,7 +15,7 @@ namespace Nihasdesk.Modules.Inbox.Infrastructure;
 /// labels are in the customer's language, and every button gets its own opaque token. Rendered once:
 /// a retry sends the same message with the same buttons.
 /// </summary>
-internal sealed class RichRenderer(InboxDbContext db, ICatalog catalog, IContactDirectory contacts, ITenantContext tenant)
+internal sealed class RichRenderer(InboxDbContext db, ICatalog catalog, IProductImageLinks images, IContactDirectory contacts, ITenantContext tenant)
 {
     public const int TitleMaxLength = 80;
     public const int SubtitleMaxLength = 80;
@@ -68,7 +68,9 @@ internal sealed class RichRenderer(InboxDbContext db, ICatalog catalog, IContact
                 .Select((action, i) => Action(message, position + i, action, RichLabels.Button(action, italian), product.Id, variant?.Id, null, now))
                 .ToList();
             var (price, currency, subtitle) = Subtitle(product, variant, card.MatchLabel, italian);
-            cards.Add(new RenderedCard(product.Id, variant?.Id, Cut(product.Title, TitleMaxLength), subtitle, price, currency, null, card.MatchLabel, buttons));
+            // The variant's own photo, else the main one (ADR 0032 §2); null while public links aren't set up.
+            var imageUrl = (variant?.ImageId ?? product.MainImageId) is { } imageId ? await images.CardUrlAsync(imageId, ct) : null;
+            cards.Add(new RenderedCard(product.Id, variant?.Id, Cut(product.Title, TitleMaxLength), subtitle, price, currency, imageUrl, card.MatchLabel, buttons));
         }
 
         var text = new StringBuilder();

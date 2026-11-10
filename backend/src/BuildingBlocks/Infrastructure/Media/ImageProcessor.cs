@@ -26,9 +26,13 @@ public static class ImageProcessor
     public const int ThumbnailEdge = 320;
     public const int AiCopyEdge = 1024;
 
+    /// <summary>Product images: the copy shown in cards and the editor (ADR 0031 §7).</summary>
+    public const int CardEdge = 1200;
+
     private const int Quality = 85;
 
-    public static ImageResult Process(byte[] content, long maxPixels = DefaultMaxPixels)
+    /// <param name="maxEdge">The longest side of <see cref="ProcessedImage.Full"/>; by default the image keeps its size.</param>
+    public static ImageResult Process(byte[] content, long maxPixels = DefaultMaxPixels, int maxEdge = int.MaxValue)
     {
         ArgumentNullException.ThrowIfNull(content);
         using var data = SKData.CreateCopy(content);
@@ -68,7 +72,7 @@ public static class ImageProcessor
 
         return new(
             new ProcessedImage(
-                Encode(Math.Max(width, height)),
+                Encode(Math.Min(maxEdge, Math.Max(width, height))),
                 Encode(ThumbnailEdge),
                 Encode(AiCopyEdge),
                 transparent ? "image/webp" : "image/jpeg",

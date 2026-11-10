@@ -15,8 +15,8 @@ The API checks every permission on the server, reading the member's **current** 
 | Inbox work (read, reply, take over / return to AI, notes, status, assign, edit contacts) | ✅ | ✅ | ✅ |
 | Orders — see, create (confirmed), edit, approve and reject order requests (ADR 0025; audited) | ✅ | ✅ | ✅ |
 | `channels.manage` — connect and disconnect channels (Facebook Pages) | ✅ | ✅ | ❌ |
-| `catalog.view` — see products, variants, prices and stock | ✅ | ✅ | ✅ |
-| `catalog.manage` — create and edit products, CSV import (ADR 0018) | ✅ | ✅ | ❌ |
+| `catalog.view` — see products, variants, prices, stock and photos | ✅ | ✅ | ✅ |
+| `catalog.manage` — create and edit products and their photos, CSV import (ADR 0018, 0031) | ✅ | ✅ | ❌ |
 | `ai.view` — see the questions the AI couldn't answer and the taught answers | ✅ | ✅ | ✅ |
 | `ai.teach` — answer those questions, add and edit taught answers (ADR 0019) | ✅ | ✅ | ❌ |
 | `ai.trace` — "Why this answer" for an AI reply, and 👍/👎 on AI replies (own rating; ADR 0026 §6) | ✅ | ✅ | ✅ |

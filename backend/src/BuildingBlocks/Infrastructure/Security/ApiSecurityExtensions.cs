@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Nihasdesk.Infrastructure.Security;
 
-/// <summary>Named rate-limit policies (SEC-07), configurable under <c>RateLimits</c>. Per client IP, except <see cref="Messages"/> and <see cref="Uploads"/>.</summary>
+/// <summary>Named rate-limit policies (SEC-07), configurable under <c>RateLimits</c>. Per client IP, except <see cref="Messages"/>, <see cref="Uploads"/> and <see cref="ProductImages"/>.</summary>
 public static class RatePolicies
 {
     public const string Login = "login";
@@ -28,6 +28,12 @@ public static class RatePolicies
 
     /// <summary>File uploads (CSV import, later documents and images); per signed-in user (SEC-07).</summary>
     public const string Uploads = "uploads";
+
+    /// <summary>Product photos in the catalog editor: up to 8 per product, so more than other uploads; per signed-in user.</summary>
+    public const string ProductImages = "product-images";
+
+    /// <summary>Signed public product image links, fetched by Meta and customers' apps; per client IP.</summary>
+    public const string PublicMedia = "public-media";
 }
 
 public sealed class RateLimitSettings
@@ -49,6 +55,8 @@ public static class ApiSecurityExtensions
         [RatePolicies.Invite] = new() { PermitLimit = 30, Window = TimeSpan.FromHours(1) },
         [RatePolicies.Messages] = new() { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) },
         [RatePolicies.Uploads] = new() { PermitLimit = 30, Window = TimeSpan.FromHours(1) },
+        [RatePolicies.ProductImages] = new() { PermitLimit = 300, Window = TimeSpan.FromHours(1) },
+        [RatePolicies.PublicMedia] = new() { PermitLimit = 600, Window = TimeSpan.FromMinutes(1) },
     };
 
     /// <summary>Antiforgery for cookie-authenticated APIs (SEC-03) and auth rate limits (SEC-07).</summary>
@@ -95,7 +103,7 @@ public static class ApiSecurityExtensions
     }
 
     private static string PartitionKey(string policy, HttpContext context) =>
-        policy is RatePolicies.Messages or RatePolicies.Uploads && context.User.FindFirstValue(ClaimTypes.NameIdentifier) is { } userId
+        policy is RatePolicies.Messages or RatePolicies.Uploads or RatePolicies.ProductImages && context.User.FindFirstValue(ClaimTypes.NameIdentifier) is { } userId
             ? "user:" + userId
             : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 

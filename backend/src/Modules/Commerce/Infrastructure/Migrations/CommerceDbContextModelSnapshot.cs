@@ -339,6 +339,117 @@ namespace Nihasdesk.Modules.Commerce.Infrastructure.Migrations
                     b.ToTable("products", "commerce");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.Commerce.Domain.ProductImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AiImageKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("ai_image_key");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("CardKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("card_key");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("failure_code");
+
+                    b.Property<int?>("Height")
+                        .HasColumnType("integer")
+                        .HasColumnName("height");
+
+                    b.Property<Guid?>("ImportBatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("import_batch_id");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("Sha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("sha256");
+
+                    b.Property<long?>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<int?>("SourceLine")
+                        .HasColumnType("integer")
+                        .HasColumnName("source_line");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)")
+                        .HasColumnName("source_url");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("ThumbnailKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("thumbnail_key");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int?>("Width")
+                        .HasColumnType("integer")
+                        .HasColumnName("width");
+
+                    b.HasKey("Id")
+                        .HasName("pk_product_images");
+
+                    b.HasIndex("NextAttemptAt")
+                        .HasDatabaseName("ix_product_images_next_attempt_at")
+                        .HasFilter("status = 'pending'");
+
+                    b.HasIndex("ProductId", "Position")
+                        .HasDatabaseName("ix_product_images_product_id_position");
+
+                    b.ToTable("product_images", "commerce", t =>
+                        {
+                            t.HasCheckConstraint("ck_product_images_position", "position BETWEEN 1 AND 8");
+                        });
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.Commerce.Domain.ProductVariant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -368,6 +479,10 @@ namespace Nihasdesk.Modules.Commerce.Infrastructure.Migrations
                         .HasColumnType("character(3)")
                         .HasColumnName("currency")
                         .IsFixedLength();
+
+                    b.Property<Guid?>("ImageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("image_id");
 
                     b.Property<string>("InventoryPolicy")
                         .IsRequired()
@@ -434,6 +549,9 @@ namespace Nihasdesk.Modules.Commerce.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_product_variants");
 
+                    b.HasIndex("ImageId")
+                        .HasDatabaseName("ix_product_variants_image_id");
+
                     b.HasIndex("ProductId")
                         .HasDatabaseName("ix_product_variants_product_id");
 
@@ -460,8 +578,24 @@ namespace Nihasdesk.Modules.Commerce.Infrastructure.Migrations
                         .HasConstraintName("fk_order_items_orders_order_id");
                 });
 
+            modelBuilder.Entity("Nihasdesk.Modules.Commerce.Domain.ProductImage", b =>
+                {
+                    b.HasOne("Nihasdesk.Modules.Commerce.Domain.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_product_images_products_product_id");
+                });
+
             modelBuilder.Entity("Nihasdesk.Modules.Commerce.Domain.ProductVariant", b =>
                 {
+                    b.HasOne("Nihasdesk.Modules.Commerce.Domain.ProductImage", null)
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_product_variants_product_images_image_id");
+
                     b.HasOne("Nihasdesk.Modules.Commerce.Domain.Product", null)
                         .WithMany("Variants")
                         .HasForeignKey("ProductId")

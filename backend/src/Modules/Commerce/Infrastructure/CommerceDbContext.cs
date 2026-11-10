@@ -20,6 +20,8 @@ internal sealed class CommerceDbContext(DbContextOptions<CommerceDbContext> opti
 
     public DbSet<ProductVariant> Variants => Set<ProductVariant>();
 
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+
     public DbSet<Order> Orders => Set<Order>();
 
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -66,6 +68,28 @@ internal sealed class CommerceDbContext(DbContextOptions<CommerceDbContext> opti
             // Update-by-SKU on import (ADR 0018): one SKU per workspace.
             variant.HasIndex(v => new { v.TenantId, v.Sku }).IsUnique().HasFilter("sku IS NOT NULL");
             variant.HasIndex(v => v.ProductId);
+            // Removing an image leaves its variants on the main image.
+            variant.HasOne<ProductImage>().WithMany().HasForeignKey(v => v.ImageId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ProductImage>(image =>
+        {
+            image.ToTable("product_images", table =>
+                table.HasCheckConstraint("ck_product_images_position", $"position BETWEEN 1 AND {ProductImage.MaxPerProduct}"));
+            image.Property(i => i.Id).ValueGeneratedNever();
+            LowerCaseText(image.Property(i => i.Status));
+            image.Property(i => i.FailureCode).HasMaxLength(ProductImageFailure.MaxLength);
+            image.Property(i => i.SourceUrl).HasMaxLength(ProductImage.SourceUrlMaxLength);
+            image.Property(i => i.ContentType).HasMaxLength(ProductImage.ContentTypeMaxLength);
+            image.Property(i => i.Sha256).HasMaxLength(64);
+            image.Property(i => i.CardKey).HasMaxLength(ProductImage.KeyMaxLength);
+            image.Property(i => i.ThumbnailKey).HasMaxLength(ProductImage.KeyMaxLength);
+            image.Property(i => i.AiImageKey).HasMaxLength(ProductImage.KeyMaxLength);
+            image.HasOne<Product>().WithMany().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Cascade);
+            // Not unique: a reorder moves several rows in one save.
+            image.HasIndex(i => new { i.ProductId, i.Position });
+            // The download job's queue.
+            image.HasIndex(i => i.NextAttemptAt).HasFilter("status = 'pending'");
         });
 
         modelBuilder.Entity<Order>(order =>

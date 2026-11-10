@@ -1,6 +1,9 @@
 namespace Nihasdesk.Modules.Commerce.Contracts;
 
-/// <summary>A variant as the AI and other modules may see it: price and availability, never the cost.</summary>
+/// <summary>
+/// A variant as the AI and other modules may see it: price and availability, never the cost.
+/// <paramref name="ImageId"/> is its own saved picture, if it has one (link it with <see cref="IProductImageLinks"/>).
+/// </summary>
 public sealed record CatalogVariant(
     Guid Id,
     string? Sku,
@@ -9,8 +12,10 @@ public sealed record CatalogVariant(
     long? CompareAtPrice,
     string Currency,
     bool Available,
-    int? Stock);
+    int? Stock,
+    Guid? ImageId = null);
 
+/// <param name="MainImageId">The first saved picture of the product, or null.</param>
 public sealed record CatalogProduct(
     Guid Id,
     string Title,
@@ -19,7 +24,8 @@ public sealed record CatalogProduct(
     string? Vendor,
     IReadOnlyList<string> Tags,
     IReadOnlyList<string> OptionNames,
-    IReadOnlyList<CatalogVariant> Variants);
+    IReadOnlyList<CatalogVariant> Variants,
+    Guid? MainImageId = null);
 
 /// <summary>
 /// The current workspace's catalog, <b>active</b> products only (ADR 0018). The one source of prices

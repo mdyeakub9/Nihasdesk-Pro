@@ -72,6 +72,12 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
     public Task<int> PurgeOldMediaAsync() =>
         Services.GetRequiredService<MediaRetention>().PurgeOnceAsync(CancellationToken.None);
 
+    /// <summary>Where Meta would fetch product images from.</summary>
+    public const string PublicUrl = "https://public.nihasdesk.test";
+
+    /// <summary>A fixed test-only key (bytes 1…32), built at run time so no key-like text sits in the repo.</summary>
+    public static readonly string ImageSigningKey = Convert.ToBase64String(Enumerable.Range(1, 32).Select(i => (byte)i).ToArray());
+
     /// <summary>Uploaded files of this test run; nothing lands in the developer's own folder.</summary>
     public string FilesFolder { get; } = Path.Combine(Path.GetTempPath(), "nihasdesk-tests", Guid.NewGuid().ToString("N"));
 
@@ -95,11 +101,14 @@ public sealed class NihasdeskApiFactory(PostgresDatabase database, IReadOnlyDict
         builder.UseSetting("Ai:BackgroundProcessing", "false");
         builder.UseSetting("Ai:SiteRequestDelay", "00:00:00");
         builder.UseSetting("Storage:LocalPath", FilesFolder);
+        // Signed product image links (ADR 0031 §7); a test-only key.
+        builder.UseSetting("App:PublicUrl", PublicUrl);
+        builder.UseSetting("Commerce:Images:SigningKey", ImageSigningKey);
         // Low enough for the limit test to reach.
         builder.UseSetting("Ai:MaxRepliesPerConversationPerHour", "3");
         builder.UseSetting("Ai:MaxSuggestionsPerWorkspacePerDay", "4");
         // Generous by default; rate-limit tests pass their own limits.
-        foreach (var policy in new[] { "login", "signup", "email", "invite", "messages", "uploads" })
+        foreach (var policy in new[] { "login", "signup", "email", "invite", "messages", "uploads", "product-images", "public-media" })
         {
             builder.UseSetting($"RateLimits:{policy}:PermitLimit", "1000");
             builder.UseSetting($"RateLimits:{policy}:Window", "00:01:00");
