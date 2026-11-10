@@ -21,6 +21,9 @@ internal static partial class Guardrails
 {
     public const int MaxReplyLength = 1500;
 
+    /// <summary>More products than this in a reply's text means they should have been cards (ADR 0032 §5).</summary>
+    public const int MaxProductsInText = 2;
+
     /// <summary>Null when the reply may be sent; otherwise a short reason code.</summary>
     public static string? Check(string? reply, IReadOnlySet<long> allowedPrices)
     {
@@ -85,6 +88,7 @@ internal static partial class Guardrails
 internal sealed partial class ReplyAgent(
     AgentBrain brain,
     AgentTools tools,
+    TapHandler taps,
     AiSettingsStore settingsStore,
     IAiConversations conversations,
     IContactDirectory contacts,
@@ -110,11 +114,16 @@ internal sealed partial class ReplyAgent(
 
         string? version = null;
 
-        async Task Finish(RunOutcome outcome, string? detail, Thought? thought = null, Guid? messageId = null)
+        async Task Finish(RunOutcome outcome, string? detail, Thought? thought = null, Guid? messageId = null, TapAnswer? tap = null)
         {
-            var run = AiRun.Finish(
-                tenant.TenantId, conversationId, Options.ReplyModel, thought?.InputTokens ?? 0, thought?.OutputTokens ?? 0,
-                thought?.Tools ?? [], outcome, detail, watch.Elapsed, thought?.Sources, thought?.Trace, version);
+            var run = tap is null
+                ? AiRun.Finish(
+                    tenant.TenantId, conversationId, Options.ReplyModel, thought?.InputTokens ?? 0, thought?.OutputTokens ?? 0,
+                    thought?.Tools ?? [], outcome, detail, watch.Elapsed, thought?.Sources, thought?.Trace, version)
+                // Code answered a tap: no model, no tokens, still a trace (ADR 0032 §4).
+                : AiRun.Finish(
+                    tenant.TenantId, conversationId, TapModel, 0, 0, [$"tap:{tap.Action}"], outcome, detail, watch.Elapsed,
+                    trace: new RunTrace([new ToolTrace("tap", tap.Action, tap.Result)], RunTraces.Passed), source: RunSource.Tap);
             if (messageId is { } id)
             {
                 run.Sent(id);
@@ -124,19 +133,50 @@ internal sealed partial class ReplyAgent(
             await db.SaveChangesAsync(ct);
         }
 
-        async Task HandOff(RunOutcome outcome, string reason, string note, Thought? thought = null)
+        async Task HandOff(RunOutcome outcome, string reason, string note, Thought? thought = null, TapAnswer? tap = null)
         {
             await conversations.HandOffAsync(conversationId, note, ct);
-            await Finish(outcome, reason, thought);
+            await Finish(outcome, reason, thought, tap: tap);
         }
 
         var settings = await settingsStore.GetAsync(ct);
         if (!settings.Enabled)
         {
-            await HandOff(RunOutcome.HandedOff, "ai_off", "The AI is switched off for this workspace (Settings → AI). Please answer this customer.");
+            // A team conversation is already with the team: nothing to hand over.
+            if (!conversation.CodeOnly)
+            {
+                await HandOff(RunOutcome.HandedOff, "ai_off", "The AI is switched off for this workspace (Settings → AI). Please answer this customer.");
+            }
+
             return;
         }
 
+        var contact = (await contacts.GetAsync([conversation.ContactId], ct)).GetValueOrDefault(conversation.ContactId);
+        var shop = await settingsStore.ShopNameAsync(ct);
+
+        // A tap: code answers first, without the model (ADR 0032 §4).
+        var italian = (ReplyLanguage.OfCustomer(conversation.Messages) ?? (contact?.Language?.StartsWith("en", StringComparison.OrdinalIgnoreCase) == true ? ReplyLanguage.English : ReplyLanguage.Italian)) == ReplyLanguage.Italian;
+        if (await taps.AnswerAsync(conversation, italian, ct) is { } answer)
+        {
+            if (answer.HandoffReason is { } tapHandoff)
+            {
+                await HandOff(RunOutcome.HandedOff, tapHandoff, Prompt.TeamNote(tapHandoff, null), tap: answer);
+                return;
+            }
+
+            List<AiReply> tapReplies = conversation.AiHasReplied ? [.. answer.Replies] : [new AiReply(Prompt.Disclosure(shop, settings)), .. answer.Replies];
+            var tapSent = await conversations.ReplyRichAsync(conversationId, tapReplies, conversation.CodeOnly, ct);
+            await Finish(tapSent is null ? RunOutcome.Dropped : RunOutcome.Replied, tapSent is null ? "team_took_over" : null, messageId: tapSent?[^1], tap: answer);
+            return;
+        }
+
+        // The team has this conversation: only code may answer, and it had nothing to say.
+        if (conversation.CodeOnly)
+        {
+            return;
+        }
+
+        // SEC-39 limits the model; taps answered by code above are free and each needs a tap.
         if (await LimitReachedAsync(conversationId, ct) is { } limit)
         {
             await HandOff(RunOutcome.LimitReached, "limit", $"AI paused: {limit}. Please answer this customer.");
@@ -151,8 +191,6 @@ internal sealed partial class ReplyAgent(
         }
 
         var last = conversation.Messages.LastOrDefault(m => m.Author == "customer");
-        var contact = (await contacts.GetAsync([conversation.ContactId], ct)).GetValueOrDefault(conversation.ContactId);
-        var shop = await settingsStore.ShopNameAsync(ct);
         // Order requests belong to this conversation; the model never picks one (SEC-36).
         tools.ConversationId = conversationId;
         tools.ContactId = conversation.ContactId;
@@ -172,8 +210,11 @@ internal sealed partial class ReplyAgent(
             memory.MarkDue(time.GetUtcNow());
         }
 
+        // Items chosen with buttons: the model quotes them and collects the details (PRD 4.9 step 3).
+        var draft = await db.Drafts.SingleOrDefaultAsync(d => d.ConversationId == conversationId, ct);
+        var orderSoFar = draft is null || draft.IsExpired(time.GetUtcNow()) ? null : await taps.OrderSoFarAsync(draft, ct);
         var thought = await brain.ThinkAsync(
-            Prompt.System(shop, settings, FirstName(contact?.Name), contact?.Language), context.Recent, ct, summary: context.Summary);
+            Prompt.System(shop, settings, FirstName(contact?.Name), contact?.Language), context.Recent, ct, summary: context.Summary, orderSoFar: orderSoFar);
 
         if (thought.Failed is { } failed)
         {
@@ -199,11 +240,43 @@ internal sealed partial class ReplyAgent(
             return;
         }
 
-        var replies = conversation.AiHasReplied ? new[] { thought.Reply! } : [Prompt.Disclosure(shop, settings), thought.Reply!];
-        // The answer is the last message (a disclosure may come first): "Why this answer" belongs to it.
-        var sent = await conversations.ReplyWithIdsAsync(conversationId, replies, ct);
-        await Finish(sent is null ? RunOutcome.Dropped : RunOutcome.Replied, sent is null ? "team_took_over" : null, thought, sent?[^1]);
+        var replies = new List<AiReply>();
+        if (!conversation.AiHasReplied)
+        {
+            replies.Add(new AiReply(Prompt.Disclosure(shop, settings)));
+        }
+
+        // "Why this answer" belongs to the answer's text, whatever follows it.
+        var answerIndex = replies.Count;
+        switch (tools.PendingRich)
+        {
+            // show_choices: the buttons go under the reply itself.
+            case { QuickReplies: { } choices }:
+                replies.Add(new AiReply(thought.Reply!, new RichContent(QuickReplies: choices with { Text = thought.Reply! })));
+                break;
+
+            // show_products: the reply, then the cards.
+            case { Carousel: { } carousel } rich:
+                replies.Add(new AiReply(thought.Reply!));
+                replies.Add(new AiReply(TapHandler.CarouselText(carousel.Intro, carousel.Cards.Select(c => tools.TitleOf(c.ProductId) ?? string.Empty)), rich));
+                if (tools.Shown is { } shown)
+                {
+                    (draft ?? await taps.DraftAsync(conversation, ct)).Shown(shown.Query, shown.ProductIds, nextPage: false);
+                }
+
+                break;
+
+            default:
+                replies.Add(new AiReply(thought.Reply!));
+                break;
+        }
+
+        var sent = await conversations.ReplyRichAsync(conversationId, replies, codeOnly: false, ct);
+        await Finish(sent is null ? RunOutcome.Dropped : RunOutcome.Replied, sent is null ? "team_took_over" : null, thought, sent?[answerIndex]);
     }
+
+    /// <summary>The <c>model</c> of a run in which code answered a tap.</summary>
+    public const string TapModel = "code";
 
     /// <summary>SEC-39: per conversation per hour and per workspace per day. Null when within limits.</summary>
     private async Task<string?> LimitReachedAsync(Guid conversationId, CancellationToken ct)
@@ -211,13 +284,14 @@ internal sealed partial class ReplyAgent(
         var now = time.GetUtcNow();
         var hourAgo = now.AddHours(-1);
         var dayAgo = now.AddDays(-1);
-        if (await db.Runs.CountAsync(r => r.ConversationId == conversationId && r.Outcome == RunOutcome.Replied && r.CreatedAt > hourAgo, ct)
+        // Model replies only: code answers to taps cost nothing and each needs a tap (ADR 0032 §4).
+        if (await db.Runs.CountAsync(r => r.ConversationId == conversationId && r.Source == RunSource.Model && r.Outcome == RunOutcome.Replied && r.CreatedAt > hourAgo, ct)
             >= Options.MaxRepliesPerConversationPerHour)
         {
             return "too many AI replies in this conversation within an hour";
         }
 
-        return await db.Runs.CountAsync(r => r.Outcome == RunOutcome.Replied && r.CreatedAt > dayAgo, ct) >= Options.MaxRepliesPerWorkspacePerDay
+        return await db.Runs.CountAsync(r => r.Source == RunSource.Model && r.Outcome == RunOutcome.Replied && r.CreatedAt > dayAgo, ct) >= Options.MaxRepliesPerWorkspacePerDay
             ? "the daily AI reply limit for this workspace is reached"
             : null;
     }
@@ -234,7 +308,7 @@ internal sealed partial class ReplyAgent(
 internal static class Prompt
 {
     /// <summary>Change these when the prompt text below changes, so traces and evals show which prompt answered.</summary>
-    public const string AgentVersion = "agent-2026-11-07";
+    public const string AgentVersion = "agent-2026-11-10";
 
     public const string AssistantVersion = "assistant-2026-11-06.2";
 
@@ -266,6 +340,7 @@ internal static class Prompt
         - Then call quote_order and show its summary with exactly its amounts (payment: cash on delivery). Only after the customer confirms, call create_order_request. Afterwards say the shop will confirm the order shortly — never that it is confirmed.
         - If the customer complains, asks for a refund or a person, or wants something you can't take as an order request, call handoff_to_human with the matching reason.
         - Never share links. Share a phone number, email or address only exactly as search_knowledge gave it. Never promise discounts, delivery dates or anything the tools didn't say.
+        - When you suggest products, show them with show_products: the customer sees cards with the current price and the buttons "I want it", "Sizes and colours" and "Similar". Your message still answers the question in a sentence or two (e.g. which colours or sizes are in stock, or that none is under a price), without listing the products or their prices, and may say they can tap "I want it" (in Italian "Lo voglio") on a card. There is no cart, photo, product page, reservation or back-in-stock alert to offer.
 
         {{OwnerGuidance(settings)}}
         Safety:

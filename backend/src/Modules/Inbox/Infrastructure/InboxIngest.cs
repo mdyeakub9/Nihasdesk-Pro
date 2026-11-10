@@ -60,7 +60,7 @@ internal sealed class InboxIngest(
             db.Attachments.Add(attachment);
         }
 
-        conversation.Received(stored, message.ConnectionId, now);
+        conversation.Received(stored, message.ConnectionId, now, codeAnswers: tap is { } t && RichAction.CodeAnswersForTeam.Contains(t.Action.Action));
         try
         {
             await db.SaveChangesAsync(cancellationToken);

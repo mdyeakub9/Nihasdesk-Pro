@@ -12,6 +12,7 @@ using Nihasdesk.Modules.AiAgent.Domain;
 using Nihasdesk.Modules.AiAgent.Features.Trace;
 using Nihasdesk.Modules.AiAgent.Infrastructure;
 using Nihasdesk.Modules.AiAgent.Llm;
+using Nihasdesk.Modules.Commerce.Contracts;
 using Nihasdesk.Modules.Identity.Contracts;
 using Nihasdesk.Modules.Inbox.Contracts;
 using Nihasdesk.SharedKernel;
@@ -45,7 +46,9 @@ internal sealed record TestChatResponse(
     IReadOnlyList<string> Tools,
     IReadOnlyList<TestSource> Sources,
     // "Why this answer" for the test reply, the same view as for a real one.
-    TraceResponse Trace);
+    TraceResponse Trace,
+    // Product cards (show_products) or choices (show_choices) the reply would carry (ADR 0032 §5).
+    IReadOnlyList<string>? Shown = null);
 
 /// <summary>
 /// What an answer was based on (PRD 4.7): <c>shipping</c> (the zones), <c>policy</c> with the
@@ -123,6 +126,8 @@ internal static class AiSettingsEndpoints
         ai.MapPost("/test", async (
                 TestChatRequest request,
                 AgentBrain brain,
+                AgentTools tools,
+                ICatalog catalog,
                 AiSettingsStore store,
                 ILlmProvider llm,
                 AiDbContext db,
@@ -168,11 +173,38 @@ internal static class AiSettingsEndpoints
                     thought.Failed,
                     thought.Tools,
                     trace.Sources,
-                    trace));
+                    trace,
+                    thought.Reply is null ? null : await ShownAsync(tools.PendingRich, catalog, ct)));
             })
             .AddEndpointFilter(manage)
             .AddEndpointFilter<ValidationFilter<TestChatRequest>>()
             .RequireRateLimiting(RatePolicies.Messages);
+    }
+
+    /// <summary>"Borsa Milano · €89.00" per card, or the choices; prices from the catalog, like the channel shows them.</summary>
+    private static async Task<IReadOnlyList<string>?> ShownAsync(RichContent? rich, ICatalog catalog, CancellationToken ct)
+    {
+        if (rich?.QuickReplies is { } choices)
+        {
+            return [.. choices.Options.Select(o => o.Label)];
+        }
+
+        if (rich?.Carousel is not { } carousel)
+        {
+            return null;
+        }
+
+        var shown = new List<string>();
+        foreach (var card in carousel.Cards)
+        {
+            if (await catalog.GetAsync(card.ProductId, ct) is { } product && product.Variants.Where(v => v.Available).MinBy(v => v.Price) is { } cheapest)
+            {
+                var amount = (cheapest.Price / 100m).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+                shown.Add($"{product.Title} · {(cheapest.Currency == "EUR" ? "€" + amount : amount + " " + cheapest.Currency)}");
+            }
+        }
+
+        return shown;
     }
 
     /// <summary>Readable sources for the dashboard; also used by the team's AI assistant.</summary>

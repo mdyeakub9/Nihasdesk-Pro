@@ -76,6 +76,12 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("output_tokens");
 
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("source");
+
                     b.PrimitiveCollection<List<string>>("Sources")
                         .IsRequired()
                         .HasColumnType("text[]")
@@ -547,6 +553,90 @@ namespace Nihasdesk.Modules.AiAgent.Infrastructure.Migrations
                         .HasFilter("kind = 'webpage'");
 
                     b.ToTable("knowledge_sources", "ai");
+                });
+
+            modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.OrderDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.PrimitiveCollection<List<string>>("ChosenValues")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("chosen_values")
+                        .HasDefaultValueSql("'{}'::text[]");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("contact_id");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("LastQuery")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("last_query");
+
+                    b.Property<string>("Lines")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("lines");
+
+                    b.Property<Guid?>("PreselectedVariantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("preselected_variant_id");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.PrimitiveCollection<List<Guid>>("ShownProductIds")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("shown_product_ids")
+                        .HasDefaultValueSql("'{}'::uuid[]");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("summary");
+
+                    b.Property<string>("SummaryHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("summary_hash")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_order_drafts");
+
+                    b.HasIndex("UpdatedAt")
+                        .HasDatabaseName("ix_order_drafts_updated_at");
+
+                    b.HasIndex("TenantId", "ContactId")
+                        .HasDatabaseName("ix_order_drafts_tenant_id_contact_id");
+
+                    b.HasIndex("TenantId", "ConversationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_order_drafts_tenant_id_conversation_id");
+
+                    b.ToTable("order_drafts", "ai");
                 });
 
             modelBuilder.Entity("Nihasdesk.Modules.AiAgent.Domain.ReplyFeedback", b =>

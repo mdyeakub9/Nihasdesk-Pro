@@ -139,7 +139,10 @@ for (var i = 0; i < cases.Count; i++)
             shopFacts,
             outcome switch
             {
-                "reply" => $"Replied to the customer: {reply}",
+                "reply" => turn.TryGetProperty("shown", out var shown) && shown.ValueKind == JsonValueKind.Array && shown.GetArrayLength() > 0
+                    // show_products / show_choices: the cards or buttons are part of what the customer sees (ADR 0032).
+                    ? $"Replied to the customer: {reply}\nWith these buttons or product cards (name · current price from the catalog): {string.Join("; ", shown.EnumerateArray().Select(s => s.GetString()))}"
+                    : $"Replied to the customer: {reply}",
                 "handoff" => $"Handed the conversation to the team (reason: {handoff}).",
                 _ => $"Its draft was held back by the reply check ({blocked}); the team answers instead.",
             },
@@ -191,6 +194,12 @@ for (var i = 0; i < cases.Count; i++)
     }
 }
 
+// --dump <path>: every case as it came out, also when the run is not saved (to look into failures).
+if (options.Dump is { } dump)
+{
+    await File.WriteAllTextAsync(dump, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+}
+
 if (!options.DryRun && results.Any(r => r.Outcome == "failed"))
 {
     Console.Error.WriteLine($"{results.Count(r => r.Outcome == "failed")} cases failed at the AI provider; nothing was saved. Run again.");
@@ -219,7 +228,7 @@ return t.MadeUpPricesReached > 0 || t.MadeUpFacts > 0 ? 1 : 0;
 static string? Text(JsonElement turn, string name) =>
     turn.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
-internal sealed record Options(string? Set, string? Shop, int? Limit, string JudgeModel, bool DryRun, bool SearchOnly, bool SummaryCheck)
+internal sealed record Options(string? Set, string? Shop, int? Limit, string JudgeModel, bool DryRun, bool SearchOnly, bool SummaryCheck, string? Dump = null)
 {
     public static Options Parse(string[] args)
     {
@@ -231,7 +240,8 @@ internal sealed record Options(string? Set, string? Shop, int? Limit, string Jud
             Value("--judge-model") ?? "gpt-5",
             args.Contains("--dry-run"),
             args.Contains("--search-only"),
-            args.Contains("--summary-check"));
+            args.Contains("--summary-check"),
+            Value("--dump"));
     }
 
     /// <summary>The checkout this runs in: the folder that has <c>docs/evals</c>.</summary>

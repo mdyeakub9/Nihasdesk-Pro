@@ -142,7 +142,8 @@ internal sealed class AiOptions
     public string ReplyModel { get; set; } = "gpt-5-mini";
 
     /// <summary>Includes a reasoning model's thinking; the reply itself stays short (prompt, guardrail).</summary>
-    public int MaxOutputTokens { get; set; } = 2000;
+    // 4000 since rich messages (ADR 0032): with more tools the model thinks longer and 2000 ran out (output_limit).
+    public int MaxOutputTokens { get; set; } = 4000;
 
     /// <summary><c>minimal</c> / <c>low</c> / <c>medium</c> / <c>high</c> for reasoning models; empty for others.</summary>
     public string? ReasoningEffort { get; set; } = "low";

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nihasdesk.Modules.AiAgent.Domain;
 using Nihasdesk.Modules.AiAgent.Llm;
 
 namespace Nihasdesk.Modules.AiAgent.Infrastructure;
@@ -26,9 +27,14 @@ internal sealed partial class TraceRetention(
         var before = time.GetUtcNow().AddDays(-options.Value.TraceRetentionDays);
         await using var scope = scopes.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AiDbContext>();
-        return await db.Database
+        var traces = await db.Database
             .SqlQuery<int>($"SELECT ai.purge_old_traces({before}) AS \"Value\"")
             .SingleAsync(ct);
+
+        // Order drafts (and any delivery details in them) older than 7 days (ADR 0032, SEC-44).
+        var draftsBefore = time.GetUtcNow() - OrderDraft.Lifetime;
+        await db.Database.SqlQuery<int>($"SELECT ai.purge_old_drafts({draftsBefore}) AS \"Value\"").SingleAsync(ct);
+        return traces;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
