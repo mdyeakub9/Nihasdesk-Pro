@@ -90,8 +90,30 @@ export type ContactDetails = {
   lastActiveAt: string;
 };
 
+/** A tap that showed interest in a product (PRD 4.5): Lo voglio, Taglie e colori, Simili. */
+export type InterestAction = 'buy' | 'options' | 'similar';
+
+export type ProductInterest = {
+  productId: string;
+  title: string;
+  lastAction: InterestAction;
+  /** Tapped "Lo voglio" on it at least once. */
+  wanted: boolean;
+  taps: number;
+  lastAt: string;
+};
+
+/** Why code set the lead status (null when the team set it), and the products of interest. */
+export type LeadInfo = {
+  reason: 'tapped_buy' | null;
+  reasonProductTitle: string | null;
+  reasonAt: string | null;
+  interests: ProductInterest[];
+};
+
 export type Conversation = ConversationSummary & {
   contact: ContactDetails;
+  lead: LeadInfo;
   messages: Message[];
   labels: string[];
   /** Team member the conversation is assigned to; the responder chip shows their name. */

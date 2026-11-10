@@ -40,4 +40,7 @@ public interface ICatalog
     Task<IReadOnlyList<CatalogProduct>> SearchAsync(string query, int limit, CancellationToken cancellationToken);
 
     Task<CatalogProduct?> GetAsync(Guid productId, CancellationToken cancellationToken);
+
+    /// <summary>Titles of active products, for showing names only (e.g. products of interest); other IDs are missing.</summary>
+    Task<IReadOnlyDictionary<Guid, string>> TitlesAsync(IReadOnlyCollection<Guid> productIds, CancellationToken cancellationToken);
 }

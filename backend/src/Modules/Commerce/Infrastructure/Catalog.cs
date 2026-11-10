@@ -107,6 +107,19 @@ internal sealed partial class Catalog(CommerceDbContext db) : ICatalog
         return product is null ? null : ToContract(product, await SavedImagesAsync([product.Id], cancellationToken));
     }
 
+    public async Task<IReadOnlyDictionary<Guid, string>> TitlesAsync(IReadOnlyCollection<Guid> productIds, CancellationToken cancellationToken)
+    {
+        if (productIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        return await db.Products
+            .AsNoTracking()
+            .Where(p => productIds.Contains(p.Id) && p.Status == ProductStatus.Active)
+            .ToDictionaryAsync(p => p.Id, p => p.Title, cancellationToken);
+    }
+
     /// <summary>Saved images only (ADR 0031 §7), by product in position order.</summary>
     private async Task<ILookup<Guid, Guid>> SavedImagesAsync(List<Guid> productIds, CancellationToken ct) =>
         (await db.ProductImages

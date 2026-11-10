@@ -131,6 +131,68 @@ public sealed class TapAnswersTests(AuthFixture fixture)
     }
 
     [Fact]
+    public async Task Lo_voglio_makes_a_hot_lead_with_the_reason_and_taps_fill_the_products_of_interest_once_each()
+    {
+        var shop = await ShopAsync();
+        var (id, psid) = await TeamConversationAsync(shop);
+        await shop.Owner.PostAsync($"/api/v1/conversations/{id}/products", new { items = new[] { new { productId = shop.BagId } } });
+        await Api.SendRepliesAsync();
+        var buttons = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload").GetProperty("elements")[0].GetProperty("buttons");
+
+        // "Taglie e colori" only adds the product; the lead stays new.
+        await TapAsync(shop, psid, "📏 Taglie e colori", postback: buttons[1].GetProperty("payload").GetString()!);
+        var detail = await DetailAsync(shop, id);
+        Assert.Equal("new", detail.GetProperty("conversation").GetProperty("leadStatus").GetString());
+        var interest = Assert.Single(detail.GetProperty("lead").GetProperty("interests").EnumerateArray());
+        Assert.Equal("Borsa Milano", interest.GetProperty("title").GetString());
+        Assert.False(interest.GetProperty("wanted").GetBoolean());
+
+        // "Lo voglio": hot, with the reason the team sees (PRD 4.5). The same webhook twice counts once.
+        var buy = TapEnvelope(shop, psid, "🛒 Lo voglio", buttons[0].GetProperty("payload").GetString()!);
+        await PostAsync(buy);
+        await PostAsync(buy);
+        detail = await DetailAsync(shop, id);
+        Assert.Equal("hot", detail.GetProperty("conversation").GetProperty("leadStatus").GetString());
+        var lead = detail.GetProperty("lead");
+        Assert.Equal("tapped_buy", lead.GetProperty("reason").GetString());
+        Assert.Equal("Borsa Milano", lead.GetProperty("reasonProductTitle").GetString());
+        Assert.Equal(shop.BagId, lead.GetProperty("reasonProductId").GetString());
+        interest = Assert.Single(lead.GetProperty("interests").EnumerateArray());
+        Assert.True(interest.GetProperty("wanted").GetBoolean());
+        Assert.Equal("buy", interest.GetProperty("lastAction").GetString());
+        Assert.Equal(2, interest.GetProperty("taps").GetInt32());
+
+        // The team changes the status: their choice wins and the old reason goes.
+        await shop.Owner.RefreshCsrfAsync();
+        (await shop.Owner.Http.PatchAsJsonAsync($"/api/v1/conversations/{id}", new { leadStatus = "support" })).EnsureSuccessStatusCode();
+        lead = (await DetailAsync(shop, id)).GetProperty("lead");
+        Assert.Equal(JsonValueKind.Null, lead.GetProperty("reason").ValueKind);
+        Assert.Single(lead.GetProperty("interests").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Lo_voglio_leaves_a_status_the_team_set_and_a_forged_tap_records_nothing()
+    {
+        var shop = await ShopAsync();
+        var (id, psid) = await TeamConversationAsync(shop);
+        await shop.Owner.RefreshCsrfAsync();
+        (await shop.Owner.Http.PatchAsJsonAsync($"/api/v1/conversations/{id}", new { leadStatus = "customer" })).EnsureSuccessStatusCode();
+        await shop.Owner.PostAsync($"/api/v1/conversations/{id}/products", new { items = new[] { new { productId = shop.BagId } } });
+        await Api.SendRepliesAsync();
+        var buttons = LastSendTo(psid).GetProperty("message").GetProperty("attachment").GetProperty("payload").GetProperty("elements")[0].GetProperty("buttons");
+
+        // A made-up token is plain text: no interest, no lead change (SEC-36).
+        await TapAsync(shop, psid, "🛒 Lo voglio", postback: "rm1:AAAAAAAAAAAAAAAAAAAAAA");
+        Assert.Empty((await DetailAsync(shop, id)).GetProperty("lead").GetProperty("interests").EnumerateArray());
+
+        await TapAsync(shop, psid, "🛒 Lo voglio", postback: buttons[0].GetProperty("payload").GetString()!);
+        var detail = await DetailAsync(shop, id);
+        Assert.Equal("customer", detail.GetProperty("conversation").GetProperty("leadStatus").GetString());
+        Assert.Equal(JsonValueKind.Null, detail.GetProperty("lead").GetProperty("reason").ValueKind);
+        Assert.True(Assert.Single(detail.GetProperty("lead").GetProperty("interests").EnumerateArray()).GetProperty("wanted").GetBoolean());
+    }
+
+    [Fact]
     public async Task Talk_to_a_person_hands_over_and_show_products_takes_only_ids_from_this_turn()
     {
         var shop = await ShopAsync();
@@ -495,6 +557,12 @@ public sealed class TapAnswersTests(AuthFixture fixture)
     }
 
 
+
+    private string TapEnvelope(Shop shop, string psid, string label, string postback) =>
+        Envelope(shop.PageId, new { sender = new { id = psid }, recipient = new { id = shop.PageId }, timestamp = Now(), postback = new { mid = "tap-" + Guid.NewGuid().ToString("N"), title = label, payload = postback } });
+
+    private static Task<JsonElement> DetailAsync(Shop shop, string id) =>
+        shop.Owner.Http.GetFromJsonAsync<JsonElement>($"/api/v1/conversations/{id}");
 
     private JsonElement LastSendTo(string psid)
     {

@@ -19,6 +19,8 @@ internal sealed class ContactsDbContext(DbContextOptions<ContactsDbContext> opti
 
     public DbSet<ContactIdentity> Identities => Set<ContactIdentity>();
 
+    public DbSet<ProductInterest> ProductInterests => Set<ProductInterest>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -43,6 +45,17 @@ internal sealed class ContactsDbContext(DbContextOptions<ContactsDbContext> opti
             // One contact per channel address per workspace; also guards concurrent first messages.
             identity.HasIndex(i => new { i.TenantId, i.Channel, i.ExternalId }).IsUnique();
             identity.HasIndex(i => i.ContactId);
+        });
+
+        modelBuilder.Entity<ProductInterest>(interest =>
+        {
+            interest.ToTable("product_interests");
+            interest.Property(i => i.LastAction).HasMaxLength(ProductInterest.ActionMaxLength);
+            interest.HasOne<Contact>().WithMany().HasForeignKey(i => i.ContactId).OnDelete(DeleteBehavior.Cascade);
+            // One row per contact and product; also guards two taps at once.
+            interest.HasIndex(i => new { i.TenantId, i.ContactId, i.ProductId }).IsUnique();
+            // The contact panel: newest first.
+            interest.HasIndex(i => new { i.ContactId, i.LastAt });
         });
 
         modelBuilder.ApplyTenantQueryFilters(this);

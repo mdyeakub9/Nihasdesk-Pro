@@ -189,6 +189,13 @@
     "teamNote": "Note del team",
     "lead": "Lead",
     "leadHint": "Classificato dall'IA; il team può modificarlo.",
+    "leadReason": {
+      "tapped_buy": "Ha toccato “Lo voglio” su {{product}}, {{when}}"
+    },
+    "interests": "Prodotti di interesse",
+    "interestWanted": "Lo vuole",
+    "interestTaps_one": "{{count}} tocco",
+    "interestTaps_other": "{{count}} tocchi",
     "orders": "Ordini",
     "orderCount_one": "{{count}} ordine",
     "orderCount_other": "{{count}} ordini",

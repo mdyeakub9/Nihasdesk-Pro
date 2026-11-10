@@ -189,6 +189,13 @@
     "teamNote": "Team notes",
     "lead": "Lead",
     "leadHint": "Classified by the AI; your team can change it.",
+    "leadReason": {
+      "tapped_buy": "Tapped “Lo voglio” on {{product}}, {{when}}"
+    },
+    "interests": "Products of interest",
+    "interestWanted": "Wants it",
+    "interestTaps_one": "{{count}} tap",
+    "interestTaps_other": "{{count}} taps",
     "orders": "Orders",
     "orderCount_one": "{{count}} order",
     "orderCount_other": "{{count}} orders",

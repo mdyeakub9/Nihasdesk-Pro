@@ -9,7 +9,9 @@ import type {
   ConversationPatch,
   ConversationSummary,
   LeadStatus,
+  LeadInfo,
   Message,
+  ProductInterest,
   TeamNotes,
 } from './types';
 
@@ -41,6 +43,21 @@ type ApiContact = {
   language: string | null;
   createdAt: string;
 };
+
+type ApiLead = {
+  reason: LeadInfo['reason'];
+  reasonProductId: string | null;
+  reasonProductTitle: string | null;
+  reasonAt: string | null;
+  interests: ProductInterest[];
+};
+
+const toLead = (lead: ApiLead | undefined): LeadInfo => ({
+  reason: lead?.reason ?? null,
+  reasonProductTitle: lead?.reasonProductTitle ?? null,
+  reasonAt: lead?.reasonAt ?? null,
+  interests: lead?.interests ?? [],
+});
 
 type ApiMessage = {
   id: string;
@@ -165,7 +182,7 @@ async function listConversations(): Promise<Raw<ConversationSummary>[]> {
 async function getConversation(id: string): Promise<Raw<Conversation> | null> {
   try {
     const [detail, messages] = await Promise.all([
-      apiGet<{ conversation: ApiConversationSummary; contact: ApiContact | null }>(path(id)),
+      apiGet<{ conversation: ApiConversationSummary; contact: ApiContact | null; lead?: ApiLead }>(path(id)),
       apiGet<MessagePage>(`${path(id)}/messages?limit=50`),
     ]);
     const c = detail.conversation;
@@ -173,6 +190,7 @@ async function getConversation(id: string): Promise<Raw<Conversation> | null> {
       ...toSummary(c),
       aiEnabled: c.aiEnabled,
       leadStatus: c.leadStatus,
+      lead: toLead(detail.lead),
       contact: {
         name: detail.contact?.name ?? '',
         ...(detail.contact?.phone ? { phone: detail.contact.phone } : {}),

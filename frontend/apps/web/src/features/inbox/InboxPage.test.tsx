@@ -82,6 +82,55 @@ describe('Inbox', () => {
     expect(callsTo(fetchMock, '/api/v1/conversations/c-giulia/read')).toHaveLength(0);
   });
 
+  it('shows why the lead is hot and the products of interest', async () => {
+    const conversations = seedConversations();
+    giulia(conversations).lead = {
+      reason: 'tapped_buy',
+      reasonProductId: 'p-borsa',
+      reasonProductTitle: 'Borsa Milano',
+      reasonAt: '2026-11-09T19:14:00Z',
+      interests: [
+        {
+          productId: 'p-borsa',
+          title: 'Borsa Milano',
+          lastAction: 'buy',
+          wanted: true,
+          taps: 2,
+          lastAt: '2026-11-09T19:14:00Z',
+        },
+        {
+          productId: 'p-zaino',
+          title: 'Zaino Roma',
+          lastAction: 'similar',
+          wanted: false,
+          taps: 1,
+          lastAt: '2026-11-09T19:10:00Z',
+        },
+      ],
+    };
+    fakeInboxApi({ conversations });
+    await renderApp('/inbox/c-giulia');
+
+    const details = await screen.findByRole('complementary', { name: 'Customer details' });
+    expect(
+      await within(details).findByText(/Tapped “Lo voglio” on Borsa Milano, November 9/),
+    ).toBeInTheDocument();
+    const interests = within(details).getByRole('list', { name: 'Products of interest' });
+    const rows = within(interests).getAllByRole('listitem');
+    expect(rows.map((row) => row.textContent)).toEqual(['Borsa MilanoWants it2 taps', 'Zaino Roma1 tap']);
+  });
+
+  it('explains the lead status when the team set it and nothing was tapped', async () => {
+    fakeInboxApi();
+    await renderApp('/inbox/c-luca');
+
+    const details = await screen.findByRole('complementary', { name: 'Customer details' });
+    expect(
+      await within(details).findByText('Classified by the AI; your team can change it.'),
+    ).toBeInTheDocument();
+    expect(within(details).queryByRole('list', { name: 'Products of interest' })).not.toBeInTheDocument();
+  });
+
   it('takes over and returns the conversation to the AI, without the old text under the composer', async () => {
     const { fetchMock } = fakeInboxApi();
     await renderApp('/inbox/c-giulia');

@@ -27,6 +27,15 @@ internal enum LeadStatus
     Spam,
 }
 
+/// <summary>Why code changed the lead status. Stored as this text.</summary>
+internal static class LeadReasons
+{
+    public const int MaxLength = 30;
+
+    /// <summary>The customer tapped "Lo voglio" on a product card (ADR 0032 §6).</summary>
+    public const string TappedBuy = "tapped_buy";
+}
+
 /// <summary>All messages with one contact on one channel (ADR 0016).</summary>
 internal sealed class Conversation : TenantEntity
 {
@@ -51,6 +60,13 @@ internal sealed class Conversation : TenantEntity
     public bool AiEnabled { get; private set; } = true;
 
     public LeadStatus LeadStatus { get; private set; } = LeadStatus.New;
+
+    /// <summary>Why code set the lead status (one of <see cref="LeadReasons"/>); null when the team set it.</summary>
+    public string? LeadReason { get; private set; }
+
+    public Guid? LeadReasonProductId { get; private set; }
+
+    public DateTimeOffset? LeadReasonAt { get; private set; }
 
     public Guid? AssigneeId { get; private set; }
 
@@ -170,7 +186,40 @@ internal sealed class Conversation : TenantEntity
         }
     }
 
-    public void SetLeadStatus(LeadStatus leadStatus) => LeadStatus = leadStatus;
+    /// <summary>The team's choice wins; the reason was for the old status, so it goes.</summary>
+    public void SetLeadStatus(LeadStatus leadStatus)
+    {
+        if (leadStatus != LeadStatus)
+        {
+            ClearLeadReason();
+        }
+
+        LeadStatus = leadStatus;
+    }
+
+    /// <summary>
+    /// "Lo voglio" on a product (PRD 4.5): a new lead becomes hot, with the reason shown to the team.
+    /// Only from new, so a customer, support or spam status set by the team stays as it is.
+    /// </summary>
+    public void WantedProduct(Guid productId, DateTimeOffset at)
+    {
+        if (LeadStatus != LeadStatus.New)
+        {
+            return;
+        }
+
+        LeadStatus = LeadStatus.Hot;
+        LeadReason = LeadReasons.TappedBuy;
+        LeadReasonProductId = productId;
+        LeadReasonAt = at;
+    }
+
+    private void ClearLeadReason()
+    {
+        LeadReason = null;
+        LeadReasonProductId = null;
+        LeadReasonAt = null;
+    }
 
     public void AssignTo(Guid? userId) => AssigneeId = userId;
 

@@ -40,6 +40,7 @@ internal sealed class InboxDbContext(DbContextOptions<InboxDbContext> options, I
             LowerCaseText(conversation.Property(c => c.Status));
             LowerCaseText(conversation.Property(c => c.Responder));
             LowerCaseText(conversation.Property(c => c.LeadStatus));
+            conversation.Property(c => c.LeadReason).HasMaxLength(LeadReasons.MaxLength);
             // One conversation per contact and channel (ADR 0016).
             conversation.HasIndex(c => new { c.TenantId, c.ContactId, c.Channel }).IsUnique();
             // The inbox list: newest activity first, keyset pagination.
