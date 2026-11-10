@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { formatPrice } from '../../lib/format';
 import { authErrorMessage, isErrorCode } from '../auth/errors';
 import { useProduct, useProducts, type Variant } from '../catalog/api';
+import { ProductThumb } from '../catalog/ProductImages';
 import { useSendProducts } from './api';
 
 const maxItems = 5;
@@ -134,10 +135,11 @@ export function ProductPicker({ conversationId, onClose }: { conversationId: str
             <button
               type="button"
               aria-expanded={open === product.id}
-              className="w-full px-3 py-2 text-left text-[13px] font-medium hover:bg-subtle"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-medium hover:bg-subtle"
               onClick={() => setOpen(open === product.id ? null : product.id)}
             >
-              {product.title}
+              <ProductThumb url={product.thumbnailUrl} className="size-8" />
+              <span className="min-w-0 flex-1 truncate">{product.title}</span>
             </button>
             {open === product.id && (
               <ProductVariants

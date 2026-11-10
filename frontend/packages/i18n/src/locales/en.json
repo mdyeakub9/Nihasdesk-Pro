@@ -594,7 +594,8 @@
       "inventoryPolicy": "When out of stock",
       "trackInventory": "Track stock",
       "stock": "In stock",
-      "requiresShipping": "Needs shipping"
+      "requiresShipping": "Needs shipping",
+      "photo": "Photo"
     },
     "policy": {
       "deny": "Stop selling",
@@ -642,6 +643,36 @@
       "errors": {
         "noFile": "Choose a CSV file first.",
         "notCsv": "This isn’t a CSV text file. Save it as CSV (UTF-8) and try again."
+      }
+    },
+    "images": {
+      "title": "Photos ({{count}} of {{max}})",
+      "titleNew": "Photos",
+      "saveFirst": "Save the product first, then add its photos.",
+      "hint": "JPG, PNG or WebP, up to 10 MB each. The first photo is the main one: it is shown in product cards. Drag to change the order.",
+      "add": "Add photos",
+      "choose": "Choose photos",
+      "none": "No photos yet.",
+      "uploading_one": "Uploading 1 photo…",
+      "uploading_other": "Uploading {{count}} photos…",
+      "main": "Main",
+      "photoNumber": "Photo {{number}}",
+      "moveLeft": "Move photo {{number}} earlier",
+      "moveRight": "Move photo {{number}} later",
+      "delete": "Delete photo {{number}}",
+      "confirmDelete": "Delete",
+      "useMain": "Main photo",
+      "status": {
+        "pending": "Downloading…",
+        "saved": "Saved",
+        "failed": "Could not be loaded"
+      },
+      "errors": {
+        "image_too_large": "Larger than 10 MB or 40 megapixels.",
+        "image_type_not_allowed": "Only JPG, PNG or WebP photos.",
+        "too_many_images": "A product has at most 8 photos.",
+        "image_not_found": "This photo no longer exists. Reload the page.",
+        "failed": "The photo could not be saved. Try again."
       }
     }
   },
